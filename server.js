@@ -351,6 +351,32 @@ io.on('connection', socket => {
     }
   });
 
+  socket.on('request-revenge', ({ isRevenge }) => {
+    const room = rooms.get(socket.data.room);
+    if (!room || room.vsAI) return;
+    const idx = socket.data.idx;
+    room.pendingRevenge = { fromIdx: idx, isRevenge: !!isRevenge };
+    emitToPlayer(room, 1 - idx, 'revenge-request-received', {
+      fromIdx: idx, isRevenge: !!isRevenge, fromName: room.names[idx],
+    });
+  });
+
+  socket.on('respond-revenge', ({ accept }) => {
+    const room = rooms.get(socket.data.room);
+    if (!room || !room.pendingRevenge) return;
+    const { fromIdx, isRevenge } = room.pendingRevenge;
+    room.pendingRevenge = null;
+    if (accept) {
+      room.scores = [0, 0];
+      room.isRevenge = isRevenge;
+      room.revengerIdx = isRevenge ? fromIdx : null;
+      room.game = null;
+      startGame(room);
+    } else {
+      emitToPlayer(room, fromIdx, 'revenge-declined', { isRevenge });
+    }
+  });
+
   socket.on('set-ready', () => {
     const room = rooms.get(socket.data.room);
     if (!room) return;
@@ -450,6 +476,8 @@ function startGame(room) {
       chars: room.chars,
       playerIndex: i,
       vsAI: !!room.vsAI,
+      isRevenge: !!room.isRevenge,
+      revengerIdx: room.revengerIdx ?? null,
       targetScore: room.targetScore,
     });
   });
@@ -462,8 +490,14 @@ function checkMatchEnd(room) {
   if (room.targetScore === null || room.targetScore === undefined) return;
   if (room.scores[0] < room.targetScore && room.scores[1] < room.targetScore) return;
   const winnerIdx = room.scores[0] === room.scores[1] ? -1 : (room.scores[0] > room.scores[1] ? 0 : 1);
+  const revengeSuccess = !!room.isRevenge && winnerIdx === room.revengerIdx;
+  const wasRevenge = !!room.isRevenge;
+  // Reset revenge state before emitting so next match can start fresh
+  room.isRevenge = false;
+  room.revengerIdx = null;
   io.to(room.code).emit('match-ended', {
-    winnerIdx, scores: room.scores, names: room.names, targetReached: true,
+    winnerIdx, scores: room.scores, names: room.names,
+    targetReached: true, wasRevenge, revengeSuccess,
   });
 }
 

@@ -252,9 +252,27 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .btn-primary { background: #4caf50; color: white; }
 .btn-secondary { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); }
 .btn-blue { background: #2196f3; color: white; }
-.btn-orange { background: #ff9800; color: white; }
+.btn-orange { background: linear-gradient(135deg, #ff6b35, #f5501a); color: white; }
 .btn-red { background: #ef5350; color: white; }
 .btn-gold { background: #f9a825; color: #111; }
+
+/* ===== Revenge mode styles ===== */
+.revenge-lbl {
+  font-size: 11px; font-weight: 700; color: #ff8c42;
+  background: rgba(255,100,20,0.15); border: 1px solid rgba(255,100,20,0.4);
+  padding: 3px 10px; border-radius: 12px; margin-left: 6px;
+  animation: revengeLblPulse 1.4s ease-in-out infinite;
+  display: inline-flex; align-items: center; vertical-align: middle;
+}
+@keyframes revengeLblPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+.avatar-card.revenge-fire {
+  animation: avatarRevengeFire 1.6s ease-in-out infinite;
+}
+@keyframes avatarRevengeFire {
+  0%,100% { box-shadow: 0 0 6px rgba(255,100,20,0.4); border-color: rgba(255,100,20,0.4); }
+  50% { box-shadow: 0 0 20px rgba(255,80,10,0.7), 0 0 40px rgba(255,130,20,0.2); border-color: rgba(255,140,40,0.8); }
+}
 
 /* ===== Game screen ===== */
 #gameScreen { padding-bottom: 20px; }
@@ -919,7 +937,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 <!-- ===== GAME ===== -->
 <div id="gameScreen" class="screen">
   <div class="game-header">
-    <div class="title-sm">🃏 진 러미 <span class="target-score-lbl" id="targetScoreLbl"></span></div>
+    <div class="title-sm">🃏 진 러미 <span class="target-score-lbl" id="targetScoreLbl"></span><span class="revenge-lbl" id="revengeLbl" style="display:none">🔥 리벤지 전</span></div>
     <div class="score-box-pretty" id="scoreBoxPretty">
       <div class="score-side" id="myScoreSide">
         <span class="score-label" data-i18n="me">나</span>
@@ -1059,7 +1077,12 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div class="result-emoji" id="matchEndEmoji">🏆</div>
     <div class="result-title" id="matchEndTitle"></div>
     <div class="result-pts" id="matchEndDetail"></div>
-    <button class="btn btn-primary" onclick="leaveRoom()" data-i18n="backToLobbyBtn">로비로 돌아가기</button>
+    <div class="rematch-row" style="margin-top:12px">
+      <button class="btn btn-orange" id="revengeBtn" onclick="requestRevenge(true)" style="max-width:180px;display:none">🔥 리벤지</button>
+      <button class="btn btn-primary" id="rematchBtn2" onclick="requestRevenge(false)" style="max-width:180px;display:none">🔄 리매치</button>
+      <button class="btn btn-secondary" onclick="leaveRoom()" style="max-width:160px" data-i18n="backToLobbyBtn">로비로 돌아가기</button>
+    </div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:8px" id="revengeStatus"></div>
   </div>
 </div>
 
@@ -1388,6 +1411,8 @@ let scores = [0, 0];
 let sortMode = 'meld';   // 'meld' | 'rank' | 'suit'
 let lastDrawnId = null;  // id of the card just drawn (for highlight)
 let vsAI = false;
+let isRevenge = false;
+let revengerIdx = null;
 let aiControlled = [false, false];
 let lastDiscardTopId = null;
 let streaks = [0, 0]; // win streaks indexed by absolute player index (0/1), synced via round-end data
@@ -1771,21 +1796,68 @@ function initSocket() {
     alert('상대방이 항복 요청을 거절했습니다. 게임을 계속합니다.');
   });
 
-  socket.on('match-ended', ({ winnerIdx, scores: sc, names: ns, targetReached }) => {
+  socket.on('match-ended', ({ winnerIdx, scores: sc, names: ns, targetReached, wasRevenge, revengeSuccess }) => {
     hideToast();
     scores = sc;
     document.getElementById('resultOverlay').classList.remove('show');
     const iWon = winnerIdx === myIdx;
     const tie = winnerIdx === -1;
-    document.getElementById('matchEndEmoji').textContent = tie ? '🤝' : (iWon ? '🏆' : '💔');
-    const reachedTxt = targetReached ? `🎯 ${targetScore}점 달성! ` : '';
-    document.getElementById('matchEndTitle').textContent = tie ? '무승부로 종료!' : (iWon ? `${reachedTxt}최종 승리!` : `${reachedTxt}${oppName()} 승리...`);
+    const iAmRevenger = revengerIdx === myIdx;
+
+    let emoji, title;
+    if (tie) { emoji = '🤝'; title = '무승부로 종료!'; }
+    else if (wasRevenge && revengeSuccess) {
+      emoji = iWon ? '🔥' : '😤';
+      title = iWon ? '🔥 리벤지 성공!!' : `🛡️ 리벤지 방어! ${oppName()} 패배...`;
+    } else if (wasRevenge && !revengeSuccess) {
+      emoji = iWon ? '🛡️' : '😢';
+      title = iWon ? '🛡️ 리벤지 방어 성공! 최종 승리!' : `🔥 리벤지 실패... ${oppName()} 승리`;
+    } else {
+      const reachedTxt = targetReached ? `🎯 ${targetScore}점 달성! ` : '';
+      emoji = iWon ? '🏆' : '💔';
+      title = iWon ? `${reachedTxt}최종 승리!` : `${reachedTxt}${oppName()} 승리...`;
+    }
+
+    document.getElementById('matchEndEmoji').textContent = emoji;
+    document.getElementById('matchEndTitle').textContent = title;
     document.getElementById('matchEndDetail').textContent = `최종 점수 — 나: ${sc[myIdx]}점 | ${oppName()}: ${sc[1-myIdx]}점`;
+
     const box = document.getElementById('matchEndBox');
-    box.className = 'result-box ' + (tie ? 'pop-neutral' : (iWon ? 'pop-win' : 'pop-lose'));
+    box.className = 'result-box ' + (tie ? 'pop-neutral' : (iWon ? (wasRevenge && revengeSuccess ? 'pop-biggin' : 'pop-win') : 'pop-lose'));
     document.getElementById('matchEndEmoji').classList.toggle('big-bounce', iWon);
-    if (iWon) spawnConfetti();
+    if (iWon) { wasRevenge && revengeSuccess ? spawnFireworks() : spawnConfetti(); }
+
+    // Show revenge/rematch/leave buttons based on role (only for human vs human)
+    const revengeBtn = document.getElementById('revengeBtn');
+    const rematchBtn2 = document.getElementById('rematchBtn2');
+    document.getElementById('revengeStatus').textContent = '';
+    if (!vsAI && winnerIdx !== -1) {
+      revengeBtn.style.display = iWon ? 'none' : '';   // loser sees Revenge
+      rematchBtn2.style.display = iWon ? '' : 'none';  // winner sees Rematch
+    } else {
+      revengeBtn.style.display = 'none';
+      rematchBtn2.style.display = 'none';
+    }
+
     document.getElementById('matchEndOverlay').classList.add('show');
+  });
+
+  socket.on('revenge-request-received', ({ fromIdx, isRevenge: ir, fromName }) => {
+    const label = ir ? '🔥 리벤지' : '🔄 리매치';
+    const msg = ir
+      ? `🔥 ${fromName} 님이 리벤지를 요청했습니다!\n수락하시겠어요?`
+      : `🔄 ${fromName} 님이 리매치를 요청했습니다.\n수락하시겠어요?`;
+    const accept = confirm(msg);
+    socket.emit('respond-revenge', { accept });
+    if (!accept) return;
+    document.getElementById('revengeStatus').textContent = '수락! 새 게임 시작 중...';
+  });
+
+  socket.on('revenge-declined', ({ isRevenge: ir }) => {
+    const msg = ir ? '상대방이 리벤지 요청을 거절했습니다.' : '상대방이 리매치 요청을 거절했습니다.';
+    document.getElementById('revengeStatus').textContent = msg;
+    document.getElementById('revengeBtn').disabled = false;
+    document.getElementById('rematchBtn2').disabled = false;
   });
 
   socket.on('ready-update', ({ ready, names: rNames }) => {
@@ -1807,12 +1879,15 @@ function initSocket() {
     scores = data.scores;
     if (data.chars) chars = data.chars;
     if (data.targetScore !== undefined) targetScore = data.targetScore;
+    isRevenge = !!data.isRevenge;
+    revengerIdx = data.revengerIdx ?? null;
     away = [false, false];
     aiControlled = [false, false];
     oppCardCount = 10;
     document.getElementById('myFaceOverlay').textContent = '';
     document.getElementById('oppFaceOverlay').textContent = '';
     document.getElementById('targetScoreLbl').textContent = formatTargetScore();
+    document.getElementById('revengeLbl').style.display = isRevenge ? '' : 'none';
     document.querySelectorAll('.vs-ai-hide').forEach(el => el.style.display = vsAI ? 'none' : '');
     showGame();
     renderGame();
@@ -2144,6 +2219,8 @@ function renderGame() {
   document.getElementById('oppAvatarName').textContent = oppName();
   document.getElementById('myAvatarCard').classList.toggle('my-turn', isMyTurn());
   document.getElementById('oppAvatarCard').classList.toggle('my-turn', !isMyTurn());
+  document.getElementById('myAvatarCard').classList.toggle('revenge-fire', isRevenge);
+  document.getElementById('oppAvatarCard').classList.toggle('revenge-fire', isRevenge);
   document.getElementById('myStatusPill').classList.toggle('show', away[myIdx] || aiControlled[myIdx]);
   document.getElementById('oppStatusPill').classList.toggle('show', away[1-myIdx] || aiControlled[1-myIdx]);
   document.getElementById('myStatusPill').classList.toggle('ai-mode', aiControlled[myIdx]);
@@ -2374,6 +2451,14 @@ function playAgain() {
   document.getElementById('rematchBtn').disabled = true;
 }
 
+function requestRevenge(ir) {
+  socket.emit('request-revenge', { isRevenge: ir });
+  const label = ir ? '🔥 리벤지' : '🔄 리매치';
+  document.getElementById('revengeStatus').textContent = `⏳ ${oppName()}의 ${label} 수락을 기다리는 중...`;
+  document.getElementById('revengeBtn').disabled = true;
+  document.getElementById('rematchBtn2').disabled = true;
+}
+
 // ===== Screen helpers =====
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
@@ -2396,6 +2481,10 @@ function showGame() {
   document.getElementById('resultOverlay').classList.remove('show');
   document.getElementById('discOverlay').classList.remove('show');
   document.getElementById('matchEndOverlay').classList.remove('show');
+  // Reset revenge overlay buttons for fresh state
+  document.getElementById('revengeBtn').disabled = false;
+  document.getElementById('rematchBtn2').disabled = false;
+  document.getElementById('revengeStatus').textContent = '';
 }
 
 // Check URL for room code (share link)
