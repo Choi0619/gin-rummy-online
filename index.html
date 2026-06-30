@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>진 러미 (Gin Rummy)</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: radial-gradient(ellipse at center, #1a5c2a 0%, #0a3015 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  padding-bottom: 20px;
+}
+
+/* ===== Header ===== */
+.header {
+  width: 100%;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0,0,0,0.4);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.title { font-size: 22px; font-weight: bold; letter-spacing: 1px; }
+.score-display { font-size: 16px; background: rgba(0,0,0,0.3); padding: 6px 14px; border-radius: 20px; }
+.btn-new { background: #2196f3; color: white; border: none; padding: 7px 16px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.15s; }
+.btn-new:hover { background: #1976d2; transform: scale(1.05); }
+
+/* ===== Game area ===== */
+.game-area {
+  width: 100%;
+  max-width: 960px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.zone-header {
+  font-size: 13px;
+  color: rgba(255,255,255,0.65);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== Cards ===== */
+.hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-height: 110px;
+  align-items: flex-end;
+}
+
+.card {
+  width: 68px;
+  height: 98px;
+  border-radius: 8px;
+  border: 2px solid #bbb;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 5px 6px;
+  cursor: default;
+  transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+  position: relative;
+  user-select: none;
+  flex-shrink: 0;
+}
+.card.clickable { cursor: pointer; }
+.card.clickable:hover { transform: translateY(-10px); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+.card.selected { transform: translateY(-16px) !important; box-shadow: 0 14px 30px rgba(255,215,0,0.7) !important; border-color: gold !important; border-width: 3px; }
+.card.in-meld { border-color: #00e676; border-width: 2.5px; }
+.card.in-meld.selected { border-color: gold; }
+.card.face-down {
+  background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #0d47a1 100%);
+  border-color: #42a5f5;
+  cursor: default;
+}
+.card.face-down::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.05) 4px, rgba(255,255,255,0.05) 5px);
+}
+
+.card-corner { font-size: 13px; font-weight: 700; line-height: 1.1; }
+.card-corner.bot { transform: rotate(180deg); align-self: flex-end; }
+.card-center { font-size: 26px; text-align: center; line-height: 1; }
+.red-suit { color: #c62828; }
+.black-suit { color: #1a1a1a; }
+
+/* Meld badge */
+.meld-dot {
+  position: absolute;
+  top: -5px; right: -5px;
+  width: 12px; height: 12px;
+  background: #00e676;
+  border-radius: 50%;
+  border: 1px solid white;
+}
+
+/* ===== Middle zone ===== */
+.middle-zone {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.pile-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.pile-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.pile-label { font-size: 11px; color: rgba(255,255,255,0.6); }
+
+.deck-pile {
+  width: 68px;
+  height: 98px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0d47a1, #1565c0);
+  border: 2px solid #42a5f5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  gap: 4px;
+  transition: transform 0.12s, box-shadow 0.12s;
+  font-size: 11px;
+  color: rgba(255,255,255,0.8);
+}
+.deck-pile:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+.deck-pile.disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+.deck-icon { font-size: 28px; }
+
+.discard-slot {
+  width: 68px;
+  height: 98px;
+  border-radius: 8px;
+  border: 2px dashed rgba(255,255,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.3);
+  font-size: 12px;
+}
+.discard-slot .card { margin: 0; }
+
+/* ===== Status panel ===== */
+.status-panel {
+  flex: 1;
+  background: rgba(0,0,0,0.35);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.status-msg {
+  font-size: 15px;
+  font-weight: 500;
+  min-height: 20px;
+}
+.deadwood-row {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.75);
+}
+.dw-badge {
+  background: rgba(0,0,0,0.3);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-weight: bold;
+}
+.dw-badge.good { color: #69f0ae; }
+.dw-badge.warn { color: #ffcc02; }
+.dw-badge.bad { color: #ff5252; }
+
+.action-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.action-btn {
+  padding: 8px 15px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.action-btn:hover:not(:disabled) { transform: scale(1.06); filter: brightness(1.1); }
+.action-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
+.btn-discard { background: #ef5350; color: white; }
+.btn-knock { background: #ff9800; color: white; }
+.btn-gin { background: #4caf50; color: white; }
+
+/* Hint text */
+.hint { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+/* ===== Overlay ===== */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+.overlay.show { display: flex; }
+
+.result-box {
+  background: linear-gradient(160deg, #1b4332, #0a3015);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 36px 40px;
+  text-align: center;
+  max-width: 500px;
+  width: 92%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+}
+.result-emoji { font-size: 52px; margin-bottom: 8px; }
+.result-title { font-size: 30px; font-weight: bold; margin-bottom: 12px; }
+.result-detail { font-size: 14px; color: rgba(255,255,255,0.8); line-height: 1.7; margin-bottom: 20px; }
+.result-detail strong { color: #69f0ae; }
+
+.meld-section { margin: 10px 0; text-align: left; }
+.meld-section-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 5px; }
+.meld-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 4px; }
+.mini-card {
+  background: white;
+  color: #111;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.mini-card.red { color: #c62828; }
+
+.score-result { margin: 14px 0; font-size: 15px; background: rgba(0,0,0,0.3); padding: 10px 16px; border-radius: 10px; }
+
+.btn-restart { background: #2196f3; color: white; border: none; padding: 12px 28px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.15s; }
+.btn-restart:hover { background: #1976d2; transform: scale(1.05); }
+
+/* ===== Animations ===== */
+@keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.card-new { animation: slideIn 0.25s ease-out; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.overlay.show { animation: fadeIn 0.2s ease-out; }
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .card { width: 54px; height: 78px; }
+  .card-center { font-size: 20px; }
+  .deck-pile { width: 54px; height: 78px; }
+  .discard-slot { width: 54px; height: 78px; }
+  .hand { gap: 5px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="title">🃏 진 러미</div>
+  <div class="score-display" id="scoreDisplay">나: 0 | AI: 0</div>
+  <button class="btn-new" onclick="newGame()">새 게임</button>
+</div>
+
+<div class="game-area">
+
+  <!-- AI zone -->
+  <div>
+    <div class="zone-header">🤖 AI 패 <span id="aiDeadwoodBadge" class="dw-badge" style="display:none"></span></div>
+    <div class="hand" id="aiHand"></div>
+  </div>
+
+  <!-- Middle zone -->
+  <div class="middle-zone">
+    <div class="pile-group">
+      <div class="pile-wrap">
+        <div class="deck-pile" id="deckPile" onclick="drawFromDeck()">
+          <div class="deck-icon">🂠</div>
+          <div id="deckCount">52장</div>
+        </div>
+        <div class="pile-label">덱</div>
+      </div>
+      <div class="pile-wrap">
+        <div class="discard-slot" id="discardSlot">비어있음</div>
+        <div class="pile-label">버린 패</div>
+      </div>
+    </div>
+
+    <div class="status-panel">
+      <div class="status-msg" id="statusMsg">게임 시작 중...</div>
+      <div class="deadwood-row">
+        <span>내 데드우드: <span class="dw-badge" id="playerDwBadge">-</span></span>
+      </div>
+      <div class="hint" id="hintText"></div>
+      <div class="action-row">
+        <button class="action-btn btn-discard" id="btnDiscard" onclick="discardSelected()" disabled>버리기</button>
+        <button class="action-btn btn-knock" id="btnKnock" onclick="doKnock()" disabled>🤜 녹 (Knock)</button>
+        <button class="action-btn btn-gin" id="btnGin" onclick="doGin()" disabled>✨ 진 (Gin)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player zone -->
+  <div>
+    <div class="zone-header">👤 내 패 <span style="font-size:11px;color:rgba(255,255,255,0.4)">(초록 테두리 = 멜드, 클릭하여 선택)</span></div>
+    <div class="hand" id="playerHand"></div>
+  </div>
+
+</div>
+
+<!-- Result overlay -->
+<div class="overlay" id="overlay">
+  <div class="result-box">
+    <div class="result-emoji" id="resultEmoji"></div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-detail" id="resultDetail"></div>
+    <button class="btn-restart" onclick="newGame()">다시 하기 🔄</button>
+  </div>
+</div>
+
+<script>
+// ===== Constants =====
+const SUITS = ['♠', '♥', '♦', '♣'];
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const RANK_VAL  = {A:1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,J:10,Q:10,K:10};
+const RANK_ORD  = {A:1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,J:11,Q:12,K:13};
+const IS_RED    = {'♥':true,'♦':true,'♠':false,'♣':false};
+
+// ===== State =====
+let G = {};
+let scores = { player: 0, ai: 0 };
+
+// ===== Deck =====
+function createDeck() {
+  let id = 0, deck = [];
+  for (const suit of SUITS)
+    for (const rank of RANKS)
+      deck.push({ id: id++, suit, rank, val: RANK_VAL[rank] });
+  return shuffle(deck);
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ===== Meld detection =====
+function findAllMelds(cards) {
+  const melds = [];
+
+  // Sets (same rank, 3-4 cards)
+  const byRank = {};
+  for (const c of cards) (byRank[c.rank] = byRank[c.rank] || []).push(c);
+  for (const g of Object.values(byRank)) {
+    if (g.length === 3) melds.push([...g]);
+    if (g.length >= 4) {
+      melds.push([...g]);
+      for (let i = 0; i < g.length; i++) melds.push(g.filter((_,j) => j !== i));
+    }
+  }
+
+  // Runs (same suit, consecutive ranks, 3+ cards)
+  const bySuit = {};
+  for (const c of cards) (bySuit[c.suit] = bySuit[c.suit] || []).push(c);
+  for (const g of Object.values(bySuit)) {
+    const sorted = [...g].sort((a,b) => RANK_ORD[a.rank] - RANK_ORD[b.rank]);
+    let i = 0;
+    while (i < sorted.length) {
+      let j = i + 1;
+      while (j < sorted.length && RANK_ORD[sorted[j].rank] === RANK_ORD[sorted[j-1].rank] + 1) j++;
+      const seq = sorted.slice(i, j);
+      if (seq.length >= 3) {
+        for (let len = 3; len <= seq.length; len++)
+          for (let s = 0; s <= seq.length - len; s++)
+            melds.push(seq.slice(s, s + len));
+      }
+      i = j;
+    }
+  }
+  return melds;
+}
+
+function deadwoodOf(cards, melds) {
+  const used = new Set(melds.flat().map(c => c.id));
+  return cards.filter(c => !used.has(c.id)).reduce((s, c) => s + c.val, 0);
+}
+
+function bestMelds(cards) {
+  const all = findAllMelds(cards);
+  let bestDW = cards.reduce((s,c) => s+c.val, 0);
+  let best = [];
+
+  function try_(idx, used, cur) {
+    const dw = deadwoodOf(cards, cur);
+    if (dw < bestDW) { bestDW = dw; best = cur.map(m => [...m]); }
+    for (let i = idx; i < all.length; i++) {
+      const m = all[i];
+      if (!m.some(c => used.has(c.id))) {
+        m.forEach(c => used.add(c.id));
+        try_(i+1, used, [...cur, m]);
+        m.forEach(c => used.delete(c.id));
+      }
+    }
+  }
+  try_(0, new Set(), []);
+  return { melds: best, dw: bestDW };
+}
+
+function canExtendMeld(card, meld) {
+  const isSet = meld.every(c => c.rank === meld[0].rank);
+  if (isSet) return card.rank === meld[0].rank && !meld.some(c => c.suit === card.suit) && meld.length < 4;
+  const orders = meld.map(c => RANK_ORD[c.rank]).sort((a,b) => a-b);
+  if (card.suit !== meld[0].suit) return false;
+  const o = RANK_ORD[card.rank];
+  return o === orders[0] - 1 || o === orders[orders.length-1] + 1;
+}
+
+function layoffDW(hand, enemyMelds, ownMelds) {
+  const ownUsed = new Set(ownMelds.flat().map(c => c.id));
+  let dw = [...hand].filter(c => !ownUsed.has(c.id));
+  for (const meld of enemyMelds) {
+    dw = dw.filter(card => {
+      if (canExtendMeld(card, meld)) { meld.push(card); return false; }
+      return true;
+    });
+  }
+  return dw.reduce((s,c) => s+c.val, 0);
+}
+
+// ===== Game init =====
+function newGame() {
+  const deck = createDeck();
+  G = {
+    deck,
+    playerHand: deck.splice(0, 10),
+    aiHand:     deck.splice(0, 10),
+    discardPile: [deck.splice(0,1)[0]],
+    turn: 'player',
+    phase: 'draw',
+    selected: null,
+    over: false,
+  };
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('aiDeadwoodBadge').style.display = 'none';
+  render();
+  setMsg('덱 또는 버린 패에서 한 장 가져오세요.', '패를 뽑아야 버릴 수 있습니다.');
+}
+
+// ===== Render =====
+function makeCard(card, opts = {}) {
+  const { faceDown=false, selected=false, inMeld=false, clickable=false, isNew=false } = opts;
+  const el = document.createElement('div');
+  el.className = 'card' + (faceDown?' face-down':'') + (selected?' selected':'') + (inMeld?' in-meld':'') + (clickable?' clickable':'') + (isNew?' card-new':'');
+  if (!faceDown) {
+    const cls = IS_RED[card.suit] ? 'red-suit' : 'black-suit';
+    el.innerHTML = `
+      <div class="card-corner ${cls}">${card.rank}<br>${card.suit}</div>
+      <div class="card-center ${cls}">${card.suit}</div>
+      <div class="card-corner bot ${cls}">${card.rank}<br>${card.suit}</div>
+    `;
+    if (inMeld) el.insertAdjacentHTML('beforeend', '<div class="meld-dot"></div>');
+  }
+  return el;
+}
+
+function render() {
+  // AI hand (face down)
+  const aiEl = document.getElementById('aiHand');
+  aiEl.innerHTML = '';
+  G.aiHand.forEach(() => aiEl.appendChild(makeCard(null, { faceDown: true })));
+
+  // Analyze player hand
+  const analysisHand = (G.phase === 'discard' && G.selected)
+    ? G.playerHand.filter(c => c.id !== G.selected.id)
+    : G.playerHand;
+  const { melds, dw } = bestMelds(analysisHand);
+  const meldIds = new Set(melds.flat().map(c => c.id));
+
+  // Sort: melds first, then by suit, then by rank
+  const sorted = [...G.playerHand].sort((a,b) => {
+    const am = meldIds.has(a.id) ? 0 : 1, bm = meldIds.has(b.id) ? 0 : 1;
+    if (am !== bm) return am - bm;
+    if (a.suit !== b.suit) return SUITS.indexOf(a.suit) - SUITS.indexOf(b.suit);
+    return RANK_ORD[a.rank] - RANK_ORD[b.rank];
+  });
+
+  const playerEl = document.getElementById('playerHand');
+  playerEl.innerHTML = '';
+  sorted.forEach(card => {
+    const sel = G.selected && G.selected.id === card.id;
+    const inM = meldIds.has(card.id);
+    const canClick = G.turn === 'player' && G.phase === 'discard';
+    const el = makeCard(card, { selected: sel, inMeld: inM, clickable: canClick });
+    if (canClick) el.onclick = () => toggleSelect(card);
+    playerEl.appendChild(el);
+  });
+
+  // Discard pile
+  const slot = document.getElementById('discardSlot');
+  slot.innerHTML = '';
+  if (G.discardPile.length > 0) {
+    const top = G.discardPile[G.discardPile.length - 1];
+    const canDraw = G.turn === 'player' && G.phase === 'draw';
+    const el = makeCard(top, { clickable: canDraw });
+    if (canDraw) el.onclick = drawFromDiscard;
+    slot.appendChild(el);
+  } else {
+    slot.textContent = '비어있음';
+  }
+
+  // Deck
+  document.getElementById('deckCount').textContent = G.deck.length + '장';
+  const deckEl = document.getElementById('deckPile');
+  if (G.turn !== 'player' || G.phase !== 'draw') deckEl.classList.add('disabled');
+  else deckEl.classList.remove('disabled');
+
+  // Score
+  document.getElementById('scoreDisplay').textContent = `나: ${scores.player} | AI: ${scores.ai}`;
+
+  // Deadwood badge
+  const dwEl = document.getElementById('playerDwBadge');
+  dwEl.textContent = dw + '점';
+  dwEl.className = 'dw-badge ' + (dw === 0 ? 'good' : dw <= 10 ? 'warn' : 'bad');
+
+  // Buttons
+  const canAct = G.turn === 'player' && G.phase === 'discard';
+  document.getElementById('btnDiscard').disabled = !(canAct && G.selected);
+  document.getElementById('btnKnock').disabled   = !(canAct && G.selected && dw <= 10 && dw > 0);
+  document.getElementById('btnGin').disabled     = !(canAct && G.selected && dw === 0);
+}
+
+function setMsg(msg, hint = '') {
+  document.getElementById('statusMsg').textContent = msg;
+  document.getElementById('hintText').textContent = hint;
+}
+
+function toggleSelect(card) {
+  if (G.turn !== 'player' || G.phase !== 'discard') return;
+  G.selected = (G.selected && G.selected.id === card.id) ? null : card;
+  render();
+}
+
+// ===== Player actions =====
+function drawFromDeck() {
+  if (G.turn !== 'player' || G.phase !== 'draw') return;
+  if (G.deck.length === 0) { deckEmpty(); return; }
+  const card = G.deck.pop();
+  G.playerHand.push(card);
+  G.phase = 'discard';
+  render();
+  setMsg(`🃏 ${card.rank}${card.suit} 뽑았습니다. 버릴 카드를 선택하고 버리거나 녹/진 하세요.`);
+}
+
+function drawFromDiscard() {
+  if (G.turn !== 'player' || G.phase !== 'draw') return;
+  if (G.discardPile.length === 0) return;
+  const card = G.discardPile.pop();
+  G.playerHand.push(card);
+  G.phase = 'discard';
+  render();
+  setMsg(`♻️ ${card.rank}${card.suit} 가져왔습니다. 버릴 카드를 선택하세요.`);
+}
+
+function discardSelected() {
+  if (!G.selected) return;
+  doDiscard();
+  endPlayerTurn();
+}
+
+function doDiscard() {
+  const idx = G.playerHand.findIndex(c => c.id === G.selected.id);
+  G.playerHand.splice(idx, 1);
+  G.discardPile.push(G.selected);
+  G.selected = null;
+}
+
+function doKnock() {
+  if (!G.selected) return;
+  const testHand = G.playerHand.filter(c => c.id !== G.selected.id);
+  const { dw } = bestMelds(testHand);
+  if (dw > 10) { setMsg('❌ 데드우드가 10 이하여야 녹 가능합니다.'); return; }
+  doDiscard();
+  resolveKnock(false);
+}
+
+function doGin() {
+  if (!G.selected) return;
+  const testHand = G.playerHand.filter(c => c.id !== G.selected.id);
+  const { dw } = bestMelds(testHand);
+  if (dw > 0) { setMsg('❌ 모든 카드가 멜드여야 진 가능합니다.'); return; }
+  doDiscard();
+  resolveKnock(true);
+}
+
+function endPlayerTurn() {
+  G.turn = 'ai';
+  G.phase = 'draw';
+  render();
+  setMsg('🤖 AI가 생각 중입니다...');
+  setTimeout(aiTurn, 1200);
+}
+
+// ===== AI turn =====
+function aiTurn() {
+  if (G.over) return;
+
+  // Draw
+  const topDiscard = G.discardPile[G.discardPile.length - 1];
+  let drawDiscard = false;
+  if (topDiscard) {
+    const curDW = bestMelds(G.aiHand).dw;
+    const testDW = bestMelds([...G.aiHand, topDiscard]).dw;
+    drawDiscard = testDW < curDW - 3;
+  }
+
+  if (drawDiscard) {
+    G.aiHand.push(G.discardPile.pop());
+  } else {
+    if (G.deck.length === 0) { deckEmpty(); return; }
+    G.aiHand.push(G.deck.pop());
+  }
+
+  // Find best discard
+  const { melds, dw: aiDW } = bestMelds(G.aiHand);
+  const usedIds = new Set(melds.flat().map(c => c.id));
+  const deadwoodCards = G.aiHand.filter(c => !usedIds.has(c.id));
+
+  let discardCard;
+  if (deadwoodCards.length > 0) {
+    discardCard = deadwoodCards.reduce((mx, c) => c.val > mx.val ? c : mx);
+  } else {
+    // All in melds — discard least-useful (lowest value not in run extension)
+    discardCard = G.aiHand.reduce((mn, c) => c.val < mn.val ? c : mn);
+  }
+
+  G.aiHand.splice(G.aiHand.findIndex(c => c.id === discardCard.id), 1);
+  G.discardPile.push(discardCard);
+
+  // Check knock/gin
+  const { dw: afterDW } = bestMelds(G.aiHand);
+  if (afterDW === 0) {
+    setTimeout(() => resolveAiKnock(true), 400);
+    return;
+  }
+  if (afterDW <= 10) {
+    setTimeout(() => resolveAiKnock(false), 400);
+    return;
+  }
+
+  // Player's turn
+  G.turn = 'player';
+  G.phase = 'draw';
+  render();
+  setMsg('덱 또는 버린 패에서 한 장 가져오세요.', `AI가 ${discardCard.rank}${discardCard.suit}을 버렸습니다.`);
+}
+
+// ===== Resolve =====
+function resolveKnock(isGin) {
+  G.over = true;
+  const { melds: pMelds, dw: pDW } = bestMelds(G.playerHand);
+  const { melds: aMelds, dw: rawADW } = bestMelds(G.aiHand);
+
+  let aiDW = rawADW;
+  if (!isGin) aiDW = layoffDW(G.aiHand, pMelds.map(m => [...m]), aMelds);
+
+  let winner, pts, titleEmoji, titleTxt, detailLines;
+
+  if (isGin) {
+    winner = 'player';
+    pts = 25 + rawADW;
+    titleEmoji = '✨';
+    titleTxt = '진! 완벽한 승리!';
+    detailLines = [`<strong>진 보너스 25점</strong> + AI 데드우드 ${rawADW}점 = <strong>+${pts}점</strong>`];
+  } else if (pDW < aiDW) {
+    winner = 'player';
+    pts = aiDW - pDW;
+    titleEmoji = '🎉';
+    titleTxt = '녹 성공! 승리!';
+    detailLines = [`AI 데드우드 ${aiDW}점 − 내 데드우드 ${pDW}점 = <strong>+${pts}점</strong>`];
+  } else if (aiDW < pDW) {
+    winner = 'ai';
+    pts = pDW - aiDW + 25;
+    titleEmoji = '😱';
+    titleTxt = '언더컷! 패배...';
+    detailLines = [`AI가 역전! 역전 보너스 25점 포함 <strong>AI +${pts}점</strong>`];
+  } else {
+    winner = 'tie';
+    pts = 0;
+    titleEmoji = '🤝';
+    titleTxt = '무승부!';
+    detailLines = ['데드우드가 동점입니다. 점수 변동 없음.'];
+  }
+
+  if (winner === 'player') scores.player += pts;
+  else if (winner === 'ai') scores.ai += pts;
+
+  showResult(titleEmoji, titleTxt, detailLines, pMelds, aMelds, pDW, aiDW);
+}
+
+function resolveAiKnock(isGin) {
+  G.over = true;
+  const { melds: aMelds, dw: aDW } = bestMelds(G.aiHand);
+  const { melds: pMelds, dw: rawPDW } = bestMelds(G.playerHand);
+
+  let pDW = rawPDW;
+  if (!isGin) pDW = layoffDW(G.playerHand, aMelds.map(m => [...m]), pMelds);
+
+  let winner, pts, titleEmoji, titleTxt, detailLines;
+
+  if (isGin) {
+    winner = 'ai';
+    pts = 25 + rawPDW;
+    titleEmoji = '💀';
+    titleTxt = 'AI 진! 패배...';
+    detailLines = [`AI 진 보너스 25점 + 내 데드우드 ${rawPDW}점 = <strong>AI +${pts}점</strong>`];
+  } else if (pDW <= aDW) {
+    winner = 'player';
+    pts = aDW - pDW + 25;
+    titleEmoji = '🔄';
+    titleTxt = '언더컷! 역전 승리!';
+    detailLines = [`내가 역전! 역전 보너스 25점 포함 <strong>+${pts}점</strong>`];
+  } else {
+    winner = 'ai';
+    pts = pDW - aDW;
+    titleEmoji = '😢';
+    titleTxt = 'AI 녹 성공. 패배...';
+    detailLines = [`내 데드우드 ${pDW}점 − AI ${aDW}점 = <strong>AI +${pts}점</strong>`];
+  }
+
+  if (winner === 'player') scores.player += pts;
+  else if (winner === 'ai') scores.ai += pts;
+
+  showResult(titleEmoji, titleTxt, detailLines, pMelds, aMelds, pDW, aDW);
+}
+
+function deckEmpty() {
+  setMsg('⚠️ 덱이 비었습니다! 무승부로 라운드 재시작...');
+  setTimeout(newGame, 2500);
+}
+
+// ===== Show result =====
+function showResult(emoji, title, detailLines, pMelds, aMelds, pDW, aDW) {
+  render(); // Show final state
+
+  function meldHtml(melds) {
+    if (!melds.length) return '<div style="color:rgba(255,255,255,0.4);font-size:13px">없음</div>';
+    return melds.map(m =>
+      `<div class="meld-row">${m.map(c => `<span class="mini-card ${IS_RED[c.suit]?'red':''}">${c.rank}${c.suit}</span>`).join('')}</div>`
+    ).join('');
+  }
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultDetail').innerHTML = `
+    <p>${detailLines.join('<br>')}</p>
+    <div class="meld-section">
+      <div class="meld-section-label">내 멜드 (데드우드 ${pDW}점)</div>
+      ${meldHtml(pMelds)}
+    </div>
+    <div class="meld-section">
+      <div class="meld-section-label">AI 멜드 (데드우드 ${aDW}점)</div>
+      ${meldHtml(aMelds)}
+    </div>
+    <div class="score-result">총 점수 → 나: <strong>${scores.player}점</strong> | AI: <strong>${scores.ai}점</strong></div>
+  `;
+
+  document.getElementById('overlay').classList.add('show');
+}
+
+// ===== Start =====
+newGame();
+</script>
+</body>
+</html>
