@@ -343,7 +343,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
   background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.05) 4px, rgba(255,255,255,0.05) 5px);
 }
-.card-corner { font-size: 12px; font-weight: 700; line-height: 1; }
+.card-corner { font-size: 12px; font-weight: 700; line-height: 1; white-space: nowrap; }
 .card-corner.bot { transform: rotate(180deg); align-self: flex-end; }
 .card-center { font-size: 24px; text-align: center; }
 .red-suit { color: #c62828; } .black-suit { color: #111; }
@@ -2013,9 +2013,9 @@ function makeCard(card, opts = {}) {
     const cls = IS_RED[card.suit] ? 'red-suit' : 'black-suit';
     el.innerHTML = `
       <div class="card-inner">
-        <div class="card-corner ${cls}">${card.rank}<br>${sym}</div>
+        <div class="card-corner ${cls}">${card.rank}${sym}</div>
         <div class="card-center ${cls}">${sym}</div>
-        <div class="card-corner bot ${cls}">${card.rank}<br>${sym}</div>
+        <div class="card-corner bot ${cls}">${card.rank}${sym}</div>
       </div>
     `;
     if (inMeld) el.insertAdjacentHTML('beforeend', '<div class="meld-dot"></div>');
