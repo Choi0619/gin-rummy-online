@@ -22,20 +22,65 @@ body {
 .screen { display: none; width: 100%; }
 .screen.active { display: flex; flex-direction: column; align-items: center; }
 
-/* ===== Lobby ===== */
+/* ===== Lobby (casino felt table look) ===== */
 #lobbyScreen {
+  position: relative;
   min-height: 100vh;
   justify-content: center;
   padding: 40px 20px;
-  gap: 32px;
+  gap: 28px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 38%, #1f7a3d 0%, #11572a 42%, #0a3a1c 72%, #051f10 100%);
 }
-.logo { font-size: 48px; margin-bottom: 4px; }
-.logo-title { font-size: 32px; font-weight: bold; letter-spacing: 2px; }
-.logo-sub { font-size: 14px; color: rgba(255,255,255,0.5); }
+#lobbyScreen::before {
+  /* felt texture */
+  content: '';
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 3px);
+  pointer-events: none;
+}
+#lobbyScreen::after {
+  /* ornate gold frame */
+  content: '';
+  position: absolute; inset: 16px;
+  border: 1.5px solid rgba(255,215,120,0.4);
+  border-radius: 22px;
+  box-shadow:
+    inset 0 0 0 5px rgba(255,215,120,0.06),
+    inset 0 0 70px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+.lobby-watermark {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  font-size: 30vw; color: rgba(255,255,255,0.025); pointer-events: none; line-height: 1;
+  user-select: none;
+}
+.lobby-corner-deco {
+  position: absolute; font-size: 36px; opacity: 0.45; pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,0.55));
+}
+.lobby-corner-deco.tl { top: 30px; left: 34px; transform: rotate(-14deg); }
+.lobby-corner-deco.tr { top: 30px; right: 34px; transform: rotate(14deg) scaleX(-1); }
+.lobby-corner-deco.bl { bottom: 30px; left: 34px; transform: rotate(14deg); }
+.lobby-corner-deco.br { bottom: 30px; right: 34px; transform: rotate(-14deg) scaleX(-1); }
+@media (max-width: 600px) { .lobby-corner-deco { font-size: 24px; } }
+
+.logo { font-size: 48px; margin-bottom: 4px; position: relative; z-index: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5)); }
+.logo-title { font-size: 32px; font-weight: bold; letter-spacing: 2px; position: relative; z-index: 1; text-shadow: 0 3px 12px rgba(0,0,0,0.5); }
+.logo-sub { font-size: 14px; color: rgba(255,255,255,0.55); position: relative; z-index: 1; }
+.btn-howto {
+  position: relative; z-index: 1;
+  background: rgba(255,215,120,0.12); border: 1px solid rgba(255,215,120,0.4); color: #ffd76a;
+  padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.15s;
+}
+.btn-howto:hover { background: rgba(255,215,120,0.22); transform: translateY(-1px); }
 
 .lobby-card {
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.1);
+  position: relative; z-index: 1;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,215,120,0.18);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.45);
   border-radius: 20px;
   padding: 32px;
   width: 100%;
@@ -298,6 +343,41 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .overlay.show { display: flex; animation: fadeIn 0.2s ease-out; }
 @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
 
+/* ===== How-to-play modal ===== */
+.howto-box {
+  position: relative;
+  background: linear-gradient(160deg, #173d24, #0a2414);
+  border: 1px solid rgba(255,215,120,0.3);
+  border-radius: 22px; padding: 30px 30px 26px;
+  max-width: 560px; width: 92%; max-height: 84vh;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  animation: bigPopIn 0.4s cubic-bezier(.34,1.56,.64,1);
+  display: flex; flex-direction: column;
+}
+.howto-title { font-size: 22px; font-weight: bold; margin-bottom: 16px; text-align: center; color: #ffd76a; }
+.howto-close {
+  position: absolute; top: 14px; right: 16px; background: rgba(255,255,255,0.1); border: none;
+  color: white; width: 28px; height: 28px; border-radius: 50%; font-size: 14px; cursor: pointer; transition: all 0.15s;
+}
+.howto-close:hover { background: rgba(255,255,255,0.22); transform: rotate(90deg); }
+.howto-scroll { overflow-y: auto; padding-right: 6px; }
+.howto-scroll::-webkit-scrollbar { width: 6px; }
+.howto-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+.howto-section { margin-bottom: 18px; }
+.howto-section h3 { font-size: 15px; color: #ffd76a; margin-bottom: 7px; display: flex; align-items: center; gap: 7px; }
+.howto-section p, .howto-section li { font-size: 13px; line-height: 1.65; color: rgba(255,255,255,0.85); }
+.howto-section ul { padding-left: 18px; margin-top: 4px; }
+.howto-example { display: flex; gap: 5px; margin: 8px 0; flex-wrap: wrap; }
+.howto-score-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
+.howto-score-table th, .howto-score-table td { padding: 6px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.howto-score-table th { color: rgba(255,255,255,0.5); font-weight: 600; font-size: 11px; }
+.howto-badge { display: inline-block; padding: 1px 8px; border-radius: 8px; font-size: 11px; font-weight: bold; }
+.howto-badge.knock { background: rgba(255,152,0,0.2); color: #ffb74d; }
+.howto-badge.gin { background: rgba(76,175,80,0.2); color: #81c784; }
+.howto-badge.biggin { background: rgba(171,71,188,0.25); color: #ce93d8; }
+.howto-badge.undercut { background: rgba(33,150,243,0.2); color: #64b5f6; }
+.howto-badge.surrender { background: rgba(239,83,80,0.2); color: #ef9a9a; }
+
 .result-box {
   background: linear-gradient(160deg, #1b4332, #0a3015);
   border: 1px solid rgba(255,255,255,0.12);
@@ -420,6 +500,22 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   100% { transform: scale(1) rotate(0deg); }
 }
 
+/* Pile glow when a card is drawn from it (deck or discard) */
+.deck-pile.pile-flash, .discard-slot.pile-flash {
+  animation: pileFlash 0.65s ease-out;
+}
+@keyframes pileFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(105,240,174,0.9); }
+  35%  { box-shadow: 0 0 0 9px rgba(105,240,174,0.25); }
+  100% { box-shadow: 0 0 0 14px rgba(105,240,174,0); }
+}
+
+/* Flying card ghost: travels from the source pile to the hand */
+.fly-ghost {
+  position: fixed; z-index: 260; pointer-events: none; border-radius: 8px;
+  transition: transform 0.42s cubic-bezier(.22,.61,.36,1), opacity 0.42s ease 0.2s;
+}
+
 /* ===== Player avatar bar ===== */
 .player-bar { display: flex; align-items: center; justify-content: center; gap: 18px; padding: 10px 16px; }
 .avatar-card {
@@ -440,6 +536,11 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   padding: 1px 7px; border-radius: 8px; margin-top: 2px; width: fit-content; white-space: nowrap;
 }
 .status-pill.show { display: block; }
+.status-pill.ai-mode {
+  background: rgba(124,77,255,0.28); color: #b39dff;
+  animation: aiPillPulse 1.4s ease-in-out infinite;
+}
+@keyframes aiPillPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
 .vs-label { font-size: 14px; color: rgba(255,255,255,0.35); font-weight: bold; }
 
 /* ===== Utility action row ===== */
@@ -465,9 +566,16 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
 <!-- ===== LOBBY ===== -->
 <div id="lobbyScreen" class="screen active">
+  <div class="lobby-watermark">♠</div>
+  <div class="lobby-corner-deco tl">🂠</div>
+  <div class="lobby-corner-deco tr">🂡</div>
+  <div class="lobby-corner-deco bl">🪙</div>
+  <div class="lobby-corner-deco br">🪙</div>
+
   <div class="logo">🃏</div>
   <div class="logo-title">진 러미 온라인</div>
   <div class="logo-sub">친구와 함께 플레이</div>
+  <button class="btn-howto" onclick="showHowTo()">📖 게임 방법 보기</button>
 
   <div class="lobby-card">
     <h2>내 이름</h2>
@@ -530,6 +638,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
         <span class="leader-crown" id="oppCrown" style="display:none">👑</span>
         <span class="score-num" id="oppScoreNum">0</span>
         <span class="score-label" id="oppScoreLabel">상대</span>
+        <span class="streak-badge" id="oppStreakBadge">🔥 <span id="oppStreakNum">0</span>연승</span>
       </div>
     </div>
   </div>
@@ -656,6 +765,74 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   </div>
 </div>
 
+<!-- ===== HOW TO PLAY MODAL ===== -->
+<div class="overlay" id="howToOverlay">
+  <div class="howto-box">
+    <button class="howto-close" onclick="hideHowTo()">✕</button>
+    <div class="howto-title">🃏 진 러미 플레이 방법</div>
+    <div class="howto-scroll">
+
+      <div class="howto-section">
+        <h3>🎯 목표</h3>
+        <p>손에 든 카드를 <strong>멜드(meld)</strong>로 정리해서 <strong>데드우드(meld에 속하지 않은 카드 점수 합)</strong>를 최대한 줄이는 게임이에요. A=1점, 2~10은 숫자 그대로, J·Q·K는 10점입니다.</p>
+      </div>
+
+      <div class="howto-section">
+        <h3>🧩 멜드 종류</h3>
+        <p><strong>세트(Set)</strong> — 같은 숫자 3~4장, 모양은 모두 달라야 함</p>
+        <div class="howto-example">
+          <span class="mini-card">7♠</span><span class="mini-card red">7♥</span><span class="mini-card">7♣</span>
+        </div>
+        <p><strong>런(Run)</strong> — 같은 모양 3장 이상, 숫자가 연속이어야 함</p>
+        <div class="howto-example">
+          <span class="mini-card">4♠</span><span class="mini-card">5♠</span><span class="mini-card">6♠</span>
+        </div>
+      </div>
+
+      <div class="howto-section">
+        <h3>🔄 턴 진행</h3>
+        <ul>
+          <li>덱 🂠 또는 버린 패 ♻️ 중 한 곳에서 카드 1장을 가져옵니다</li>
+          <li>손에서 카드 1장을 선택해 버립니다 (멜드는 초록 테두리로 자동 표시돼요)</li>
+          <li>조건이 맞으면 버리는 대신 녹/진/빅진을 선언할 수 있습니다</li>
+        </ul>
+      </div>
+
+      <div class="howto-section">
+        <h3>🏆 라운드를 끝내는 방법</h3>
+        <p><span class="howto-badge knock">🤜 녹 (Knock)</span> 데드우드 10점 이하일 때 선언. 상대가 내 멜드에 카드를 얹는 <strong>레이오프</strong> 후 점수 비교</p>
+        <p><span class="howto-badge gin">✨ 진 (Gin)</span> 데드우드 0점(10장 전부 멜드)일 때 선언. 레이오프 없이 25점 + 상대 데드우드 획득</p>
+        <p><span class="howto-badge biggin">💎 빅진 (Big Gin)</span> 카드를 뽑은 11장 전부가 멜드일 때 즉시 선언 (버릴 필요 없음!). 31점 + 상대 데드우드 획득</p>
+        <p><span class="howto-badge undercut">🔄 언더컷</span> 녹 선언자보다 상대 데드우드가 같거나 낮으면 상대가 역전! +25점 보너스</p>
+        <p><span class="howto-badge surrender">🏳️ 항복</span> 상대가 수락하면 그 라운드는 상대 승리(+25점)로 즉시 종료</p>
+      </div>
+
+      <div class="howto-section">
+        <h3>🧮 점수 요약</h3>
+        <table class="howto-score-table">
+          <tr><th>상황</th><th>점수</th></tr>
+          <tr><td>진 성공</td><td>25 + 상대 데드우드</td></tr>
+          <tr><td>빅진 성공</td><td>31 + 상대 데드우드</td></tr>
+          <tr><td>녹 성공</td><td>(상대 데드우드 − 내 데드우드)</td></tr>
+          <tr><td>언더컷 당함</td><td>(내 데드우드 − 상대 데드우드) + 25</td></tr>
+          <tr><td>항복 수락됨</td><td>고정 25점</td></tr>
+        </table>
+      </div>
+
+      <div class="howto-section">
+        <h3>👫 같이 할 때 편의 기능</h3>
+        <ul>
+          <li><strong>⏸ 자리비움</strong> — 잠깐 자리 비울 때 켜면 AI가 대신 플레이 (복귀하면 자동 해제)</li>
+          <li><strong>🛑 게임 종료 요청</strong> — 상대 동의 시 현재 점수로 매치 종료</li>
+          <li><strong>🚪 나가기</strong> — 상대에게 퇴장 알림 후 즉시 방 종료</li>
+        </ul>
+      </div>
+
+    </div>
+    <button class="btn btn-primary" style="margin-top:14px" onclick="hideHowTo()">확인했어요!</button>
+  </div>
+</div>
+
 <!-- ===== TOAST BANNER (요청/대기 상태) ===== -->
 <div class="toast-banner" id="toastBanner"></div>
 
@@ -693,7 +870,7 @@ let lastDrawnId = null;  // id of the card just drawn (for highlight)
 let vsAI = false;
 let aiControlled = [false, false];
 let lastDiscardTopId = null;
-let winStreak = 0;
+let streaks = [0, 0]; // win streaks indexed by absolute player index (0/1), synced via round-end data
 
 function renderScoreBox() {
   const myScore = scores[myIdx], oppScore = scores[1-myIdx];
@@ -707,9 +884,11 @@ function renderScoreBox() {
   document.getElementById('myCrown').style.display = myLead ? '' : 'none';
   document.getElementById('oppCrown').style.display = oppLead ? '' : 'none';
 
-  const streakEl = document.getElementById('streakBadge');
-  streakEl.classList.toggle('show', winStreak >= 2);
-  document.getElementById('streakNum').textContent = winStreak;
+  const myStreak = streaks[myIdx] || 0, oppStreak = streaks[1-myIdx] || 0;
+  document.getElementById('streakBadge').classList.toggle('show', myStreak >= 2);
+  document.getElementById('streakNum').textContent = myStreak;
+  document.getElementById('oppStreakBadge').classList.toggle('show', oppStreak >= 2);
+  document.getElementById('oppStreakNum').textContent = oppStreak;
 }
 
 // ===== Toast banner =====
@@ -885,9 +1064,28 @@ function initSocket() {
     renderGame();
   });
 
-  socket.on('ai-takeover-update', ({ idx, enabled }) => {
+  socket.on('ai-takeover-update', ({ idx, enabled, auto }) => {
     aiControlled[idx] = enabled;
     renderGame();
+    if (auto && enabled) {
+      if (idx === myIdx) {
+        showToast('🤖 45초 동안 움직임이 없어 AI가 대신 플레이를 시작했습니다. 카드를 클릭하면 바로 복귀돼요.', 'incoming');
+        setTimeout(() => { if (aiControlled[myIdx]) hideToast(); }, 4000);
+      } else {
+        showToast(`🤖 ${oppName()} 님이 45초 무응답으로 AI 대리 플레이로 전환됐습니다.`, 'waiting');
+        setTimeout(hideToast, 3500);
+      }
+    } else if (!enabled) {
+      hideToast();
+    }
+  });
+
+  socket.on('turn-timeout-warning', () => {
+    showToast('⏰ <strong>5초 후</strong> 자동으로 AI가 대신 플레이합니다! 지금 카드를 클릭하면 취소돼요.', 'alert');
+  });
+
+  socket.on('turn-timer-reset', () => {
+    hideToast();
   });
 
   socket.on('sync-state', data => {
@@ -984,21 +1182,26 @@ function initSocket() {
   });
 
   socket.on('you-drew', ({ card, deckCount: dc, newDiscardTop }) => {
+    const from = newDiscardTop !== undefined ? 'discard' : 'deck';
+    flashPile(from);
+    flyCardGhost(from, 'myHand', card);
     myHand.push(card);
     lastDrawnId = card.id;
     deckCount = dc;
     if (newDiscardTop !== undefined) discardTop = newDiscardTop;
     currentPhase = 'discard';
     renderGame();
-    setStatus(`✨ ${card.rank}${SUITS_SYM[card.suit]} 뽑음! 버릴 카드를 선택하세요.`, '노란 테두리 = 방금 뽑은 카드 · 초록 테두리 = 멜드');
+    setStatus(`✨ ${from === 'deck' ? '덱' : '버린 패'}에서 ${card.rank}${SUITS_SYM[card.suit]} 뽑음! 버릴 카드를 선택하세요.`, '노란 테두리 = 방금 뽑은 카드 · 초록 테두리 = 멜드');
   });
 
   socket.on('opp-drew', ({ from, deckCount: dc, newDiscardTop }) => {
+    flashPile(from);
+    flyCardGhost(from, 'oppHand', null);
     oppCardCount++;
     deckCount = dc;
     if (newDiscardTop !== undefined) discardTop = newDiscardTop;
     renderGame();
-    setStatus(`${oppName()} 이(가) ${from === 'deck' ? '덱' : '버린 패'}에서 뽑았습니다...`);
+    setStatus(`${oppName()} 이(가) ${from === 'deck' ? '🂠 덱' : '♻️ 버린 패'}에서 뽑았습니다...`);
   });
 
   socket.on('card-discarded', ({ card, byIdx, nextTurn, deckCount: dc }) => {
@@ -1155,6 +1358,40 @@ function makeCard(card, opts = {}) {
   return el;
 }
 
+// ===== Draw effects: glow the source pile + fly a card ghost to the hand =====
+function flashPile(from) {
+  const el = document.getElementById(from === 'deck' ? 'deckPile' : 'discardSlot');
+  if (!el) return;
+  el.classList.remove('pile-flash'); void el.offsetWidth; el.classList.add('pile-flash');
+  setTimeout(() => el.classList.remove('pile-flash'), 700);
+}
+
+function flyCardGhost(from, toContainerId, card) {
+  const srcEl = document.getElementById(from === 'deck' ? 'deckPile' : 'discardSlot');
+  const toEl = document.getElementById(toContainerId);
+  if (!srcEl || !toEl) return;
+  const srcRect = srcEl.getBoundingClientRect();
+  const toRect = toEl.getBoundingClientRect();
+
+  const ghost = card ? makeCard(card, {}) : makeCard(null, { faceDown: true });
+  ghost.classList.add('fly-ghost');
+  ghost.style.left = srcRect.left + 'px';
+  ghost.style.top = srcRect.top + 'px';
+  ghost.style.width = srcRect.width + 'px';
+  ghost.style.height = srcRect.height + 'px';
+  ghost.style.opacity = '1';
+  document.body.appendChild(ghost);
+
+  const targetX = toRect.left + toRect.width * 0.5 - srcRect.left - srcRect.width / 2;
+  const targetY = toRect.top + toRect.height * 0.5 - srcRect.top - srcRect.height / 2;
+
+  requestAnimationFrame(() => {
+    ghost.style.transform = `translate(${targetX}px, ${targetY}px) scale(0.85) rotate(8deg)`;
+    ghost.style.opacity = '0';
+  });
+  setTimeout(() => ghost.remove(), 450);
+}
+
 function renderGame() {
   // Opponent hand (face down)
   const oppEl = document.getElementById('oppHand');
@@ -1169,12 +1406,16 @@ function renderGame() {
   const { melds, dw } = bestMelds(analysisHand);
   const meldIds = new Set(melds.flat().map(c => c.id));
 
+  // Map each card id -> which meld group it belongs to (for grouping, not just suit/rank)
+  const cardGroupIdx = new Map();
+  melds.forEach((m, gi) => m.forEach(c => cardGroupIdx.set(c.id, gi)));
+
   // Sort by mode
   const sorted = [...myHand].sort((a,b) => {
     if (sortMode === 'meld') {
-      const am = meldIds.has(a.id)?0:1, bm = meldIds.has(b.id)?0:1;
-      if (am !== bm) return am - bm;
-      if (a.suit !== b.suit) return SUITS_ORDER.indexOf(a.suit) - SUITS_ORDER.indexOf(b.suit);
+      const ag = cardGroupIdx.has(a.id) ? cardGroupIdx.get(a.id) : 999;
+      const bg = cardGroupIdx.has(b.id) ? cardGroupIdx.get(b.id) : 999;
+      if (ag !== bg) return ag - bg;
       return RANK_ORD[a.rank] - RANK_ORD[b.rank];
     } else if (sortMode === 'rank') {
       if (RANK_ORD[a.rank] !== RANK_ORD[b.rank]) return RANK_ORD[a.rank] - RANK_ORD[b.rank];
@@ -1233,8 +1474,10 @@ function renderGame() {
   document.getElementById('oppAvatarName').textContent = oppName();
   document.getElementById('myAvatarCard').classList.toggle('my-turn', isMyTurn());
   document.getElementById('oppAvatarCard').classList.toggle('my-turn', !isMyTurn());
-  document.getElementById('myStatusPill').classList.toggle('show', away[myIdx]);
-  document.getElementById('oppStatusPill').classList.toggle('show', away[1-myIdx]);
+  document.getElementById('myStatusPill').classList.toggle('show', away[myIdx] || aiControlled[myIdx]);
+  document.getElementById('oppStatusPill').classList.toggle('show', away[1-myIdx] || aiControlled[1-myIdx]);
+  document.getElementById('myStatusPill').classList.toggle('ai-mode', aiControlled[myIdx]);
+  document.getElementById('oppStatusPill').classList.toggle('ai-mode', aiControlled[1-myIdx]);
   document.getElementById('myStatusPill').textContent = aiControlled[myIdx] ? '🤖 AI 대리 플레이중' : '⏸ 자리비움';
   document.getElementById('oppStatusPill').textContent = aiControlled[1-myIdx] ? '🤖 AI 대리 플레이중' : '⏸ 자리비움';
   document.getElementById('awayBtn').classList.toggle('away-on', away[myIdx]);
@@ -1356,8 +1599,12 @@ function showResult(data) {
   const { resultType, winnerIdx, pts, knockerIdx, hands, melds, dw, rawDw, layoff, scores: sc, names: ns } = data;
   scores = sc;
 
-  if (winnerIdx === myIdx) winStreak++;
-  else winStreak = 0;
+  if (winnerIdx === -1) {
+    streaks = [0, 0];
+  } else {
+    streaks[winnerIdx] = (streaks[winnerIdx] || 0) + 1;
+    streaks[1 - winnerIdx] = 0;
+  }
 
   const myMelds = melds[myIdx], oppMelds = melds[1-myIdx];
   const myDW = dw[myIdx], oppDW = dw[1-myIdx];
@@ -1388,7 +1635,9 @@ function showResult(data) {
 
   document.getElementById('resEmoji').textContent = emojis[resultType] || (iWon ? '🎉' : '😢');
   document.getElementById('resTitle').textContent = titles[resultType] || (iWon ? '승리!' : '패배...');
-  document.getElementById('resPts').textContent = pts > 0 ? `${iWon ? '+' : 'AI +'}`+ pts + '점' : '점수 변동 없음';
+  document.getElementById('resPts').textContent = pts > 0
+    ? (iWon ? `+${pts}점` : `${oppName()} +${pts}점`)
+    : '점수 변동 없음';
 
   // Big win/lose entrance effect
   const isTie = winnerIdx === -1;
@@ -1451,6 +1700,14 @@ function playAgain() {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+}
+
+// ===== How-to-play modal =====
+function showHowTo() {
+  document.getElementById('howToOverlay').classList.add('show');
+}
+function hideHowTo() {
+  document.getElementById('howToOverlay').classList.remove('show');
 }
 
 function showGame() {

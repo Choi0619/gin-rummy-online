@@ -203,6 +203,9 @@ io.on('connection', socket => {
         room.aiControlled[idx] = false;
         io.to(room.code).emit('ai-takeover-update', { idx, enabled: false });
       }
+      if (room.aiMoveTimer && room.game && room.game.turn === idx) {
+        clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null;
+      }
       if (room.game && !room.game.over) {
         const g = room.game;
         socket.emit('sync-state', {
@@ -216,6 +219,7 @@ io.on('connection', socket => {
         });
       }
     }
+    if (room.game && !room.game.over && room.game.turn === idx) startTurnTimer(room);
   });
 
   socket.on('toggle-ai-takeover', () => {
@@ -227,13 +231,17 @@ io.on('connection', socket => {
     const enabled = room.aiControlled[idx];
     io.to(room.code).emit('ai-takeover-update', { idx, enabled });
     if (enabled && room.game.turn === idx) {
-      setTimeout(() => aiPlayTurnFor(room, idx), 900 + Math.random() * 700);
+      clearTurnTimers(room);
+      room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, idx), 900 + Math.random() * 700);
+    } else if (!enabled && room.game.turn === idx) {
+      startTurnTimer(room);
     }
   });
 
   function resolveSurrender(room, idx) {
     const oppIdx = 1 - idx;
     room.game.over = true;
+    clearTurnTimers(room);
     room.scores[oppIdx] += 25;
     io.to(room.code).emit('round-end', {
       resultType: 'surrender',
@@ -295,6 +303,8 @@ io.on('connection', socket => {
     if (!room) return;
     const idx = socket.data.idx;
     room.leaving = true;
+    clearTurnTimers(room);
+    if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
     emitToPlayer(room, 1 - idx, 'player-left', { name: room.names[idx] });
     rooms.delete(room.code);
   });
@@ -357,6 +367,8 @@ io.on('connection', socket => {
     const room = rooms.get(code);
     if (room && !room.leaving) {
       const idx = socket.data.idx;
+      clearTurnTimers(room);
+      if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
       io.to(code).emit('player-left', { name: room.names[idx], disconnected: true });
       rooms.delete(code);
     }
@@ -389,11 +401,53 @@ function startGame(room) {
       vsAI: !!room.vsAI,
     });
   });
+  startTurnTimer(room);
+}
+
+// ===== Inactivity auto-AI-takeover =====
+// If the active player does nothing for 45s, the AI takes over their turn.
+// A warning is sent at 40s (5 seconds before the switch).
+const TURN_WARN_MS = 40000;
+const TURN_AI_MS = 45000;
+
+function clearTurnTimers(room) {
+  if (room.turnWarnTimeout) { clearTimeout(room.turnWarnTimeout); room.turnWarnTimeout = null; }
+  if (room.turnAiTimeout) { clearTimeout(room.turnAiTimeout); room.turnAiTimeout = null; }
+}
+
+function startTurnTimer(room) {
+  clearTurnTimers(room);
+  if (!room.game || room.game.over || room.vsAI) return;
+  const idx = room.game.turn;
+  if (!room.players[idx]) return;
+  if (room.aiControlled && room.aiControlled[idx]) return; // AI already plays for them
+
+  room.turnWarnTimeout = setTimeout(() => {
+    emitToPlayer(room, idx, 'turn-timeout-warning', {});
+  }, TURN_WARN_MS);
+
+  room.turnAiTimeout = setTimeout(() => {
+    if (!room.game || room.game.over || room.game.turn !== idx) return;
+    if (!room.aiControlled) room.aiControlled = [false, false];
+    room.aiControlled[idx] = true;
+    io.to(room.code).emit('ai-takeover-update', { idx, enabled: true, auto: true });
+    room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, idx), 600);
+  }, TURN_AI_MS);
 }
 
 function handleAction(room, idx, type, cardId, socket) {
   const g = room.game;
-  if (room.aiControlled && room.aiControlled[idx]) { socket.emit('err', 'AI가 대신 플레이 중입니다. 먼저 복귀하세요.'); return; }
+
+  // Taking any action automatically reclaims control: clears "away" and
+  // "AI is playing for me" state without needing an explicit "return" click.
+  if ((room.aiControlled && room.aiControlled[idx]) || (room.away && room.away[idx])) {
+    if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
+    if (room.aiControlled) room.aiControlled[idx] = false;
+    if (room.away) room.away[idx] = false;
+    io.to(room.code).emit('status-update', { idx, away: false });
+    io.to(room.code).emit('ai-takeover-update', { idx, enabled: false });
+  }
+
   if (g.turn !== idx) { socket.emit('err', '내 턴이 아닙니다.'); return; }
   const oppIdx = 1 - idx;
 
@@ -438,9 +492,9 @@ function handleAction(room, idx, type, cardId, socket) {
         deckCount: g.deck.length,
       });
       if (room.vsAI && oppIdx === 1) {
-        setTimeout(() => aiPlayTurnFor(room, 1), 900 + Math.random()*700);
+        room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, 1), 900 + Math.random()*700);
       } else if (room.aiControlled && room.aiControlled[oppIdx]) {
-        setTimeout(() => aiPlayTurnFor(room, oppIdx), 900 + Math.random()*700);
+        room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, oppIdx), 900 + Math.random()*700);
       }
     } else {
       const isGin = (type === 'gin');
@@ -450,6 +504,9 @@ function handleAction(room, idx, type, cardId, socket) {
       resolveRound(room, idx, isGin);
     }
   }
+
+  socket.emit('turn-timer-reset');
+  if (room.game && !room.game.over) startTurnTimer(room);
 }
 
 // Big Gin: all 11 cards (after drawing, before discarding) form valid melds.
@@ -457,6 +514,7 @@ function handleAction(room, idx, type, cardId, socket) {
 function resolveBigGin(room, knockerIdx) {
   const g = room.game;
   g.over = true;
+  clearTurnTimers(room);
   const defIdx = 1 - knockerIdx;
   const { melds: kMelds } = bestMelds(g.hands[knockerIdx]);
   const { melds: dMelds, dw: defDW } = bestMelds(g.hands[defIdx]);
@@ -483,6 +541,7 @@ function resolveBigGin(room, knockerIdx) {
 function resolveRound(room, knockerIdx, isGin) {
   const g = room.game;
   g.over = true;
+  clearTurnTimers(room);
   const defIdx = 1 - knockerIdx;
   const kHand = g.hands[knockerIdx];
   const dHand = g.hands[defIdx];
@@ -586,7 +645,7 @@ function aiPlayTurnFor(room, idx) {
 
   const { dw: afterDW } = bestMelds(g.hands[idx]);
 
-  setTimeout(() => {
+  room.aiMoveTimer = setTimeout(() => {
     if (afterDW === 0) { resolveRound(room, idx, true); return; }
     if (afterDW <= 10) { resolveRound(room, idx, false); return; }
     g.phase = 'draw';
@@ -597,13 +656,16 @@ function aiPlayTurnFor(room, idx) {
       });
     }
     if (room.aiControlled && room.aiControlled[oppIdx]) {
-      setTimeout(() => aiPlayTurnFor(room, oppIdx), 900 + Math.random() * 700);
+      room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, oppIdx), 900 + Math.random() * 700);
+    } else {
+      startTurnTimer(room);
     }
   }, 500);
 }
 
 function handleDeckEmpty(room) {
   room.game.over = true;
+  clearTurnTimers(room);
   io.to(room.code).emit('deck-empty');
   room.rematch = [false, false];
 }
