@@ -342,7 +342,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   100% { transform: translateY(105vh) rotate(540deg); opacity: 0.2; }
 }
 
-/* ===== Toast banner (요청/대기 상태) ===== */
+/* ===== Toast banner (request / waiting status) ===== */
 .toast-banner {
   display: none; position: fixed; top: 78px; left: 50%; transform: translateX(-50%);
   z-index: 250; background: rgba(10,10,20,0.92); border: 2px solid rgba(255,255,255,0.2);
@@ -620,7 +620,7 @@ let chars = [CHAR_LIST[0], CHAR_LIST[1]];
 let away = [false, false];
 let scores = [0, 0];
 let sortMode = 'meld';   // 'meld' | 'rank' | 'suit'
-let lastDrawnId = null;  // 방금 뽑은 카드 id
+let lastDrawnId = null;  // id of the card just drawn (for highlight)
 let vsAI = false;
 let aiControlled = [false, false];
 let lastDiscardTopId = null;
