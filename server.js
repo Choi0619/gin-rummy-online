@@ -146,6 +146,27 @@ io.on('connection', socket => {
     socket.emit('room-created', { code, playerIndex: 0 });
   });
 
+  socket.on('create-ai-room', ({ name, char }) => {
+    const code = makeCode();
+    const room = {
+      code,
+      players: [socket.id],
+      names: [name || '플레이어1', 'AI'],
+      chars: [char || '🐱', '🤖'],
+      away: [false, false],
+      ready: [true, true],
+      game: null,
+      scores: [0, 0],
+      endRequest: null,
+      vsAI: true,
+    };
+    rooms.set(code, room);
+    socket.join(code);
+    socket.data.room = code;
+    socket.data.idx = 0;
+    startGame(room);
+  });
+
   socket.on('join-room', ({ code, name, char }) => {
     const room = rooms.get(code.toUpperCase().trim());
     if (!room) { socket.emit('err', '방을 찾을 수 없습니다.'); return; }
@@ -248,6 +269,7 @@ io.on('connection', socket => {
   socket.on('play-again', () => {
     const room = rooms.get(socket.data.room);
     if (!room) return;
+    if (room.vsAI) { room.game = null; startGame(room); return; }
     const idx = socket.data.idx;
     if (!room.rematch) room.rematch = [false, false];
     room.rematch[idx] = true;
@@ -294,6 +316,7 @@ function startGame(room) {
       names: room.names,
       chars: room.chars,
       playerIndex: i,
+      vsAI: !!room.vsAI,
     });
   });
 }
@@ -337,6 +360,7 @@ function handleAction(room, idx, type, cardId, socket) {
         nextTurn: g.turn,
         deckCount: g.deck.length,
       });
+      if (room.vsAI && oppIdx === 1) setTimeout(() => aiPlayTurn(room), 900 + Math.random()*700);
     } else {
       const isGin = (type === 'gin');
       const { dw } = bestMelds(g.hands[idx]);
@@ -393,6 +417,66 @@ function resolveRound(room, knockerIdx, isGin) {
     discardTop: g.discardPile[g.discardPile.length-1],
   });
   room.rematch = [false, false];
+}
+
+// ===== AI opponent (idx 1) =====
+function aiPlayTurn(room) {
+  const g = room.game;
+  if (!g || g.over || g.turn !== 1) return;
+  const humanSid = room.players[0];
+
+  // --- Draw decision: take discard if it strictly improves deadwood, else deck ---
+  const topDiscard = g.discardPile[g.discardPile.length - 1];
+  let takeDiscard = false;
+  if (topDiscard) {
+    const curDW = bestMelds(g.hands[1]).dw;
+    const testDW = bestMelds([...g.hands[1], topDiscard]).dw;
+    takeDiscard = testDW < curDW;
+  }
+
+  let drawnCard, drewFrom;
+  if (takeDiscard) {
+    drawnCard = g.discardPile.pop();
+    drewFrom = 'discard';
+  } else {
+    if (g.deck.length === 0) { handleDeckEmpty(room); return; }
+    drawnCard = g.deck.pop();
+    drewFrom = 'deck';
+  }
+  g.hands[1].push(drawnCard);
+
+  const newTop = g.discardPile[g.discardPile.length - 1] || null;
+  io.to(humanSid).emit('opp-drew', {
+    from: drewFrom,
+    deckCount: g.deck.length,
+    newDiscardTop: drewFrom === 'discard' ? newTop : undefined,
+  });
+
+  // --- Discard decision: full search — try removing each card, keep the hand with lowest deadwood ---
+  const hand = g.hands[1];
+  let bestPick = null;
+  for (const card of hand) {
+    const rest = hand.filter(c => c.id !== card.id);
+    const { dw } = bestMelds(rest);
+    if (!bestPick || dw < bestPick.dw || (dw === bestPick.dw && card.val > bestPick.card.val)) {
+      bestPick = { card, dw };
+    }
+  }
+  const discardCard = bestPick.card;
+  g.hands[1] = hand.filter(c => c.id !== discardCard.id);
+  g.discardPile.push(discardCard);
+
+  const { dw: afterDW } = bestMelds(g.hands[1]);
+
+  setTimeout(() => {
+    if (afterDW === 0) { resolveRound(room, 1, true); return; }
+    if (afterDW <= 10) { resolveRound(room, 1, false); return; }
+    g.phase = 'draw';
+    g.turn = 0;
+    io.to(humanSid).emit('card-discarded', {
+      card: discardCard, byIdx: 1, nextTurn: 0, deckCount: g.deck.length,
+    });
+  }, 500);
 }
 
 function handleDeckEmpty(room) {

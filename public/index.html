@@ -349,6 +349,8 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div class="divider">방 참가</div>
     <input id="joinCode" type="text" placeholder="방 코드 입력 (예: AB3KZ)" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
     <button class="btn btn-blue" onclick="joinRoom()">🚀 입장하기</button>
+    <div class="divider">솔로 플레이</div>
+    <button class="btn btn-gold" onclick="startAIGame()">🤖 AI와 대결하기</button>
     <div class="error-msg" id="lobbyError"></div>
   </div>
 </div>
@@ -410,8 +412,8 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   </div>
 
   <div class="util-row">
-    <button class="util-btn" id="awayBtn" onclick="toggleAway()">⏸ 자리비움</button>
-    <button class="util-btn" onclick="requestEnd()">🛑 게임 종료 요청</button>
+    <button class="util-btn vs-ai-hide" id="awayBtn" onclick="toggleAway()">⏸ 자리비움</button>
+    <button class="util-btn vs-ai-hide" onclick="requestEnd()">🛑 게임 종료 요청</button>
     <button class="util-btn danger" onclick="confirmSurrender()">🏳️ 항복</button>
     <button class="util-btn danger" onclick="confirmLeave()">🚪 나가기</button>
   </div>
@@ -537,6 +539,7 @@ let away = [false, false];
 let scores = [0, 0];
 let sortMode = 'meld';   // 'meld' | 'rank' | 'suit'
 let lastDrawnId = null;  // 방금 뽑은 카드 id
+let vsAI = false;
 
 function renderCharGrid() {
   const grid = document.getElementById('lobbyCharGrid');
@@ -674,6 +677,8 @@ function initSocket() {
   });
 
   socket.on('game-started', data => {
+    myIdx = data.playerIndex;
+    vsAI = !!data.vsAI;
     myHand = data.hand;
     discardTop = data.discardTop;
     deckCount = data.deckCount;
@@ -688,6 +693,7 @@ function initSocket() {
     oppCardCount = 10;
     document.getElementById('myFaceOverlay').textContent = '';
     document.getElementById('oppFaceOverlay').textContent = '';
+    document.querySelectorAll('.vs-ai-hide').forEach(el => el.style.display = vsAI ? 'none' : '');
     showGame();
     renderGame();
     setStatus(isMyTurn() ? '내 턴: 덱 또는 버린 패에서 뽑으세요.' : `${oppName()} 턴...`);
@@ -750,6 +756,14 @@ function createRoom() {
   if (!socket) initSocket();
   document.getElementById('lobbyError').textContent = '';
   socket.emit('create-room', { name: myName, char: myChar });
+}
+
+function startAIGame() {
+  myName = document.getElementById('myName').value.trim() || '플레이어1';
+  if (!socket) initSocket();
+  document.getElementById('lobbyError').textContent = '';
+  myIdx = 0;
+  socket.emit('create-ai-room', { name: myName, char: myChar });
 }
 
 function joinRoom() {
