@@ -15,7 +15,8 @@ html { -webkit-overflow-scrolling: touch; }
 
 body {
   font-family: 'Segoe UI', sans-serif;
-  background: radial-gradient(ellipse at center, #1a5c2a 0%, #0a3015 100%);
+  background: var(--bg-grad);
+  transition: background 0.4s ease;
   min-height: 100vh;
   min-height: 100dvh;
   color: white;
@@ -39,8 +40,8 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
   padding: 40px 20px;
   gap: 28px;
   overflow-x: hidden;
-  background:
-    radial-gradient(circle at 50% 38%, #1f7a3d 0%, #11572a 42%, #0a3a1c 72%, #051f10 100%);
+  background: var(--lobby-grad);
+  transition: background 0.4s ease;
 }
 #lobbyScreen::before {
   /* felt texture */
@@ -84,6 +85,54 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
   padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.15s;
 }
 .btn-howto:hover { background: rgba(255,215,120,0.22); transform: translateY(-1px); }
+
+.lobby-top-row { position: relative; z-index: 1; display: flex; gap: 8px; align-items: center; }
+.btn-settings {
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: white;
+  width: 36px; height: 36px; border-radius: 50%; font-size: 16px; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.btn-settings:hover { background: rgba(255,255,255,0.2); transform: rotate(45deg); }
+
+/* ===== Settings: theme swatches ===== */
+.theme-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.theme-swatch {
+  width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
+  border: 3px solid rgba(255,255,255,0.15); transition: all 0.15s;
+}
+.theme-swatch:hover { transform: scale(1.1); }
+.theme-swatch.selected { border-color: #ffd76a; box-shadow: 0 0 0 2px rgba(255,215,120,0.4); }
+
+/* ===== Settings: language toggle ===== */
+.lang-toggle { display: flex; gap: 8px; }
+.lang-btn {
+  flex: 1; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08); color: white; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.15s;
+}
+.lang-btn:hover { background: rgba(255,255,255,0.15); }
+.lang-btn.active { background: rgba(255,215,120,0.2); border-color: #ffd76a; color: #ffd76a; }
+
+/* ===== Theme variables (default = green felt) ===== */
+:root {
+  --bg-grad: radial-gradient(ellipse at center, #1a5c2a 0%, #0a3015 100%);
+  --lobby-grad: radial-gradient(circle at 50% 38%, #1f7a3d 0%, #11572a 42%, #0a3a1c 72%, #051f10 100%);
+}
+body.theme-blue {
+  --bg-grad: radial-gradient(ellipse at center, #16486b 0%, #07202f 100%);
+  --lobby-grad: radial-gradient(circle at 50% 38%, #1e6f9e 0%, #144f72 42%, #0a2a3f 72%, #051620 100%);
+}
+body.theme-purple {
+  --bg-grad: radial-gradient(ellipse at center, #4a2470 0%, #1d0d33 100%);
+  --lobby-grad: radial-gradient(circle at 50% 38%, #7c3fb0 0%, #582888 42%, #2d1245 72%, #160922 100%);
+}
+body.theme-red {
+  --bg-grad: radial-gradient(ellipse at center, #6e1c30 0%, #2c0a13 100%);
+  --lobby-grad: radial-gradient(circle at 50% 38%, #a8233f 0%, #7a182d 42%, #3f0a16 72%, #1f0509 100%);
+}
+body.theme-dark {
+  --bg-grad: radial-gradient(ellipse at center, #2c343a 0%, #0c0f11 100%);
+  --lobby-grad: radial-gradient(circle at 50% 38%, #3e4a52 0%, #262e33 42%, #0e1316 72%, #050708 100%);
+}
 
 .lobby-card {
   position: relative; z-index: 1;
@@ -738,36 +787,40 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   <div class="lobby-corner-deco bl">🪙</div>
   <div class="lobby-corner-deco br">🪙</div>
 
+  <div class="lobby-top-row">
+    <button class="btn-howto" onclick="showHowTo()" data-i18n="howToBtn">📖 게임 방법 보기</button>
+    <button class="btn-settings" onclick="showSettings()" title="Settings">⚙️</button>
+  </div>
+
   <div class="logo">🃏</div>
-  <div class="logo-title">진 러미 온라인</div>
-  <div class="logo-sub">친구와 함께 플레이</div>
-  <button class="btn-howto" onclick="showHowTo()">📖 게임 방법 보기</button>
+  <div class="logo-title" data-i18n="logoTitle">진 러미 온라인</div>
+  <div class="logo-sub" data-i18n="logoSub">친구와 함께 플레이</div>
 
   <div class="lobby-card">
-    <h2>내 이름</h2>
-    <input id="myName" type="text" placeholder="닉네임 입력" maxlength="12">
-    <div class="char-picker-label">캐릭터 선택</div>
+    <h2 data-i18n="myNameLabel">내 이름</h2>
+    <input id="myName" type="text" data-i18n-placeholder="namePlaceholder" placeholder="닉네임 입력" maxlength="12">
+    <div class="char-picker-label" data-i18n="charSelectLabel">캐릭터 선택</div>
     <div class="char-grid" id="lobbyCharGrid"></div>
-    <div class="char-picker-label">🎯 목표 점수 (방장만 설정)</div>
+    <div class="char-picker-label" data-i18n="targetScoreLabel">🎯 목표 점수 (방장만 설정)</div>
     <select id="targetScoreSelect" class="target-score-select">
-      <option value="100" selected>100점 (기본)</option>
-      <option value="150">150점</option>
-      <option value="200">200점</option>
-      <option value="250">250점</option>
-      <option value="300">300점</option>
-      <option value="350">350점</option>
-      <option value="400">400점</option>
-      <option value="450">450점</option>
-      <option value="500">500점</option>
-      <option value="unlimited">♾️ 무제한</option>
+      <option value="100" data-i18n="ts100" selected>100점 (기본)</option>
+      <option value="150" data-i18n="ts150">150점</option>
+      <option value="200" data-i18n="ts200">200점</option>
+      <option value="250" data-i18n="ts250">250점</option>
+      <option value="300" data-i18n="ts300">300점</option>
+      <option value="350" data-i18n="ts350">350점</option>
+      <option value="400" data-i18n="ts400">400점</option>
+      <option value="450" data-i18n="ts450">450점</option>
+      <option value="500" data-i18n="ts500">500점</option>
+      <option value="unlimited" data-i18n="tsUnlimited">♾️ 무제한</option>
     </select>
-    <div class="divider">방 만들기</div>
-    <button class="btn btn-primary" onclick="createRoom()">✨ 새 방 만들기</button>
-    <div class="divider">방 참가</div>
-    <input id="joinCode" type="text" placeholder="방 코드 입력 (예: AB3KZ)" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
-    <button class="btn btn-blue" onclick="joinRoom()">🚀 입장하기</button>
-    <div class="divider">솔로 플레이</div>
-    <button class="btn btn-gold" onclick="startAIGame()">🤖 AI와 대결하기</button>
+    <div class="divider" data-i18n="createRoomDivider">방 만들기</div>
+    <button class="btn btn-primary" onclick="createRoom()" data-i18n="createRoomBtn">✨ 새 방 만들기</button>
+    <div class="divider" data-i18n="joinRoomDivider">방 참가</div>
+    <input id="joinCode" type="text" data-i18n-placeholder="joinCodePlaceholder" placeholder="방 코드 입력 (예: AB3KZ)" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
+    <button class="btn btn-blue" onclick="joinRoom()" data-i18n="joinRoomBtn">🚀 입장하기</button>
+    <div class="divider" data-i18n="soloDivider">솔로 플레이</div>
+    <button class="btn btn-gold" onclick="startAIGame()" data-i18n="aiBtn">🤖 AI와 대결하기</button>
     <div class="error-msg" id="lobbyError"></div>
   </div>
 </div>
@@ -777,9 +830,9 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   <div class="logo">🃏</div>
   <div class="waiting-card">
     <div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:10px">방 코드 (클릭하여 복사)</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:10px" data-i18n="roomCodeHint">방 코드 (클릭하여 복사)</div>
       <div class="room-code-display" id="roomCodeDisplay" onclick="copyCode()">-----</div>
-      <div class="copy-hint" id="copyHint">친구에게 이 코드를 알려주세요</div>
+      <div class="copy-hint" id="copyHint" data-i18n="shareCodeHint">친구에게 이 코드를 알려주세요</div>
       <div class="target-score-lbl" id="waitingTargetScoreLbl" style="display:inline-block;margin-top:10px"></div>
     </div>
 
@@ -787,18 +840,18 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       <div class="player-slot connected" id="slot0">
         <div class="slot-icon" id="slotIcon0">🐱</div>
         <div class="slot-name" id="slotName0">나</div>
-        <div class="slot-status" id="slotStatus0">대기 중...</div>
+        <div class="slot-status" id="slotStatus0" data-i18n="waitingDots">대기 중...</div>
       </div>
       <div style="font-size:24px;align-self:center">VS</div>
       <div class="player-slot" id="slot1">
         <div class="slot-icon" id="slotIcon1"><span class="spinner">⏳</span></div>
-        <div class="slot-name" id="slotName1">기다리는 중...</div>
-        <div class="slot-status" id="slotStatus1">상대방 연결 대기</div>
+        <div class="slot-name" id="slotName1" data-i18n="waitingForOpponent">기다리는 중...</div>
+        <div class="slot-status" id="slotStatus1" data-i18n="waitingOpponentConn">상대방 연결 대기</div>
       </div>
     </div>
 
-    <button class="btn btn-primary" id="readyBtn" onclick="setReady()" disabled>✅ 준비 완료</button>
-    <button class="btn btn-secondary" onclick="leaveRoom()">← 나가기</button>
+    <button class="btn btn-primary" id="readyBtn" onclick="setReady()" disabled data-i18n="readyBtn">✅ 준비 완료</button>
+    <button class="btn btn-secondary" onclick="leaveRoom()" data-i18n="leaveBtnArrow">← 나가기</button>
   </div>
 </div>
 
@@ -808,17 +861,17 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div class="title-sm">🃏 진 러미 <span class="target-score-lbl" id="targetScoreLbl"></span></div>
     <div class="score-box-pretty" id="scoreBoxPretty">
       <div class="score-side" id="myScoreSide">
-        <span class="score-label">나</span>
+        <span class="score-label" data-i18n="me">나</span>
         <span class="score-num" id="myScoreNum">0</span>
         <span class="leader-crown" id="myCrown" style="display:none">👑</span>
-        <span class="streak-badge" id="streakBadge">🔥 <span id="streakNum">0</span>연승</span>
+        <span class="streak-badge" id="streakBadge">🔥 <span id="streakNum">0</span><span data-i18n="streakSuffix">연승</span></span>
       </div>
       <span class="score-vs-divider">VS</span>
       <div class="score-side" id="oppScoreSide">
         <span class="leader-crown" id="oppCrown" style="display:none">👑</span>
         <span class="score-num" id="oppScoreNum">0</span>
-        <span class="score-label" id="oppScoreLabel">상대</span>
-        <span class="streak-badge" id="oppStreakBadge">🔥 <span id="oppStreakNum">0</span>연승</span>
+        <span class="score-label" id="oppScoreLabel" data-i18n="opponent">상대</span>
+        <span class="streak-badge" id="oppStreakBadge">🔥 <span id="oppStreakNum">0</span><span data-i18n="streakSuffix">연승</span></span>
       </div>
     </div>
   </div>
@@ -827,28 +880,28 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div class="avatar-card" id="oppAvatarCard">
       <div class="avatar-emoji" id="oppAvatarEmoji">🐶<span class="face-overlay" id="oppFaceOverlay"></span></div>
       <div class="avatar-info">
-        <div class="avatar-name" id="oppAvatarName">상대방</div>
-        <div class="avatar-turn-lbl">▶ 상대 턴</div>
-        <div class="status-pill" id="oppStatusPill">⏸ 자리비움</div>
+        <div class="avatar-name" id="oppAvatarName" data-i18n="opponent">상대방</div>
+        <div class="avatar-turn-lbl" data-i18n="oppTurnLbl">▶ 상대 턴</div>
+        <div class="status-pill" id="oppStatusPill" data-i18n="away">⏸ 자리비움</div>
       </div>
     </div>
     <div class="vs-label">VS</div>
     <div class="avatar-card" id="myAvatarCard">
       <div class="avatar-emoji" id="myAvatarEmoji">🐱<span class="face-overlay" id="myFaceOverlay"></span></div>
       <div class="avatar-info">
-        <div class="avatar-name" id="myAvatarName">나</div>
-        <div class="avatar-turn-lbl">▶ 내 턴</div>
-        <div class="status-pill" id="myStatusPill">⏸ 자리비움</div>
+        <div class="avatar-name" id="myAvatarName" data-i18n="me">나</div>
+        <div class="avatar-turn-lbl" data-i18n="myTurnLbl">▶ 내 턴</div>
+        <div class="status-pill" id="myStatusPill" data-i18n="away">⏸ 자리비움</div>
       </div>
     </div>
   </div>
 
   <div class="util-row">
-    <button class="util-btn vs-ai-hide" id="awayBtn" onclick="toggleAway()">⏸ 자리비움</button>
-    <button class="util-btn vs-ai-hide" id="aiTakeoverBtn" onclick="toggleAITakeover()" style="display:none">🤖 AI 대신 플레이</button>
-    <button class="util-btn vs-ai-hide" onclick="requestEnd()">🛑 게임 종료 요청</button>
-    <button class="util-btn danger" onclick="confirmSurrender()">🏳️ 항복</button>
-    <button class="util-btn danger" onclick="confirmLeave()">🚪 나가기</button>
+    <button class="util-btn vs-ai-hide" id="awayBtn" onclick="toggleAway()" data-i18n="away">⏸ 자리비움</button>
+    <button class="util-btn vs-ai-hide" id="aiTakeoverBtn" onclick="toggleAITakeover()" style="display:none" data-i18n="aiTakeoverBtn">🤖 AI 대신 플레이</button>
+    <button class="util-btn vs-ai-hide" onclick="requestEnd()" data-i18n="requestEndBtn">🛑 게임 종료 요청</button>
+    <button class="util-btn danger" onclick="confirmSurrender()" data-i18n="surrenderBtn">🏳️ 항복</button>
+    <button class="util-btn danger" onclick="confirmLeave()" data-i18n="leaveBtn">🚪 나가기</button>
   </div>
 
   <div class="game-area">
@@ -856,7 +909,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div>
       <div class="zone-label">
         <span id="oppTurnArrow"></span>
-        🤖 <span id="oppNameLabel">상대방</span>의 패
+        🤖 <span id="oppNameLabel">상대방</span><span data-i18n="handSuffix">의 패</span>
         <span style="color:rgba(255,255,255,0.35);font-size:11px" id="oppCardCount">(10장)</span>
       </div>
       <div class="hand" id="oppHand"></div>
@@ -870,27 +923,27 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
             <div class="deck-icon">🂠</div>
             <div id="deckCountTxt">52장</div>
           </div>
-          <div class="pile-lbl">덱</div>
+          <div class="pile-lbl" data-i18n="deckLbl">덱</div>
         </div>
         <div class="pile-wrap">
-          <div class="discard-slot" id="discardSlot">비어있음</div>
-          <div class="pile-lbl">버린 패</div>
+          <div class="discard-slot" id="discardSlot" data-i18n="emptyLbl">비어있음</div>
+          <div class="pile-lbl" data-i18n="discardLbl">버린 패</div>
         </div>
       </div>
 
       <div class="status-panel">
-        <div class="status-msg" id="statusMsg">게임 시작 중...</div>
-        <div class="dw-row">내 데드우드: <span class="dw-badge" id="myDwBadge">-</span></div>
+        <div class="status-msg" id="statusMsg" data-i18n="startingGame">게임 시작 중...</div>
+        <div class="dw-row"><span data-i18n="myDeadwood">내 데드우드:</span> <span class="dw-badge" id="myDwBadge">-</span></div>
         <div class="hint-txt" id="hintTxt"></div>
         <div class="action-row" id="upcardActions" style="display:none">
-          <button class="act-btn btn-gin-act" id="btnTakeUpcard" onclick="actTakeUpcard()">🎴 가져가기</button>
-          <button class="act-btn btn-discard-act" id="btnPassUpcard" onclick="actPassUpcard()">❌ 패스</button>
+          <button class="act-btn btn-gin-act" id="btnTakeUpcard" onclick="actTakeUpcard()" data-i18n="takeUpcardBtn">🎴 가져가기</button>
+          <button class="act-btn btn-discard-act" id="btnPassUpcard" onclick="actPassUpcard()" data-i18n="passUpcardBtn">❌ 패스</button>
         </div>
         <div class="action-row" id="normalActions">
-          <button class="act-btn btn-discard-act" id="btnDiscard" onclick="actDiscard()" disabled>버리기</button>
-          <button class="act-btn btn-knock-act" id="btnKnock" onclick="actKnock()" disabled>🤜 녹</button>
-          <button class="act-btn btn-gin-act" id="btnGin" onclick="actGin()" disabled>✨ 진</button>
-          <button class="act-btn btn-biggin-act" id="btnBigGin" onclick="actBigGin()" disabled style="display:none">💎 빅진</button>
+          <button class="act-btn btn-discard-act" id="btnDiscard" onclick="actDiscard()" disabled data-i18n="discardBtn">버리기</button>
+          <button class="act-btn btn-knock-act" id="btnKnock" onclick="actKnock()" disabled data-i18n="knockBtn">🤜 녹</button>
+          <button class="act-btn btn-gin-act" id="btnGin" onclick="actGin()" disabled data-i18n="ginBtn">✨ 진</button>
+          <button class="act-btn btn-biggin-act" id="btnBigGin" onclick="actBigGin()" disabled style="display:none" data-i18n="bigGinBtn">💎 빅진</button>
         </div>
       </div>
     </div>
@@ -899,14 +952,14 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div>
       <div class="zone-label">
         <span id="myTurnArrow"></span>
-        👤 내 패
-        <span style="font-size:10px;color:rgba(255,255,255,0.35)">(초록=멜드, 클릭하여 선택)</span>
+        👤 <span data-i18n="myHand">내 패</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.35)" data-i18n="meldHint">(초록=멜드, 클릭하여 선택)</span>
       </div>
       <div class="sort-bar">
-        <span class="sort-label">정렬:</span>
-        <button class="sort-btn active" id="sortMeld" onclick="setSort('meld')">멜드순</button>
-        <button class="sort-btn" id="sortRank" onclick="setSort('rank')">숫자순</button>
-        <button class="sort-btn" id="sortSuit" onclick="setSort('suit')">모양순</button>
+        <span class="sort-label" data-i18n="sortLabel">정렬:</span>
+        <button class="sort-btn active" id="sortMeld" onclick="setSort('meld')" data-i18n="sortMeld">멜드순</button>
+        <button class="sort-btn" id="sortRank" onclick="setSort('rank')" data-i18n="sortRank">숫자순</button>
+        <button class="sort-btn" id="sortSuit" onclick="setSort('suit')" data-i18n="sortSuit">모양순</button>
       </div>
       <div class="hand" id="myHand"></div>
     </div>
@@ -922,8 +975,8 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div id="resMelds"></div>
     <div class="score-bar" id="resScoreBar"></div>
     <div class="rematch-row">
-      <button class="btn btn-primary" id="rematchBtn" style="max-width:200px" onclick="playAgain()">🔄 한 판 더</button>
-      <button class="btn btn-secondary" style="max-width:160px" onclick="leaveRoom()">나가기</button>
+      <button class="btn btn-primary" id="rematchBtn" style="max-width:200px" onclick="playAgain()" data-i18n="playAgainBtn">🔄 한 판 더</button>
+      <button class="btn btn-secondary" style="max-width:160px" onclick="leaveRoom()" data-i18n="leaveBtnPlain">나가기</button>
     </div>
     <div class="rematch-banner" id="rematchStatus"></div>
   </div>
@@ -935,7 +988,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div style="font-size:56px" id="discEmoji">😢</div>
     <h2 id="discTitle">상대방이 나갔습니다</h2>
     <p style="color:rgba(255,255,255,0.6);margin-bottom:24px" id="discSub">방이 닫혔습니다.</p>
-    <button class="btn btn-primary" onclick="leaveRoom()">로비로 돌아가기</button>
+    <button class="btn btn-primary" onclick="leaveRoom()" data-i18n="backToLobbyBtn">로비로 돌아가기</button>
   </div>
 </div>
 
@@ -945,7 +998,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div class="result-emoji" id="matchEndEmoji">🏆</div>
     <div class="result-title" id="matchEndTitle"></div>
     <div class="result-pts" id="matchEndDetail"></div>
-    <button class="btn btn-primary" onclick="leaveRoom()">로비로 돌아가기</button>
+    <button class="btn btn-primary" onclick="leaveRoom()" data-i18n="backToLobbyBtn">로비로 돌아가기</button>
   </div>
 </div>
 
@@ -953,77 +1006,37 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 <div class="overlay" id="howToOverlay">
   <div class="howto-box">
     <button class="howto-close" onclick="hideHowTo()">✕</button>
-    <div class="howto-title">🃏 진 러미 플레이 방법</div>
+    <div class="howto-title" data-i18n="howToTitle">🃏 진 러미 플레이 방법</div>
+    <div class="howto-scroll" id="howToScroll"></div>
+    <button class="btn btn-primary" style="margin-top:14px" onclick="hideHowTo()" data-i18n="gotItBtn">확인했어요!</button>
+  </div>
+</div>
+
+<!-- ===== SETTINGS MODAL ===== -->
+<div class="overlay" id="settingsOverlay">
+  <div class="howto-box" style="max-width:420px">
+    <button class="howto-close" onclick="hideSettings()">✕</button>
+    <div class="howto-title" data-i18n="settingsTitle">⚙️ 설정</div>
     <div class="howto-scroll">
-
       <div class="howto-section">
-        <h3>🎯 목표</h3>
-        <p>손에 든 카드를 <strong>멜드(meld)</strong>로 정리해서 <strong>데드우드(meld에 속하지 않은 카드 점수 합)</strong>를 최대한 줄이는 게임이에요. A=1점, 2~10은 숫자 그대로, J·Q·K는 10점입니다.</p>
-      </div>
-
-      <div class="howto-section">
-        <h3>🧩 멜드 종류</h3>
-        <p><strong>세트(Set)</strong> — 같은 숫자 3~4장, 모양은 모두 달라야 함</p>
-        <div class="howto-example">
-          <span class="mini-card">7♠</span><span class="mini-card red">7♥</span><span class="mini-card">7♣</span>
-        </div>
-        <p><strong>런(Run)</strong> — 같은 모양 3장 이상, 숫자가 연속이어야 함</p>
-        <div class="howto-example">
-          <span class="mini-card">4♠</span><span class="mini-card">5♠</span><span class="mini-card">6♠</span>
+        <h3 data-i18n="settingsTheme">🎨 배경 테마</h3>
+        <div class="theme-grid" id="themeGrid">
+          <button class="theme-swatch" data-theme="green" onclick="setTheme('green')" style="background:linear-gradient(135deg,#1f7a3d,#0a3015)"></button>
+          <button class="theme-swatch" data-theme="blue" onclick="setTheme('blue')" style="background:linear-gradient(135deg,#1e6f9e,#0a2a3f)"></button>
+          <button class="theme-swatch" data-theme="purple" onclick="setTheme('purple')" style="background:linear-gradient(135deg,#7c3fb0,#2d1245)"></button>
+          <button class="theme-swatch" data-theme="red" onclick="setTheme('red')" style="background:linear-gradient(135deg,#a8233f,#3f0a16)"></button>
+          <button class="theme-swatch" data-theme="dark" onclick="setTheme('dark')" style="background:linear-gradient(135deg,#3e4a52,#0e1316)"></button>
         </div>
       </div>
-
       <div class="howto-section">
-        <h3>🎴 라운드 시작 (첫 카드 선택)</h3>
-        <ul>
-          <li>매 라운드 시작 시 <strong>선(먼저 정해진 사람)</strong>이 바뀌어요 — 판마다 교대로 첫 기회를 가집니다</li>
-          <li>선이 먼저 시작 카드를 <strong>가져갈지 패스할지</strong> 결정</li>
-          <li>선이 패스하면 → 상대도 같은 카드를 가져갈지 패스할지 결정</li>
-          <li>둘 다 패스하면 → 그때 선이 덱에서 새 카드를 뽑으며 정식으로 시작</li>
-        </ul>
+        <h3 data-i18n="settingsLanguage">🌐 언어 / Language</h3>
+        <div class="lang-toggle">
+          <button class="lang-btn" id="langBtnKo" onclick="setLanguage('ko')">한국어</button>
+          <button class="lang-btn" id="langBtnEn" onclick="setLanguage('en')">English</button>
+        </div>
       </div>
-
-      <div class="howto-section">
-        <h3>🔄 턴 진행</h3>
-        <ul>
-          <li>덱 🂠 또는 버린 패 ♻️ 중 한 곳에서 카드 1장을 가져옵니다</li>
-          <li>손에서 카드 1장을 선택해 버립니다 (멜드는 초록 테두리로 자동 표시돼요)</li>
-          <li>조건이 맞으면 버리는 대신 녹/진/빅진을 선언할 수 있습니다</li>
-        </ul>
-      </div>
-
-      <div class="howto-section">
-        <h3>🏆 라운드를 끝내는 방법</h3>
-        <p><span class="howto-badge knock">🤜 녹 (Knock)</span> 데드우드 10점 이하일 때 선언. 상대가 내 멜드에 카드를 얹는 <strong>레이오프</strong> 후 점수 비교</p>
-        <p><span class="howto-badge gin">✨ 진 (Gin)</span> 데드우드 0점(10장 전부 멜드)일 때 선언. 레이오프 없이 25점 + 상대 데드우드 획득</p>
-        <p><span class="howto-badge biggin">💎 빅진 (Big Gin)</span> 카드를 뽑은 11장 전부가 멜드일 때 즉시 선언 (버릴 필요 없음!). 31점 + 상대 데드우드 획득</p>
-        <p><span class="howto-badge undercut">🔄 언더컷</span> 녹 선언자보다 상대 데드우드가 같거나 낮으면 상대가 역전! +25점 보너스</p>
-        <p><span class="howto-badge surrender">🏳️ 항복</span> 상대가 수락하면 그 라운드는 상대 승리(+25점)로 즉시 종료</p>
-      </div>
-
-      <div class="howto-section">
-        <h3>🧮 점수 요약</h3>
-        <table class="howto-score-table">
-          <tr><th>상황</th><th>점수</th></tr>
-          <tr><td>진 성공</td><td>25 + 상대 데드우드</td></tr>
-          <tr><td>빅진 성공</td><td>31 + 상대 데드우드</td></tr>
-          <tr><td>녹 성공</td><td>(상대 데드우드 − 내 데드우드)</td></tr>
-          <tr><td>언더컷 당함</td><td>(내 데드우드 − 상대 데드우드) + 25</td></tr>
-          <tr><td>항복 수락됨</td><td>고정 25점</td></tr>
-        </table>
-      </div>
-
-      <div class="howto-section">
-        <h3>👫 같이 할 때 편의 기능</h3>
-        <ul>
-          <li><strong>⏸ 자리비움</strong> — 잠깐 자리 비울 때 켜면 AI가 대신 플레이 (복귀하면 자동 해제)</li>
-          <li><strong>🛑 게임 종료 요청</strong> — 상대 동의 시 현재 점수로 매치 종료</li>
-          <li><strong>🚪 나가기</strong> — 상대에게 퇴장 알림 후 즉시 방 종료</li>
-        </ul>
-      </div>
-
     </div>
-    <button class="btn btn-primary" style="margin-top:14px" onclick="hideHowTo()">확인했어요!</button>
+    <button class="btn btn-primary" style="margin-top:14px" onclick="hideSettings()" data-i18n="gotItBtn">확인했어요!</button>
   </div>
 </div>
 
@@ -1039,7 +1052,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 </button>
 <div class="chat-panel" id="chatPanel">
   <div class="chat-header">
-    💬 채팅
+    💬 <span data-i18n="chatTitle">채팅</span>
     <button class="chat-close" onclick="toggleChat()">✕</button>
   </div>
   <div class="chat-messages" id="chatMessages"></div>
@@ -1062,12 +1075,230 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <button onclick="sendQuickEmoji('🤝')" title="굿게임">🤝</button>
   </div>
   <div class="chat-input-row">
-    <input id="chatInput" type="text" placeholder="메시지 입력..." maxlength="200">
-    <button onclick="sendChat()">전송</button>
+    <input id="chatInput" type="text" data-i18n-placeholder="chatPlaceholder" placeholder="메시지 입력..." maxlength="200">
+    <button onclick="sendChat()" data-i18n="chatSendBtn">전송</button>
   </div>
 </div>
 
 <script>
+// ===== i18n =====
+const I18N = {
+  ko: {
+    howToBtn: '📖 게임 방법 보기', logoTitle: '진 러미 온라인', logoSub: '친구와 함께 플레이',
+    myNameLabel: '내 이름', namePlaceholder: '닉네임 입력', charSelectLabel: '캐릭터 선택',
+    targetScoreLabel: '🎯 목표 점수 (방장만 설정)',
+    ts100: '100점 (기본)', ts150: '150점', ts200: '200점', ts250: '250점', ts300: '300점',
+    ts350: '350점', ts400: '400점', ts450: '450점', ts500: '500점', tsUnlimited: '♾️ 무제한',
+    createRoomDivider: '방 만들기', createRoomBtn: '✨ 새 방 만들기',
+    joinRoomDivider: '방 참가', joinCodePlaceholder: '방 코드 입력 (예: AB3KZ)', joinRoomBtn: '🚀 입장하기',
+    soloDivider: '솔로 플레이', aiBtn: '🤖 AI와 대결하기',
+    roomCodeHint: '방 코드 (클릭하여 복사)', shareCodeHint: '친구에게 이 코드를 알려주세요',
+    waitingDots: '대기 중...', waitingForOpponent: '기다리는 중...', waitingOpponentConn: '상대방 연결 대기',
+    readyBtn: '✅ 준비 완료', leaveBtnArrow: '← 나가기',
+    me: '나', opponent: '상대', streakSuffix: '연승',
+    oppTurnLbl: '▶ 상대 턴', myTurnLbl: '▶ 내 턴', away: '⏸ 자리비움',
+    aiTakeoverBtn: '🤖 AI 대신 플레이', requestEndBtn: '🛑 게임 종료 요청',
+    surrenderBtn: '🏳️ 항복', leaveBtn: '🚪 나가기',
+    handSuffix: '의 패', deckLbl: '덱', emptyLbl: '비어있음', discardLbl: '버린 패',
+    startingGame: '게임 시작 중...', myDeadwood: '내 데드우드:',
+    takeUpcardBtn: '🎴 가져가기', passUpcardBtn: '❌ 패스',
+    discardBtn: '버리기', knockBtn: '🤜 녹', ginBtn: '✨ 진', bigGinBtn: '💎 빅진',
+    myHand: '내 패', meldHint: '(초록=멜드, 클릭하여 선택)',
+    sortLabel: '정렬:', sortMeld: '멜드순', sortRank: '숫자순', sortSuit: '모양순',
+    playAgainBtn: '🔄 한 판 더', leaveBtnPlain: '나가기', backToLobbyBtn: '로비로 돌아가기',
+    howToTitle: '🃏 진 러미 플레이 방법', gotItBtn: '확인했어요!',
+    settingsTitle: '⚙️ 설정', settingsTheme: '🎨 배경 테마', settingsLanguage: '🌐 언어 / Language',
+    chatTitle: '채팅', chatPlaceholder: '메시지 입력...', chatSendBtn: '전송',
+    cardsSuffix: '장', connectedLbl: '연결됨', readyDoneLbl: '✅ 준비 완료!',
+    roomNotFound: '방을 찾을 수 없습니다.', roomFull: '방이 가득 찼습니다.', enterRoomCode: '방 코드를 입력하세요.',
+    defaultPlayer1: '플레이어1', defaultPlayer2: '플레이어2',
+  },
+  en: {
+    howToBtn: '📖 How to Play', logoTitle: 'Gin Rummy Online', logoSub: 'Play with friends',
+    myNameLabel: 'My Name', namePlaceholder: 'Enter a nickname', charSelectLabel: 'Choose a character',
+    targetScoreLabel: '🎯 Target Score (host only)',
+    ts100: '100 pts (default)', ts150: '150 pts', ts200: '200 pts', ts250: '250 pts', ts300: '300 pts',
+    ts350: '350 pts', ts400: '400 pts', ts450: '450 pts', ts500: '500 pts', tsUnlimited: '♾️ Unlimited',
+    createRoomDivider: 'Create a Room', createRoomBtn: '✨ Create New Room',
+    joinRoomDivider: 'Join a Room', joinCodePlaceholder: 'Enter room code (e.g. AB3KZ)', joinRoomBtn: '🚀 Join',
+    soloDivider: 'Solo Play', aiBtn: '🤖 Play vs AI',
+    roomCodeHint: 'Room code (tap to copy)', shareCodeHint: 'Share this code with your friend',
+    waitingDots: 'Waiting...', waitingForOpponent: 'Waiting for player...', waitingOpponentConn: 'Waiting for opponent',
+    readyBtn: '✅ Ready', leaveBtnArrow: '← Leave',
+    me: 'Me', opponent: 'Opponent', streakSuffix: ' win streak',
+    oppTurnLbl: "▶ Opponent's turn", myTurnLbl: '▶ My turn', away: '⏸ Away',
+    aiTakeoverBtn: '🤖 Let AI Play', requestEndBtn: '🛑 Request Match End',
+    surrenderBtn: '🏳️ Surrender', leaveBtn: '🚪 Leave',
+    handSuffix: "'s hand", deckLbl: 'Deck', emptyLbl: 'Empty', discardLbl: 'Discard',
+    startingGame: 'Starting game...', myDeadwood: 'My deadwood:',
+    takeUpcardBtn: '🎴 Take it', passUpcardBtn: '❌ Pass',
+    discardBtn: 'Discard', knockBtn: '🤜 Knock', ginBtn: '✨ Gin', bigGinBtn: '💎 Big Gin',
+    myHand: 'My Hand', meldHint: '(green = meld, click to select)',
+    sortLabel: 'Sort:', sortMeld: 'By Meld', sortRank: 'By Rank', sortSuit: 'By Suit',
+    playAgainBtn: '🔄 Play Again', leaveBtnPlain: 'Leave', backToLobbyBtn: 'Back to Lobby',
+    howToTitle: '🃏 How to Play Gin Rummy', gotItBtn: 'Got it!',
+    settingsTitle: '⚙️ Settings', settingsTheme: '🎨 Background Theme', settingsLanguage: '🌐 Language / 언어',
+    chatTitle: 'Chat', chatPlaceholder: 'Type a message...', chatSendBtn: 'Send',
+    cardsSuffix: ' cards', connectedLbl: 'Connected', readyDoneLbl: '✅ Ready!',
+    roomNotFound: 'Room not found.', roomFull: 'Room is full.', enterRoomCode: 'Please enter a room code.',
+    defaultPlayer1: 'Player 1', defaultPlayer2: 'Player 2',
+  },
+};
+let LANG = localStorage.getItem('grLang') || 'ko';
+
+function t(key) { return (I18N[LANG] && I18N[LANG][key]) || I18N.ko[key] || key; }
+
+function applyLanguage() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (I18N[LANG][key] !== undefined) el.textContent = I18N[LANG][key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if (I18N[LANG][key] !== undefined) el.placeholder = I18N[LANG][key];
+  });
+  document.getElementById('langBtnKo')?.classList.toggle('active', LANG === 'ko');
+  document.getElementById('langBtnEn')?.classList.toggle('active', LANG === 'en');
+  const howToScroll = document.getElementById('howToScroll');
+  if (howToScroll) howToScroll.innerHTML = HOWTO_HTML[LANG];
+  document.documentElement.lang = LANG;
+}
+
+function setLanguage(lang) {
+  LANG = lang;
+  localStorage.setItem('grLang', lang);
+  applyLanguage();
+}
+
+const HOWTO_HTML = {
+  ko: `
+    <div class="howto-section">
+      <h3>🎯 목표</h3>
+      <p>손에 든 카드를 <strong>멜드(meld)</strong>로 정리해서 <strong>데드우드(meld에 속하지 않은 카드 점수 합)</strong>를 최대한 줄이는 게임이에요. A=1점, 2~10은 숫자 그대로, J·Q·K는 10점입니다.</p>
+    </div>
+    <div class="howto-section">
+      <h3>🧩 멜드 종류</h3>
+      <p><strong>세트(Set)</strong> — 같은 숫자 3~4장, 모양은 모두 달라야 함</p>
+      <div class="howto-example"><span class="mini-card">7♠</span><span class="mini-card red">7♥</span><span class="mini-card">7♣</span></div>
+      <p><strong>런(Run)</strong> — 같은 모양 3장 이상, 숫자가 연속이어야 함</p>
+      <div class="howto-example"><span class="mini-card">4♠</span><span class="mini-card">5♠</span><span class="mini-card">6♠</span></div>
+    </div>
+    <div class="howto-section">
+      <h3>🎴 라운드 시작 (첫 카드 선택)</h3>
+      <ul>
+        <li>매 라운드 시작 시 <strong>선(먼저 정해진 사람)</strong>이 바뀌어요 — 판마다 교대로 첫 기회를 가집니다</li>
+        <li>선이 먼저 시작 카드를 <strong>가져갈지 패스할지</strong> 결정</li>
+        <li>선이 패스하면 → 상대도 같은 카드를 가져갈지 패스할지 결정</li>
+        <li>둘 다 패스하면 → 그때 선이 덱에서 새 카드를 뽑으며 정식으로 시작</li>
+      </ul>
+    </div>
+    <div class="howto-section">
+      <h3>🔄 턴 진행</h3>
+      <ul>
+        <li>덱 🂠 또는 버린 패 ♻️ 중 한 곳에서 카드 1장을 가져옵니다</li>
+        <li>손에서 카드 1장을 선택해 버립니다 (멜드는 초록 테두리로 자동 표시돼요)</li>
+        <li>조건이 맞으면 버리는 대신 녹/진/빅진을 선언할 수 있습니다</li>
+      </ul>
+    </div>
+    <div class="howto-section">
+      <h3>🏆 라운드를 끝내는 방법</h3>
+      <p><span class="howto-badge knock">🤜 녹 (Knock)</span> 데드우드 10점 이하일 때 선언. 상대가 내 멜드에 카드를 얹는 <strong>레이오프</strong> 후 점수 비교</p>
+      <p><span class="howto-badge gin">✨ 진 (Gin)</span> 데드우드 0점(10장 전부 멜드)일 때 선언. 레이오프 없이 25점 + 상대 데드우드 획득</p>
+      <p><span class="howto-badge biggin">💎 빅진 (Big Gin)</span> 카드를 뽑은 11장 전부가 멜드일 때 즉시 선언 (버릴 필요 없음!). 31점 + 상대 데드우드 획득</p>
+      <p><span class="howto-badge undercut">🔄 언더컷</span> 녹 선언자보다 상대 데드우드가 같거나 낮으면 상대가 역전! +25점 보너스</p>
+      <p><span class="howto-badge surrender">🏳️ 항복</span> 상대가 수락하면 그 라운드는 상대 승리(+25점)로 즉시 종료</p>
+    </div>
+    <div class="howto-section">
+      <h3>🧮 점수 요약</h3>
+      <table class="howto-score-table">
+        <tr><th>상황</th><th>점수</th></tr>
+        <tr><td>진 성공</td><td>25 + 상대 데드우드</td></tr>
+        <tr><td>빅진 성공</td><td>31 + 상대 데드우드</td></tr>
+        <tr><td>녹 성공</td><td>(상대 데드우드 − 내 데드우드)</td></tr>
+        <tr><td>언더컷 당함</td><td>(내 데드우드 − 상대 데드우드) + 25</td></tr>
+        <tr><td>항복 수락됨</td><td>고정 25점</td></tr>
+      </table>
+    </div>
+    <div class="howto-section">
+      <h3>👫 같이 할 때 편의 기능</h3>
+      <ul>
+        <li><strong>⏸ 자리비움</strong> — 잠깐 자리 비울 때 켜면 AI가 대신 플레이 (복귀하면 자동 해제)</li>
+        <li><strong>🛑 게임 종료 요청</strong> — 상대 동의 시 현재 점수로 매치 종료</li>
+        <li><strong>🚪 나가기</strong> — 상대에게 퇴장 알림 후 즉시 방 종료</li>
+      </ul>
+    </div>`,
+  en: `
+    <div class="howto-section">
+      <h3>🎯 Goal</h3>
+      <p>Arrange your cards into <strong>melds</strong> to minimize your <strong>deadwood</strong> (the point total of cards not part of any meld). A=1, 2-10 face value, J/Q/K=10.</p>
+    </div>
+    <div class="howto-section">
+      <h3>🧩 Meld Types</h3>
+      <p><strong>Set</strong> — 3-4 cards of the same rank, all different suits</p>
+      <div class="howto-example"><span class="mini-card">7♠</span><span class="mini-card red">7♥</span><span class="mini-card">7♣</span></div>
+      <p><strong>Run</strong> — 3+ consecutive cards of the same suit</p>
+      <div class="howto-example"><span class="mini-card">4♠</span><span class="mini-card">5♠</span><span class="mini-card">6♠</span></div>
+    </div>
+    <div class="howto-section">
+      <h3>🎴 Starting a Round (Up-card Offer)</h3>
+      <ul>
+        <li>The <strong>lead player</strong> alternates every round — taking turns going first</li>
+        <li>The lead may <strong>take or pass</strong> on the starting up-card</li>
+        <li>If they pass → the other player gets the same offer</li>
+        <li>If both pass → the lead draws blind from the deck and play begins normally</li>
+      </ul>
+    </div>
+    <div class="howto-section">
+      <h3>🔄 Taking a Turn</h3>
+      <ul>
+        <li>Draw one card from the deck 🂠 or the discard pile ♻️</li>
+        <li>Discard one card from your hand (melds are auto-highlighted in green)</li>
+        <li>If eligible, you may declare Knock/Gin/Big Gin instead of discarding</li>
+      </ul>
+    </div>
+    <div class="howto-section">
+      <h3>🏆 Ending a Round</h3>
+      <p><span class="howto-badge knock">🤜 Knock</span> Declare when deadwood ≤ 10. Opponent may <strong>lay off</strong> cards onto your melds before scoring</p>
+      <p><span class="howto-badge gin">✨ Gin</span> Declare when deadwood = 0 (all 10 cards melded). No lay-offs; score 25 + opponent's deadwood</p>
+      <p><span class="howto-badge biggin">💎 Big Gin</span> Declare instantly when all 11 drawn cards are melded (no discard needed!). Score 31 + opponent's deadwood</p>
+      <p><span class="howto-badge undercut">🔄 Undercut</span> If the opponent's deadwood is equal or lower than the knocker's, they win instead — +25 bonus!</p>
+      <p><span class="howto-badge surrender">🏳️ Surrender</span> If accepted, the round ends immediately as an opponent win (+25 pts)</p>
+    </div>
+    <div class="howto-section">
+      <h3>🧮 Scoring Summary</h3>
+      <table class="howto-score-table">
+        <tr><th>Situation</th><th>Score</th></tr>
+        <tr><td>Gin</td><td>25 + opponent's deadwood</td></tr>
+        <tr><td>Big Gin</td><td>31 + opponent's deadwood</td></tr>
+        <tr><td>Knock win</td><td>(opponent deadwood − your deadwood)</td></tr>
+        <tr><td>Undercut</td><td>(your deadwood − opponent deadwood) + 25</td></tr>
+        <tr><td>Surrender accepted</td><td>Flat 25 pts</td></tr>
+      </table>
+    </div>
+    <div class="howto-section">
+      <h3>👫 Multiplayer Convenience</h3>
+      <ul>
+        <li><strong>⏸ Away</strong> — Step away and let the AI play for you (auto-clears when you return)</li>
+        <li><strong>🛑 Request Match End</strong> — Ends the match early at the current score if the opponent agrees</li>
+        <li><strong>🚪 Leave</strong> — Notifies the opponent and ends the room immediately</li>
+      </ul>
+    </div>`,
+};
+
+// ===== Themes =====
+function setTheme(theme) {
+  document.body.className = document.body.className.replace(/theme-\S+/g, '').trim();
+  if (theme !== 'green') document.body.classList.add('theme-' + theme);
+  localStorage.setItem('grTheme', theme);
+  document.querySelectorAll('.theme-swatch').forEach(el => el.classList.toggle('selected', el.dataset.theme === theme));
+}
+
+function showSettings() { document.getElementById('settingsOverlay').classList.add('show'); }
+function hideSettings() { document.getElementById('settingsOverlay').classList.remove('show'); }
+
+setTheme(localStorage.getItem('grTheme') || 'green');
+applyLanguage();
+
 // ===== Constants =====
 const SUITS_SYM = { S:'♠', H:'♥', D:'♦', C:'♣' };
 const IS_RED = { H:true, D:true, S:false, C:false };
@@ -1618,14 +1849,14 @@ function getSelectedTargetScore() {
 }
 
 function createRoom() {
-  myName = document.getElementById('myName').value.trim() || '플레이어1';
+  myName = document.getElementById('myName').value.trim() || t('defaultPlayer1');
   if (!socket) initSocket();
   document.getElementById('lobbyError').textContent = '';
   socket.emit('create-room', { name: myName, char: myChar, targetScore: getSelectedTargetScore() });
 }
 
 function startAIGame() {
-  myName = document.getElementById('myName').value.trim() || '플레이어1';
+  myName = document.getElementById('myName').value.trim() || t('defaultPlayer1');
   if (!socket) initSocket();
   document.getElementById('lobbyError').textContent = '';
   myIdx = 0;
@@ -1634,8 +1865,8 @@ function startAIGame() {
 
 function joinRoom() {
   const code = document.getElementById('joinCode').value.trim().toUpperCase();
-  if (!code) { document.getElementById('lobbyError').textContent = '방 코드를 입력하세요.'; return; }
-  myName = document.getElementById('myName').value.trim() || '플레이어2';
+  if (!code) { document.getElementById('lobbyError').textContent = t('enterRoomCode'); return; }
+  myName = document.getElementById('myName').value.trim() || t('defaultPlayer2');
   if (!socket) initSocket();
   document.getElementById('lobbyError').textContent = '';
   socket.emit('join-room', { code, name: myName, char: myChar });
@@ -1649,8 +1880,8 @@ function showWaiting(code) {
   showChatWidget();
   document.getElementById('roomCodeDisplay').textContent = code;
   document.getElementById('waitingTargetScoreLbl').textContent = formatTargetScore();
-  document.getElementById('slotName0').textContent = myIdx === 0 ? myName + ' (나)' : names[0];
-  document.getElementById('slotName1').textContent = myIdx === 1 ? myName + ' (나)' : '기다리는 중...';
+  document.getElementById('slotName0').textContent = myIdx === 0 ? `${myName} (${t('me')})` : names[0];
+  document.getElementById('slotName1').textContent = myIdx === 1 ? `${myName} (${t('me')})` : t('waitingForOpponent');
   document.getElementById('slotIcon0').textContent = myIdx === 0 ? myChar : (chars[0] || CHAR_LIST[0]);
   document.getElementById('slot0').className = 'player-slot connected';
   document.getElementById('slot1').className = 'player-slot';
@@ -1667,23 +1898,21 @@ function onOpponentJoined(name, char) {
   if (char) chars[1-myIdx] = char;
   document.getElementById('slotName' + oppSlotIdx).textContent = name;
   document.getElementById('slotIcon' + oppSlotIdx).textContent = char || '🐶';
-  document.getElementById('slotStatus' + oppSlotIdx).textContent = '연결됨';
+  document.getElementById('slotStatus' + oppSlotIdx).textContent = t('connectedLbl');
   document.getElementById('slot' + oppSlotIdx).className = 'player-slot connected';
   document.getElementById('readyBtn').disabled = false;
 }
 
 function updateReadyUI(ready) {
-  const nameMap = [names[0] || '플레이어1', names[1] || '플레이어2'];
   [0, 1].forEach(i => {
-    // Map slot index to player index
     const pIdx = i; // slot 0 = player 0, slot 1 = player 1
     const statusEl = document.getElementById('slotStatus' + i);
     const slotEl = document.getElementById('slot' + i);
     if (ready[pIdx]) {
-      statusEl.textContent = '✅ 준비 완료!';
+      statusEl.textContent = t('readyDoneLbl');
       slotEl.classList.add('ready-state');
     } else {
-      statusEl.textContent = '대기 중...';
+      statusEl.textContent = t('waitingDots');
       slotEl.classList.remove('ready-state');
     }
   });
@@ -1693,7 +1922,7 @@ function updateReadyUI(ready) {
 function setReady() {
   socket.emit('set-ready');
   document.getElementById('readyBtn').disabled = true;
-  document.getElementById('slotStatus' + myIdx).textContent = '✅ 준비 완료!';
+  document.getElementById('slotStatus' + myIdx).textContent = t('readyDoneLbl');
 }
 
 async function copyCode() {
@@ -1712,7 +1941,7 @@ function leaveRoom() {
 
 // ===== Game render =====
 function isMyTurn() { return currentTurn === myIdx; }
-function oppName() { return names[1-myIdx] || '상대방'; }
+function oppName() { return names[1-myIdx] || t('opponent'); }
 
 function makeCard(card, opts = {}) {
   const { faceDown=false, selected=false, inMeld=false, clickable=false } = opts;
@@ -1770,7 +1999,7 @@ function renderGame() {
   const oppEl = document.getElementById('oppHand');
   oppEl.innerHTML = '';
   for (let i = 0; i < oppCardCount; i++) oppEl.appendChild(makeCard(null, { faceDown: true }));
-  document.getElementById('oppCardCount').textContent = `(${oppCardCount}장)`;
+  document.getElementById('oppCardCount').textContent = `(${oppCardCount}${t('cardsSuffix')})`;
 
   // Analyze my hand
   const analysisHand = (currentPhase === 'discard' && selected)
@@ -1828,7 +2057,7 @@ function renderGame() {
   }
 
   // Deck (blind draw is only allowed in the normal 'draw' phase, never during the upcard offer)
-  document.getElementById('deckCountTxt').textContent = deckCount + '장';
+  document.getElementById('deckCountTxt').textContent = deckCount + t('cardsSuffix');
   const deckEl = document.getElementById('deckPile');
   const canDrawDeck = isMyDecision && currentPhase === 'draw';
   deckEl.className = 'deck-pile' + (canDrawDeck ? '' : ' no-click');
@@ -1848,7 +2077,7 @@ function renderGame() {
   // Avatar bar
   document.getElementById('myAvatarEmoji').firstChild.textContent = chars[myIdx] || CHAR_LIST[0];
   document.getElementById('oppAvatarEmoji').firstChild.textContent = chars[1-myIdx] || CHAR_LIST[1];
-  document.getElementById('myAvatarName').textContent = (names[myIdx] || myName || '나') + ' (나)';
+  document.getElementById('myAvatarName').textContent = (names[myIdx] || myName || t('me')) + ` (${t('me')})`;
   document.getElementById('oppAvatarName').textContent = oppName();
   document.getElementById('myAvatarCard').classList.toggle('my-turn', isMyTurn());
   document.getElementById('oppAvatarCard').classList.toggle('my-turn', !isMyTurn());
