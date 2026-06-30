@@ -65,6 +65,17 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
 .error-msg { color: #ff5252; font-size: 13px; min-height: 18px; text-align: center; }
 
+/* ===== Character picker ===== */
+.char-picker-label { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+.char-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.char-opt {
+  font-size: 26px; padding: 8px 0; border-radius: 10px;
+  border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06);
+  cursor: pointer; transition: all 0.15s; text-align: center;
+}
+.char-opt:hover { background: rgba(255,255,255,0.14); }
+.char-opt.selected { border-color: gold; background: rgba(255,215,0,0.18); transform: scale(1.08); }
+
 /* ===== Waiting room ===== */
 #waitingScreen {
   min-height: 100vh;
@@ -279,6 +290,38 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .disc-box { background: #1a1a2e; border-radius: 16px; padding: 36px; text-align: center; max-width: 360px; width: 90%; }
 .disc-box h2 { font-size: 22px; margin-bottom: 12px; }
 
+/* ===== Player avatar bar ===== */
+.player-bar { display: flex; align-items: center; justify-content: center; gap: 18px; padding: 10px 16px; }
+.avatar-card {
+  flex: 1; max-width: 220px; background: rgba(0,0,0,0.3);
+  border: 2px solid transparent; border-radius: 14px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  transition: all 0.2s; position: relative;
+}
+.avatar-card.my-turn { border-color: #69f0ae; box-shadow: 0 0 16px rgba(105,240,174,0.45); background: rgba(105,240,174,0.08); }
+.avatar-emoji { font-size: 34px; line-height: 1; position: relative; }
+.avatar-emoji .face-overlay { position: absolute; bottom: -4px; right: -8px; font-size: 16px; }
+.avatar-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.avatar-name { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.avatar-turn-lbl { font-size: 10px; color: #69f0ae; font-weight: bold; display: none; }
+.avatar-card.my-turn .avatar-turn-lbl { display: block; }
+.status-pill {
+  display: none; font-size: 10px; background: rgba(255,152,0,0.25); color: #ffb74d;
+  padding: 1px 7px; border-radius: 8px; margin-top: 2px; width: fit-content;
+}
+.status-pill.show { display: block; }
+.vs-label { font-size: 14px; color: rgba(255,255,255,0.35); font-weight: bold; }
+
+/* ===== Utility action row ===== */
+.util-row { display: flex; gap: 6px; justify-content: center; padding: 0 16px 6px; flex-wrap: wrap; }
+.util-btn {
+  padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.08); color: white; font-size: 12px; cursor: pointer; transition: all 0.15s;
+}
+.util-btn:hover { background: rgba(255,255,255,0.18); }
+.util-btn.away-on { background: rgba(255,152,0,0.3); border-color: #ff9800; }
+.util-btn.danger:hover { background: rgba(239,83,80,0.3); border-color: #ef5350; }
+
 @media (max-width: 600px) {
   .card { width: 52px; height: 76px; }
   .card-center { font-size: 18px; }
@@ -299,6 +342,8 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   <div class="lobby-card">
     <h2>내 이름</h2>
     <input id="myName" type="text" placeholder="닉네임 입력" maxlength="12">
+    <div class="char-picker-label">캐릭터 선택</div>
+    <div class="char-grid" id="lobbyCharGrid"></div>
     <div class="divider">방 만들기</div>
     <button class="btn btn-primary" onclick="createRoom()">✨ 새 방 만들기</button>
     <div class="divider">방 참가</div>
@@ -320,7 +365,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
     <div class="players-status">
       <div class="player-slot connected" id="slot0">
-        <div class="slot-icon">👤</div>
+        <div class="slot-icon" id="slotIcon0">🐱</div>
         <div class="slot-name" id="slotName0">나</div>
         <div class="slot-status" id="slotStatus0">대기 중...</div>
       </div>
@@ -342,6 +387,33 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   <div class="game-header">
     <div class="title-sm">🃏 진 러미</div>
     <div class="score-box" id="scoreBox">나: 0 | 상대: 0</div>
+  </div>
+
+  <div class="player-bar">
+    <div class="avatar-card" id="oppAvatarCard">
+      <div class="avatar-emoji" id="oppAvatarEmoji">🐶<span class="face-overlay" id="oppFaceOverlay"></span></div>
+      <div class="avatar-info">
+        <div class="avatar-name" id="oppAvatarName">상대방</div>
+        <div class="avatar-turn-lbl">▶ 상대 턴</div>
+        <div class="status-pill" id="oppStatusPill">⏸ 자리비움</div>
+      </div>
+    </div>
+    <div class="vs-label">VS</div>
+    <div class="avatar-card" id="myAvatarCard">
+      <div class="avatar-emoji" id="myAvatarEmoji">🐱<span class="face-overlay" id="myFaceOverlay"></span></div>
+      <div class="avatar-info">
+        <div class="avatar-name" id="myAvatarName">나</div>
+        <div class="avatar-turn-lbl">▶ 내 턴</div>
+        <div class="status-pill" id="myStatusPill">⏸ 자리비움</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="util-row">
+    <button class="util-btn" id="awayBtn" onclick="toggleAway()">⏸ 자리비움</button>
+    <button class="util-btn" onclick="requestEnd()">🛑 게임 종료 요청</button>
+    <button class="util-btn danger" onclick="confirmSurrender()">🏳️ 항복</button>
+    <button class="util-btn danger" onclick="confirmLeave()">🚪 나가기</button>
   </div>
 
   <div class="game-area">
@@ -420,9 +492,19 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 <!-- ===== DISCONNECT OVERLAY ===== -->
 <div class="overlay" id="discOverlay">
   <div class="disc-box">
-    <div style="font-size:40px">😢</div>
-    <h2>상대방이 나갔습니다</h2>
-    <p style="color:rgba(255,255,255,0.6);margin-bottom:24px">방이 닫혔습니다.</p>
+    <div style="font-size:40px" id="discEmoji">😢</div>
+    <h2 id="discTitle">상대방이 나갔습니다</h2>
+    <p style="color:rgba(255,255,255,0.6);margin-bottom:24px" id="discSub">방이 닫혔습니다.</p>
+    <button class="btn btn-primary" onclick="leaveRoom()">로비로 돌아가기</button>
+  </div>
+</div>
+
+<!-- ===== MATCH END OVERLAY ===== -->
+<div class="overlay" id="matchEndOverlay">
+  <div class="result-box">
+    <div class="result-emoji" id="matchEndEmoji">🏆</div>
+    <div class="result-title" id="matchEndTitle"></div>
+    <div class="result-pts" id="matchEndDetail"></div>
     <button class="btn btn-primary" onclick="leaveRoom()">로비로 돌아가기</button>
   </div>
 </div>
@@ -436,6 +518,8 @@ const RANK_ORD = {A:1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,J:
 const SUITS_ORDER = ['S','H','D','C'];
 
 // ===== Client state =====
+const CHAR_LIST = ['🐱','🐶','🐰','🦊','🐻','🐼','🐨','🐯'];
+let myChar = CHAR_LIST[0];
 let socket = null;
 let myIdx = -1;
 let myHand = [];
@@ -448,9 +532,24 @@ let selected = null;
 let roomCode = '';
 let myName = '';
 let names = ['', ''];
+let chars = [CHAR_LIST[0], CHAR_LIST[1]];
+let away = [false, false];
 let scores = [0, 0];
 let sortMode = 'meld';   // 'meld' | 'rank' | 'suit'
 let lastDrawnId = null;  // 방금 뽑은 카드 id
+
+function renderCharGrid() {
+  const grid = document.getElementById('lobbyCharGrid');
+  grid.innerHTML = '';
+  CHAR_LIST.forEach(ch => {
+    const btn = document.createElement('div');
+    btn.className = 'char-opt' + (ch === myChar ? ' selected' : '');
+    btn.textContent = ch;
+    btn.onclick = () => { myChar = ch; renderCharGrid(); };
+    grid.appendChild(btn);
+  });
+}
+renderCharGrid();
 
 // ===== Meld detection (client-side, for display only) =====
 function findAllMelds(cards) {
@@ -506,23 +605,68 @@ function initSocket() {
   socket.on('room-created', ({ code, playerIndex }) => {
     myIdx = playerIndex;
     roomCode = code;
+    chars[myIdx] = myChar;
     showWaiting(code);
   });
 
-  socket.on('room-joined', ({ code, playerIndex, opponentName }) => {
+  socket.on('room-joined', ({ code, playerIndex, opponentName, opponentChar }) => {
     myIdx = playerIndex;
     roomCode = code;
+    chars[myIdx] = myChar;
+    chars[1-myIdx] = opponentChar || CHAR_LIST[0];
     names[1-myIdx] = opponentName;
     showWaiting(code);
     // Opponent already in room
-    onOpponentJoined(opponentName);
+    onOpponentJoined(opponentName, opponentChar);
   });
 
   socket.on('err', msg => {
     document.getElementById('lobbyError').textContent = msg;
   });
 
-  socket.on('opponent-joined', ({ name }) => onOpponentJoined(name));
+  socket.on('opponent-joined', ({ name, char }) => onOpponentJoined(name, char));
+
+  socket.on('char-update', ({ idx, char }) => {
+    chars[idx] = char;
+    const slotIdx = idx;
+    const iconEl = document.getElementById('slotIcon' + slotIdx);
+    if (iconEl) iconEl.textContent = char;
+    renderGame();
+  });
+
+  socket.on('status-update', ({ idx, away: a }) => {
+    away[idx] = a;
+    renderGame();
+  });
+
+  socket.on('player-left', ({ name, disconnected }) => {
+    document.getElementById('resultOverlay').classList.remove('show');
+    document.getElementById('matchEndOverlay').classList.remove('show');
+    document.getElementById('discEmoji').textContent = disconnected ? '📡' : '🚪';
+    document.getElementById('discTitle').textContent = `${name || '상대방'}님이 ${disconnected ? '연결이 끊겼습니다' : '퇴장하셨습니다'}`;
+    document.getElementById('discSub').textContent = '방이 닫혔습니다.';
+    document.getElementById('discOverlay').classList.add('show');
+  });
+
+  socket.on('end-request-received', ({ fromName }) => {
+    const accept = confirm(`${fromName} 님이 게임 종료를 요청했습니다.\n현재 점수로 매치를 종료할까요?\n(나: ${scores[myIdx]}점 | ${fromName}: ${scores[1-myIdx]}점)`);
+    socket.emit('respond-end', { accept });
+  });
+
+  socket.on('end-request-declined', () => {
+    alert('상대방이 종료 요청을 거절했습니다. 게임을 계속합니다.');
+  });
+
+  socket.on('match-ended', ({ winnerIdx, scores: sc, names: ns }) => {
+    scores = sc;
+    document.getElementById('resultOverlay').classList.remove('show');
+    const iWon = winnerIdx === myIdx;
+    const tie = winnerIdx === -1;
+    document.getElementById('matchEndEmoji').textContent = tie ? '🤝' : (iWon ? '🏆' : '💔');
+    document.getElementById('matchEndTitle').textContent = tie ? '무승부로 종료!' : (iWon ? '최종 승리!' : `${oppName()} 승리...`);
+    document.getElementById('matchEndDetail').textContent = `최종 점수 — 나: ${sc[myIdx]}점 | ${oppName()}: ${sc[1-myIdx]}점`;
+    document.getElementById('matchEndOverlay').classList.add('show');
+  });
 
   socket.on('ready-update', ({ ready, names: rNames }) => {
     names = rNames;
@@ -539,7 +683,11 @@ function initSocket() {
     lastDrawnId = null;
     names = data.names;
     scores = data.scores;
+    if (data.chars) chars = data.chars;
+    away = [false, false];
     oppCardCount = 10;
+    document.getElementById('myFaceOverlay').textContent = '';
+    document.getElementById('oppFaceOverlay').textContent = '';
     showGame();
     renderGame();
     setStatus(isMyTurn() ? '내 턴: 덱 또는 버린 패에서 뽑으세요.' : `${oppName()} 턴...`);
@@ -594,10 +742,6 @@ function initSocket() {
     document.getElementById('rematchStatus').textContent = txt;
   });
 
-  socket.on('opponent-left', () => {
-    document.getElementById('resultOverlay').classList.remove('show');
-    document.getElementById('discOverlay').classList.add('show');
-  });
 }
 
 // ===== Lobby actions =====
@@ -605,7 +749,7 @@ function createRoom() {
   myName = document.getElementById('myName').value.trim() || '플레이어1';
   if (!socket) initSocket();
   document.getElementById('lobbyError').textContent = '';
-  socket.emit('create-room', { name: myName });
+  socket.emit('create-room', { name: myName, char: myChar });
 }
 
 function joinRoom() {
@@ -614,7 +758,7 @@ function joinRoom() {
   myName = document.getElementById('myName').value.trim() || '플레이어2';
   if (!socket) initSocket();
   document.getElementById('lobbyError').textContent = '';
-  socket.emit('join-room', { code, name: myName });
+  socket.emit('join-room', { code, name: myName, char: myChar });
 }
 
 document.getElementById('joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
@@ -625,19 +769,22 @@ function showWaiting(code) {
   document.getElementById('roomCodeDisplay').textContent = code;
   document.getElementById('slotName0').textContent = myIdx === 0 ? myName + ' (나)' : names[0];
   document.getElementById('slotName1').textContent = myIdx === 1 ? myName + ' (나)' : '기다리는 중...';
+  document.getElementById('slotIcon0').textContent = myIdx === 0 ? myChar : (chars[0] || CHAR_LIST[0]);
   document.getElementById('slot0').className = 'player-slot connected';
   document.getElementById('slot1').className = 'player-slot';
   // Enable ready button if opponent present (for joiner)
   if (myIdx === 1) {
+    document.getElementById('slotIcon1').textContent = myChar;
     document.getElementById('readyBtn').disabled = false;
   }
 }
 
-function onOpponentJoined(name) {
+function onOpponentJoined(name, char) {
   const oppSlotIdx = myIdx === 0 ? 1 : 0;
   names[1-myIdx] = name;
+  if (char) chars[1-myIdx] = char;
   document.getElementById('slotName' + oppSlotIdx).textContent = name;
-  document.getElementById('slotIcon1').textContent = '👤';
+  document.getElementById('slotIcon1').textContent = char || '🐶';
   document.getElementById('slotStatus1').textContent = '연결됨';
   document.getElementById('slot1').className = 'player-slot connected';
   document.getElementById('readyBtn').disabled = false;
@@ -769,6 +916,18 @@ function renderGame() {
   document.getElementById('myTurnArrow').textContent = isMyTurn() ? '▶' : '';
   document.getElementById('oppTurnArrow').textContent = !isMyTurn() ? '▶' : '';
 
+  // Avatar bar
+  document.getElementById('myAvatarEmoji').firstChild.textContent = chars[myIdx] || CHAR_LIST[0];
+  document.getElementById('oppAvatarEmoji').firstChild.textContent = chars[1-myIdx] || CHAR_LIST[1];
+  document.getElementById('myAvatarName').textContent = (names[myIdx] || myName || '나') + ' (나)';
+  document.getElementById('oppAvatarName').textContent = oppName();
+  document.getElementById('myAvatarCard').classList.toggle('my-turn', isMyTurn());
+  document.getElementById('oppAvatarCard').classList.toggle('my-turn', !isMyTurn());
+  document.getElementById('myStatusPill').classList.toggle('show', away[myIdx]);
+  document.getElementById('oppStatusPill').classList.toggle('show', away[1-myIdx]);
+  document.getElementById('awayBtn').classList.toggle('away-on', away[myIdx]);
+  document.getElementById('awayBtn').textContent = away[myIdx] ? '▶ 복귀하기' : '⏸ 자리비움';
+
   // DW badge
   const dwEl = document.getElementById('myDwBadge');
   dwEl.textContent = dw + '점';
@@ -827,6 +986,28 @@ function actGin() {
   socket.emit('action', { type: 'gin', cardId: selected.id });
 }
 
+// ===== Utility actions =====
+function toggleAway() {
+  socket.emit('toggle-status');
+}
+
+function confirmSurrender() {
+  if (!confirm('정말 항복하시겠습니까? 이번 라운드는 상대방의 승리(+25점)로 처리됩니다.')) return;
+  socket.emit('surrender');
+}
+
+function confirmLeave() {
+  if (!confirm('정말 나가시겠습니까? 상대방에게 퇴장 알림이 전송되고 방이 종료됩니다.')) return;
+  socket.emit('leave-game');
+  setTimeout(() => location.reload(), 150);
+}
+
+function requestEnd() {
+  if (!confirm('상대방에게 게임 종료를 요청할까요? 상대가 수락하면 현재 점수로 매치가 종료됩니다.')) return;
+  socket.emit('request-end');
+  setStatus('🛑 게임 종료 요청을 보냈습니다. 상대방 응답을 기다리는 중...');
+}
+
 // ===== Result =====
 function showResult(data) {
   const { resultType, winnerIdx, pts, knockerIdx, hands, melds, dw, rawDw, layoff, scores: sc, names: ns } = data;
@@ -840,13 +1021,23 @@ function showResult(data) {
   const oppLayoff = layoff ? layoff[1-myIdx] : [];
 
   const iWon = winnerIdx === myIdx;
-  const emojis = { gin:'✨', undercut:'🔄', knock: iWon?'🎉':'😢', tie:'🤝' };
+  const emojis = { gin:'✨', undercut:'🔄', knock: iWon?'🎉':'😢', tie:'🤝', surrender:'🏳️' };
   const titles = {
     gin: knockerIdx === myIdx ? '진! 완벽한 승리!' : `${ns[knockerIdx]} 진! 패배...`,
     undercut: iWon ? '언더컷! 역전 승리!' : '언더컷! 역전 패배...',
     knock: iWon ? '녹 성공! 승리!' : `${ns[knockerIdx]} 녹 성공. 패배...`,
     tie: '무승부!',
+    surrender: iWon ? `${ns[1-winnerIdx]} 항복! 승리!` : '항복했습니다...',
   };
+
+  // Avatar face overlay
+  if (winnerIdx === -1) {
+    document.getElementById('myFaceOverlay').textContent = '😐';
+    document.getElementById('oppFaceOverlay').textContent = '😐';
+  } else {
+    document.getElementById('myFaceOverlay').textContent = iWon ? '😆' : '😭';
+    document.getElementById('oppFaceOverlay').textContent = iWon ? '😭' : '😆';
+  }
 
   document.getElementById('resEmoji').textContent = emojis[resultType] || (iWon ? '🎉' : '😢');
   document.getElementById('resTitle').textContent = titles[resultType] || (iWon ? '승리!' : '패배...');
@@ -906,6 +1097,7 @@ function showGame() {
   showScreen('gameScreen');
   document.getElementById('resultOverlay').classList.remove('show');
   document.getElementById('discOverlay').classList.remove('show');
+  document.getElementById('matchEndOverlay').classList.remove('show');
 }
 
 // Check URL for room code (share link)

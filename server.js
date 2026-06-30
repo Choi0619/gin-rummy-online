@@ -127,15 +127,18 @@ function emitToPlayer(room, idx, event, data) {
 io.on('connection', socket => {
   console.log('connect', socket.id);
 
-  socket.on('create-room', ({ name }) => {
+  socket.on('create-room', ({ name, char }) => {
     const code = makeCode();
     rooms.set(code, {
       code,
       players: [socket.id],
       names: [name || '플레이어1', ''],
+      chars: [char || '🐱', ''],
+      away: [false, false],
       ready: [false, false],
       game: null,
       scores: [0, 0],
+      endRequest: null,
     });
     socket.join(code);
     socket.data.room = code;
@@ -143,17 +146,88 @@ io.on('connection', socket => {
     socket.emit('room-created', { code, playerIndex: 0 });
   });
 
-  socket.on('join-room', ({ code, name }) => {
+  socket.on('join-room', ({ code, name, char }) => {
     const room = rooms.get(code.toUpperCase().trim());
     if (!room) { socket.emit('err', '방을 찾을 수 없습니다.'); return; }
     if (room.players.length >= 2 && room.players[1]) { socket.emit('err', '방이 가득 찼습니다.'); return; }
     room.players[1] = socket.id;
     room.names[1] = name || '플레이어2';
+    room.chars[1] = char || '🐶';
     socket.join(code);
     socket.data.room = code;
     socket.data.idx = 1;
-    socket.emit('room-joined', { code, playerIndex: 1, opponentName: room.names[0] });
-    emitToPlayer(room, 0, 'opponent-joined', { name: room.names[1] });
+    socket.emit('room-joined', { code, playerIndex: 1, opponentName: room.names[0], opponentChar: room.chars[0] });
+    emitToPlayer(room, 0, 'opponent-joined', { name: room.names[1], char: room.chars[1] });
+  });
+
+  socket.on('set-character', ({ char }) => {
+    const room = rooms.get(socket.data.room);
+    if (!room) return;
+    const idx = socket.data.idx;
+    room.chars[idx] = char;
+    io.to(room.code).emit('char-update', { idx, char });
+  });
+
+  socket.on('toggle-status', () => {
+    const room = rooms.get(socket.data.room);
+    if (!room) return;
+    const idx = socket.data.idx;
+    room.away[idx] = !room.away[idx];
+    io.to(room.code).emit('status-update', { idx, away: room.away[idx] });
+  });
+
+  socket.on('surrender', () => {
+    const room = rooms.get(socket.data.room);
+    if (!room || !room.game || room.game.over) return;
+    const idx = socket.data.idx;
+    const oppIdx = 1 - idx;
+    room.game.over = true;
+    room.scores[oppIdx] += 25;
+    io.to(room.code).emit('round-end', {
+      resultType: 'surrender',
+      winnerIdx: oppIdx,
+      pts: 25,
+      knockerIdx: oppIdx,
+      hands: room.game.hands,
+      melds: [[], []],
+      dw: [0, 0],
+      rawDw: [0, 0],
+      layoff: [[], []],
+      scores: room.scores,
+      names: room.names,
+      surrenderBy: idx,
+    });
+    room.rematch = [false, false];
+  });
+
+  socket.on('leave-game', () => {
+    const room = rooms.get(socket.data.room);
+    if (!room) return;
+    const idx = socket.data.idx;
+    room.leaving = true;
+    emitToPlayer(room, 1 - idx, 'player-left', { name: room.names[idx] });
+    rooms.delete(room.code);
+  });
+
+  socket.on('request-end', () => {
+    const room = rooms.get(socket.data.room);
+    if (!room) return;
+    const idx = socket.data.idx;
+    room.endRequest = idx;
+    emitToPlayer(room, 1 - idx, 'end-request-received', { fromName: room.names[idx] });
+  });
+
+  socket.on('respond-end', ({ accept }) => {
+    const room = rooms.get(socket.data.room);
+    if (!room || room.endRequest === null) return;
+    const requesterIdx = room.endRequest;
+    room.endRequest = null;
+    if (accept) {
+      const winnerIdx = room.scores[0] === room.scores[1] ? -1 : (room.scores[0] > room.scores[1] ? 0 : 1);
+      io.to(room.code).emit('match-ended', { winnerIdx, scores: room.scores, names: room.names });
+    } else {
+      emitToPlayer(room, requesterIdx, 'end-request-declined', {});
+    }
   });
 
   socket.on('set-ready', () => {
@@ -190,8 +264,9 @@ io.on('connection', socket => {
     const code = socket.data.room;
     if (!code) return;
     const room = rooms.get(code);
-    if (room) {
-      io.to(code).emit('opponent-left');
+    if (room && !room.leaving) {
+      const idx = socket.data.idx;
+      io.to(code).emit('player-left', { name: room.names[idx], disconnected: true });
       rooms.delete(code);
     }
   });
@@ -208,6 +283,7 @@ function startGame(room) {
     phase: 'draw',
     over: false,
   };
+  room.away = [false, false];
   room.players.forEach((sid, i) => {
     io.to(sid).emit('game-started', {
       hand: room.game.hands[i],
@@ -216,6 +292,7 @@ function startGame(room) {
       turn: 0,
       scores: room.scores,
       names: room.names,
+      chars: room.chars,
       playerIndex: i,
     });
   });
