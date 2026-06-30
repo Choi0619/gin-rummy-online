@@ -487,8 +487,8 @@ function handleUpcardDecision(room, idx, type, socket) {
       g.phase = 'discard';
       g.turn = firstIdx;
       const sid = room.players[firstIdx];
-      if (sid) io.to(sid).emit('you-drew', { card, deckCount: g.deck.length });
-      emitToPlayer(room, 1 - firstIdx, 'opp-drew', { from: 'deck', deckCount: g.deck.length });
+      if (sid) io.to(sid).emit('you-drew', { card, deckCount: g.deck.length, turn: firstIdx });
+      emitToPlayer(room, 1 - firstIdx, 'opp-drew', { from: 'deck', deckCount: g.deck.length, turn: firstIdx });
     }
   }
 
