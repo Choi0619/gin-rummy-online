@@ -212,8 +212,13 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   flex-wrap: wrap;
   gap: 8px;
 }
-.game-header .title-sm { font-size: 16px; font-weight: bold; }
-.target-score-lbl { font-size: 11px; font-weight: 600; color: #ffd76a; background: rgba(255,215,120,0.12); border: 1px solid rgba(255,215,120,0.3); padding: 2px 9px; border-radius: 10px; margin-left: 4px; vertical-align: middle; }
+.game-header .title-sm { font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+.target-score-lbl {
+  font-size: 13px; font-weight: 700; color: #ffd76a;
+  background: rgba(255,215,120,0.14); border: 1px solid rgba(255,215,120,0.35);
+  padding: 5px 13px; border-radius: 14px;
+  display: inline-flex; align-items: center; line-height: 1;
+}
 
 /* ===== Pretty score box ===== */
 .score-box-pretty {
@@ -561,6 +566,73 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .util-btn.away-on { background: rgba(255,152,0,0.3); border-color: #ff9800; }
 .util-btn.danger:hover { background: rgba(239,83,80,0.3); border-color: #ef5350; }
 
+/* ===== Chat ===== */
+.chat-toggle-btn {
+  position: fixed; bottom: 20px; right: 20px; z-index: 240;
+  width: 52px; height: 52px; border-radius: 50%; border: none;
+  background: linear-gradient(135deg, #2196f3, #1565c0); color: white;
+  font-size: 22px; cursor: pointer; box-shadow: 0 8px 22px rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center; transition: transform 0.15s;
+}
+.chat-toggle-btn:hover { transform: scale(1.08); }
+.chat-badge {
+  display: none; position: absolute; top: -2px; right: -2px; min-width: 18px; height: 18px;
+  background: #ef5350; color: white; font-size: 10px; font-weight: bold; border-radius: 9px;
+  align-items: center; justify-content: center; padding: 0 4px; border: 2px solid #0a3015;
+}
+.chat-panel {
+  position: fixed; bottom: 84px; right: 20px; z-index: 240;
+  width: 300px; max-width: 88vw; height: 380px; max-height: 65vh;
+  background: linear-gradient(160deg, #173d24, #0a2414);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 16px;
+  box-shadow: 0 16px 50px rgba(0,0,0,0.6);
+  display: flex; flex-direction: column; overflow: hidden;
+  transform: translateY(20px) scale(0.96); opacity: 0; pointer-events: none;
+  transition: all 0.2s cubic-bezier(.34,1.56,.64,1);
+}
+.chat-panel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+.chat-header {
+  padding: 10px 14px; font-size: 14px; font-weight: bold; color: #ffd76a;
+  background: rgba(0,0,0,0.25); display: flex; justify-content: space-between; align-items: center;
+}
+.chat-close { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 16px; cursor: pointer; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.chat-messages::-webkit-scrollbar { width: 5px; }
+.chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+.chat-msg { display: flex; flex-direction: column; max-width: 80%; }
+.chat-msg.mine { align-self: flex-end; align-items: flex-end; }
+.chat-msg.system { align-self: center; max-width: 100%; align-items: center; }
+.chat-name { font-size: 10px; color: rgba(255,255,255,0.45); margin-bottom: 2px; }
+.chat-bubble {
+  background: rgba(255,255,255,0.1); padding: 7px 11px; border-radius: 12px 12px 12px 3px;
+  font-size: 13px; line-height: 1.4; word-break: break-word; color: white;
+}
+.chat-msg.mine .chat-bubble { background: rgba(33,150,243,0.35); border-radius: 12px 12px 3px 12px; }
+.chat-msg.system .chat-bubble { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.55); font-size: 11px; border-radius: 10px; }
+.chat-bubble.emoji-only { background: transparent !important; padding: 2px; font-size: 30px; line-height: 1; animation: emojiPop 0.3s cubic-bezier(.34,1.56,.64,1); }
+@keyframes emojiPop { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.chat-time { font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+.chat-quick-emojis {
+  display: flex; gap: 4px; padding: 8px 10px 0; flex-wrap: wrap; justify-content: center;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.chat-quick-emojis button {
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px; font-size: 18px; padding: 4px 7px; cursor: pointer; transition: all 0.15s; line-height: 1;
+}
+.chat-quick-emojis button:hover { background: rgba(255,255,255,0.18); transform: scale(1.15); }
+.chat-input-row { display: flex; gap: 6px; padding: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
+.chat-input-row input {
+  flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 18px; padding: 8px 14px; color: white; font-size: 13px; outline: none;
+}
+.chat-input-row input::placeholder { color: rgba(255,255,255,0.35); }
+.chat-input-row button {
+  background: #2196f3; color: white; border: none; border-radius: 18px; padding: 8px 16px;
+  font-size: 13px; font-weight: bold; cursor: pointer;
+}
+.chat-input-row button:hover { background: #1976d2; }
+
 @media (max-width: 600px) {
   .card { width: 52px; height: 76px; }
   .card-center { font-size: 18px; }
@@ -875,6 +947,34 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 <!-- ===== CONFETTI LAYER ===== -->
 <div id="confettiLayer"></div>
 
+<!-- ===== CHAT ===== -->
+<button class="chat-toggle-btn" id="chatToggleBtn" onclick="toggleChat()" style="display:none">
+  💬<span class="chat-badge" id="chatBadge"></span>
+</button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-header">
+    💬 채팅
+    <button class="chat-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-quick-emojis">
+    <button onclick="sendQuickEmoji('👍')" title="따봉">👍</button>
+    <button onclick="sendQuickEmoji('😂')" title="웃음">😂</button>
+    <button onclick="sendQuickEmoji('😭')" title="울음">😭</button>
+    <button onclick="sendQuickEmoji('😮')" title="놀람">😮</button>
+    <button onclick="sendQuickEmoji('😡')" title="화남">😡</button>
+    <button onclick="sendQuickEmoji('❤️')" title="좋아요">❤️</button>
+    <button onclick="sendQuickEmoji('🔥')" title="불타오름">🔥</button>
+    <button onclick="sendQuickEmoji('🎉')" title="축하">🎉</button>
+    <button onclick="sendQuickEmoji('🤔')" title="고민">🤔</button>
+    <button onclick="sendQuickEmoji('👏')" title="박수">👏</button>
+  </div>
+  <div class="chat-input-row">
+    <input id="chatInput" type="text" placeholder="메시지 입력..." maxlength="200">
+    <button onclick="sendChat()">전송</button>
+  </div>
+</div>
+
 <script>
 // ===== Constants =====
 const SUITS_SYM = { S:'♠', H:'♥', D:'♦', C:'♣' };
@@ -908,6 +1008,80 @@ let aiControlled = [false, false];
 let lastDiscardTopId = null;
 let streaks = [0, 0]; // win streaks indexed by absolute player index (0/1), synced via round-end data
 let targetScore = 100; // null = unlimited
+
+// ===== Chat =====
+let chatOpen = false;
+let unreadChat = 0;
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  document.getElementById('chatPanel').classList.toggle('open', chatOpen);
+  if (chatOpen) {
+    unreadChat = 0;
+    const badge = document.getElementById('chatBadge');
+    badge.style.display = 'none';
+    badge.textContent = '';
+    scrollChatToBottom();
+    setTimeout(() => document.getElementById('chatInput').focus(), 150);
+  }
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text || !socket) return;
+  socket.emit('chat-message', { text });
+  input.value = '';
+}
+
+function sendQuickEmoji(emoji) {
+  if (!socket) return;
+  socket.emit('chat-message', { text: emoji });
+}
+
+const EMOJI_ONLY_RE = /^(?:\p{Extended_Pictographic}️?‍?)+$/u;
+
+function scrollChatToBottom() {
+  const list = document.getElementById('chatMessages');
+  list.scrollTop = list.scrollHeight;
+}
+
+function appendChatMessage({ idx, name, text, ts, system }) {
+  const list = document.getElementById('chatMessages');
+  const mine = !system && idx === myIdx;
+  const row = document.createElement('div');
+  row.className = 'chat-msg' + (system ? ' system' : (mine ? ' mine' : ''));
+  if (!system) {
+    const nameEl = document.createElement('div');
+    nameEl.className = 'chat-name';
+    nameEl.textContent = mine ? '나' : (name || '상대방');
+    row.appendChild(nameEl);
+  }
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble' + (!system && text.length <= 8 && EMOJI_ONLY_RE.test(text) ? ' emoji-only' : '');
+  bubble.textContent = text;
+  row.appendChild(bubble);
+  if (!system) {
+    const timeEl = document.createElement('div');
+    timeEl.className = 'chat-time';
+    timeEl.textContent = new Date(ts || Date.now()).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    row.appendChild(timeEl);
+  }
+  list.appendChild(row);
+  scrollChatToBottom();
+  if (!mine && !chatOpen) {
+    unreadChat++;
+    const badge = document.getElementById('chatBadge');
+    badge.style.display = 'flex';
+    badge.textContent = unreadChat > 9 ? '9+' : unreadChat;
+  }
+}
+
+function showChatWidget() {
+  document.getElementById('chatToggleBtn').style.display = 'flex';
+}
+
+document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
 
 function formatTargetScore() {
   return targetScore === null ? '♾️ 무제한' : `🎯 ${targetScore}점 선승`;
@@ -1064,6 +1238,8 @@ function bestMelds(cards) {
 function initSocket() {
   socket = io();
 
+  socket.on('chat-message', appendChatMessage);
+
   socket.on('room-created', ({ code, playerIndex, targetScore: ts }) => {
     myIdx = playerIndex;
     roomCode = code;
@@ -1157,6 +1333,25 @@ function initSocket() {
     const box = document.getElementById('discBox');
     box.classList.remove('pop-in'); void box.offsetWidth; box.classList.add('pop-in');
     document.getElementById('discOverlay').classList.add('show');
+  });
+
+  socket.on('opponent-disconnected-info', ({ name }) => {
+    const inGame = document.getElementById('gameScreen').classList.contains('active');
+    if (inGame) {
+      showToast(`📡 ${name || '상대방'}님의 연결이 끊겼습니다. AI가 대신 플레이합니다.`, 'waiting');
+      setTimeout(() => hideToast(), 4000);
+    } else {
+      // This event always comes from the opponent's perspective, so the
+      // disconnected slot is whichever one isn't "me".
+      const oppSlotIdx = myIdx === 0 ? 1 : 0;
+      const statusEl = document.getElementById('slotStatus' + oppSlotIdx);
+      const iconEl = document.getElementById('slotIcon' + oppSlotIdx);
+      if (statusEl) statusEl.textContent = '📡 연결 끊김 — 대기 중...';
+      if (iconEl) iconEl.innerHTML = '<span class="spinner">⏳</span>';
+      const slotEl = document.getElementById('slot' + oppSlotIdx);
+      if (slotEl) slotEl.className = 'player-slot';
+      document.getElementById('readyBtn').disabled = true;
+    }
   });
 
   socket.on('end-request-received', ({ fromName }) => {
@@ -1346,6 +1541,7 @@ document.getElementById('joinCode').addEventListener('keydown', e => { if (e.key
 // ===== Waiting room =====
 function showWaiting(code) {
   showScreen('waitingScreen');
+  showChatWidget();
   document.getElementById('roomCodeDisplay').textContent = code;
   document.getElementById('waitingTargetScoreLbl').textContent = formatTargetScore();
   document.getElementById('slotName0').textContent = myIdx === 0 ? myName + ' (나)' : names[0];
@@ -1797,6 +1993,7 @@ function hideHowTo() {
 
 function showGame() {
   showScreen('gameScreen');
+  showChatWidget();
   hideToast();
   lastDiscardTopId = null;
   document.getElementById('resultOverlay').classList.remove('show');

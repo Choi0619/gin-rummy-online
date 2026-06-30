@@ -200,6 +200,15 @@ io.on('connection', socket => {
     io.to(room.code).emit('char-update', { idx, char });
   });
 
+  socket.on('chat-message', ({ text }) => {
+    const room = rooms.get(socket.data.room);
+    if (!room) return;
+    const idx = socket.data.idx;
+    const clean = String(text || '').slice(0, 200).trim();
+    if (!clean) return;
+    io.to(room.code).emit('chat-message', { idx, name: room.names[idx], text: clean, ts: Date.now() });
+  });
+
   socket.on('toggle-status', () => {
     const room = rooms.get(socket.data.room);
     if (!room) return;
@@ -381,12 +390,28 @@ io.on('connection', socket => {
     const code = socket.data.room;
     if (!code) return;
     const room = rooms.get(code);
-    if (room && !room.leaving) {
-      const idx = socket.data.idx;
-      clearTurnTimers(room);
-      if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
-      io.to(code).emit('player-left', { name: room.names[idx], disconnected: true });
-      rooms.delete(code);
+    if (!room || room.leaving) return;
+    const idx = socket.data.idx;
+    if (room.players[idx] !== socket.id) return; // stale/duplicate event, ignore
+
+    // A plain disconnect (closed tab, dropped wifi, etc.) does NOT end the
+    // room for the other player — only an explicit "leave-game" does that.
+    room.players[idx] = null;
+
+    if (room.game && !room.game.over) {
+      // Mid-round: let the AI take over so the remaining player can keep playing.
+      if (!room.aiControlled) room.aiControlled = [false, false];
+      room.aiControlled[idx] = true;
+      if (!room.away) room.away = [false, false];
+      room.away[idx] = true;
+      io.to(code).emit('status-update', { idx, away: true });
+      io.to(code).emit('ai-takeover-update', { idx, enabled: true, auto: true });
+      emitToPlayer(room, 1 - idx, 'opponent-disconnected-info', { name: room.names[idx] });
+      if (room.game.turn === idx) aiTakeTurn(room, idx);
+    } else {
+      // Not mid-round (waiting room / between rounds): just notify, stay put.
+      if (room.ready) room.ready = [false, false];
+      emitToPlayer(room, 1 - idx, 'opponent-disconnected-info', { name: room.names[idx] });
     }
   });
 });
