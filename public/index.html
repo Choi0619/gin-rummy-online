@@ -255,6 +255,15 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .btn-discard-act { background: #ef5350; color: white; }
 .btn-knock-act { background: #ff9800; color: white; }
 .btn-gin-act { background: #4caf50; color: white; }
+.act-btn.ready-glow {
+  animation: readyPulse 1s ease-in-out infinite;
+  transform: scale(1.12);
+  font-size: 13px;
+}
+@keyframes readyPulse {
+  0%, 100% { box-shadow: 0 0 6px 0 currentColor; }
+  50% { box-shadow: 0 0 16px 4px currentColor; }
+}
 
 /* ===== Overlay ===== */
 .overlay {
@@ -285,29 +294,95 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .layoff-saved { font-size: 11px; color: #ffd54f; display: block; margin-top: 4px; }
 .dw-final { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 5px; }
 .rematch-row { display: flex; gap: 10px; justify-content: center; margin-top: 4px; }
+.rematch-banner {
+  display: none; margin-top: 12px; padding: 9px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: bold; align-items: center; justify-content: center; gap: 8px;
+}
+.rematch-banner.show-waiting {
+  display: flex; background: rgba(255,193,7,0.15); border: 1px solid rgba(255,193,7,0.4); color: #ffca28;
+}
+.rematch-banner.show-incoming {
+  display: flex; background: rgba(105,240,174,0.15); border: 1px solid rgba(105,240,174,0.45); color: #69f0ae;
+  animation: bannerPulse 1s ease-in-out infinite;
+}
+@keyframes bannerPulse { 0%,100%{ opacity:1 } 50%{ opacity:0.6 } }
+.rematch-spinner { display: inline-block; animation: spin 1.2s linear infinite; }
 
 /* Disconnect overlay */
-.disc-box { background: #1a1a2e; border-radius: 16px; padding: 36px; text-align: center; max-width: 360px; width: 90%; }
-.disc-box h2 { font-size: 22px; margin-bottom: 12px; }
+.disc-box { background: #1a1a2e; border-radius: 16px; padding: 36px; text-align: center; max-width: 360px; width: 90%; border: 2px solid rgba(239,83,80,0.4); }
+.disc-box h2 { font-size: 24px; margin-bottom: 12px; }
+.disc-box.pop-in { animation: bigPopIn 0.45s cubic-bezier(.34,1.56,.64,1), shakeX 0.5s ease-in-out 0.45s; }
+
+/* ===== Big pop / shake / confetti effects ===== */
+@keyframes bigPopIn {
+  0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+  60% { transform: scale(1.12) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.result-box.pop-win { animation: bigPopIn 0.5s cubic-bezier(.34,1.56,.64,1); border-color: rgba(255,215,0,0.5); box-shadow: 0 0 50px rgba(255,215,0,0.35), 0 20px 60px rgba(0,0,0,0.7); }
+.result-box.pop-lose { animation: bigPopIn 0.45s ease-out, shakeX 0.5s ease-in-out 0.45s; border-color: rgba(239,83,80,0.4); }
+.result-box.pop-neutral { animation: bigPopIn 0.45s ease-out; }
+@keyframes shakeX {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(9px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(4px); }
+}
+.result-emoji.big-bounce { animation: emojiBounce 0.7s ease-in-out infinite; display: inline-block; }
+@keyframes emojiBounce { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.15); } }
+
+#confettiLayer { position: fixed; inset: 0; pointer-events: none; z-index: 350; overflow: hidden; }
+.confetti-piece {
+  position: absolute; top: -30px; font-size: 22px; will-change: transform, opacity;
+  animation-name: confettiFall; animation-timing-function: ease-in; animation-fill-mode: forwards;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(540deg); opacity: 0.2; }
+}
+
+/* ===== Toast banner (요청/대기 상태) ===== */
+.toast-banner {
+  display: none; position: fixed; top: 78px; left: 50%; transform: translateX(-50%);
+  z-index: 250; background: rgba(10,10,20,0.92); border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 14px; padding: 13px 22px; font-size: 14px; font-weight: bold;
+  align-items: center; gap: 10px; box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+  max-width: 90vw; text-align: center;
+}
+.toast-banner.show { display: flex; animation: toastPop 0.35s cubic-bezier(.34,1.56,.64,1); }
+.toast-banner.waiting { border-color: #ffca28; color: #ffca28; }
+.toast-banner.incoming { border-color: #69f0ae; color: #69f0ae; }
+.toast-banner.incoming.show { animation: toastPop 0.35s cubic-bezier(.34,1.56,.64,1), bannerPulse 1s ease-in-out infinite 0.35s; }
+.toast-banner.alert { border-color: #ef5350; color: #ff8a80; }
+@keyframes toastPop { from { transform: translateX(-50%) scale(0.6); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+
+/* ===== Card movement animations ===== */
+.card.discard-pop { animation: discardPop 0.35s cubic-bezier(.34,1.56,.64,1); }
+@keyframes discardPop {
+  0% { transform: scale(0.3) translateY(-30px) rotate(-15deg); opacity: 0; }
+  70% { transform: scale(1.1) translateY(0) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); }
+}
 
 /* ===== Player avatar bar ===== */
 .player-bar { display: flex; align-items: center; justify-content: center; gap: 18px; padding: 10px 16px; }
 .avatar-card {
-  flex: 1; max-width: 220px; background: rgba(0,0,0,0.3);
+  flex: 1; max-width: 230px; background: rgba(0,0,0,0.3);
   border: 2px solid transparent; border-radius: 14px; padding: 10px 14px;
   display: flex; align-items: center; gap: 10px;
   transition: all 0.2s; position: relative;
 }
 .avatar-card.my-turn { border-color: #69f0ae; box-shadow: 0 0 16px rgba(105,240,174,0.45); background: rgba(105,240,174,0.08); }
-.avatar-emoji { font-size: 34px; line-height: 1; position: relative; }
-.avatar-emoji .face-overlay { position: absolute; bottom: -4px; right: -8px; font-size: 16px; }
-.avatar-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.avatar-emoji { font-size: 40px; line-height: 1; position: relative; flex-shrink: 0; }
+.avatar-emoji .face-overlay { position: absolute; bottom: -4px; right: -10px; font-size: 17px; }
+.avatar-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .avatar-name { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.avatar-turn-lbl { font-size: 10px; color: #69f0ae; font-weight: bold; display: none; }
+.avatar-turn-lbl { font-size: 10px; color: #69f0ae; font-weight: bold; display: none; white-space: nowrap; }
 .avatar-card.my-turn .avatar-turn-lbl { display: block; }
 .status-pill {
   display: none; font-size: 10px; background: rgba(255,152,0,0.25); color: #ffb74d;
-  padding: 1px 7px; border-radius: 8px; margin-top: 2px; width: fit-content;
+  padding: 1px 7px; border-radius: 8px; margin-top: 2px; width: fit-content; white-space: nowrap;
 }
 .status-pill.show { display: block; }
 .vs-label { font-size: 14px; color: rgba(255,255,255,0.35); font-weight: bold; }
@@ -413,6 +488,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
   <div class="util-row">
     <button class="util-btn vs-ai-hide" id="awayBtn" onclick="toggleAway()">⏸ 자리비움</button>
+    <button class="util-btn vs-ai-hide" id="aiTakeoverBtn" onclick="toggleAITakeover()" style="display:none">🤖 AI 대신 플레이</button>
     <button class="util-btn vs-ai-hide" onclick="requestEnd()">🛑 게임 종료 요청</button>
     <button class="util-btn danger" onclick="confirmSurrender()">🏳️ 항복</button>
     <button class="util-btn danger" onclick="confirmLeave()">🚪 나가기</button>
@@ -477,24 +553,24 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
 <!-- ===== RESULT OVERLAY ===== -->
 <div class="overlay" id="resultOverlay">
-  <div class="result-box">
+  <div class="result-box" id="resBox">
     <div class="result-emoji" id="resEmoji"></div>
     <div class="result-title" id="resTitle"></div>
     <div class="result-pts" id="resPts"></div>
     <div id="resMelds"></div>
     <div class="score-bar" id="resScoreBar"></div>
     <div class="rematch-row">
-      <button class="btn btn-primary" style="max-width:200px" onclick="playAgain()">🔄 한 판 더</button>
+      <button class="btn btn-primary" id="rematchBtn" style="max-width:200px" onclick="playAgain()">🔄 한 판 더</button>
       <button class="btn btn-secondary" style="max-width:160px" onclick="leaveRoom()">나가기</button>
     </div>
-    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:10px" id="rematchStatus"></div>
+    <div class="rematch-banner" id="rematchStatus"></div>
   </div>
 </div>
 
 <!-- ===== DISCONNECT OVERLAY ===== -->
 <div class="overlay" id="discOverlay">
-  <div class="disc-box">
-    <div style="font-size:40px" id="discEmoji">😢</div>
+  <div class="disc-box" id="discBox">
+    <div style="font-size:56px" id="discEmoji">😢</div>
     <h2 id="discTitle">상대방이 나갔습니다</h2>
     <p style="color:rgba(255,255,255,0.6);margin-bottom:24px" id="discSub">방이 닫혔습니다.</p>
     <button class="btn btn-primary" onclick="leaveRoom()">로비로 돌아가기</button>
@@ -503,13 +579,19 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
 <!-- ===== MATCH END OVERLAY ===== -->
 <div class="overlay" id="matchEndOverlay">
-  <div class="result-box">
+  <div class="result-box" id="matchEndBox">
     <div class="result-emoji" id="matchEndEmoji">🏆</div>
     <div class="result-title" id="matchEndTitle"></div>
     <div class="result-pts" id="matchEndDetail"></div>
     <button class="btn btn-primary" onclick="leaveRoom()">로비로 돌아가기</button>
   </div>
 </div>
+
+<!-- ===== TOAST BANNER (요청/대기 상태) ===== -->
+<div class="toast-banner" id="toastBanner"></div>
+
+<!-- ===== CONFETTI LAYER ===== -->
+<div id="confettiLayer"></div>
 
 <script>
 // ===== Constants =====
@@ -540,6 +622,38 @@ let scores = [0, 0];
 let sortMode = 'meld';   // 'meld' | 'rank' | 'suit'
 let lastDrawnId = null;  // 방금 뽑은 카드 id
 let vsAI = false;
+let aiControlled = [false, false];
+let lastDiscardTopId = null;
+
+// ===== Toast banner =====
+function showToast(html, type = 'waiting') {
+  const el = document.getElementById('toastBanner');
+  el.className = 'toast-banner show ' + type;
+  el.innerHTML = html;
+}
+function hideToast() {
+  document.getElementById('toastBanner').className = 'toast-banner';
+}
+
+// ===== Confetti burst =====
+function spawnConfetti() {
+  const layer = document.getElementById('confettiLayer');
+  const pieces = ['🎉','✨','🎊','⭐','💛','💚'];
+  for (let i = 0; i < 40; i++) {
+    const span = document.createElement('span');
+    span.className = 'confetti-piece';
+    span.textContent = pieces[Math.floor(Math.random() * pieces.length)];
+    const left = Math.random() * 100;
+    const duration = 1.6 + Math.random() * 1.2;
+    const delay = Math.random() * 0.4;
+    span.style.left = left + 'vw';
+    span.style.fontSize = (16 + Math.random() * 16) + 'px';
+    span.style.animationDuration = duration + 's';
+    span.style.animationDelay = delay + 's';
+    layer.appendChild(span);
+    setTimeout(() => span.remove(), (duration + delay) * 1000 + 200);
+  }
+}
 
 function renderCharGrid() {
   const grid = document.getElementById('lobbyCharGrid');
@@ -625,6 +739,10 @@ function initSocket() {
 
   socket.on('err', msg => {
     document.getElementById('lobbyError').textContent = msg;
+    if (document.getElementById('gameScreen').classList.contains('active')) {
+      setStatus('⚠️ ' + msg + ' — 상태를 동기화하는 중...');
+      socket.emit('request-sync');
+    }
   });
 
   socket.on('opponent-joined', ({ name, char }) => onOpponentJoined(name, char));
@@ -642,12 +760,36 @@ function initSocket() {
     renderGame();
   });
 
+  socket.on('ai-takeover-update', ({ idx, enabled }) => {
+    aiControlled[idx] = enabled;
+    renderGame();
+  });
+
+  socket.on('sync-state', data => {
+    myHand = data.hand;
+    discardTop = data.discardTop;
+    deckCount = data.deckCount;
+    currentTurn = data.turn;
+    currentPhase = data.phase;
+    oppCardCount = data.oppCardCount;
+    scores = data.scores;
+    selected = null;
+    lastDrawnId = null;
+    renderGame();
+    setStatus(isMyTurn()
+      ? (currentPhase === 'draw' ? '내 턴: 덱 또는 버린 패에서 뽑으세요.' : '버릴 카드를 선택하세요.')
+      : `${oppName()} 턴...`);
+  });
+
   socket.on('player-left', ({ name, disconnected }) => {
+    hideToast();
     document.getElementById('resultOverlay').classList.remove('show');
     document.getElementById('matchEndOverlay').classList.remove('show');
     document.getElementById('discEmoji').textContent = disconnected ? '📡' : '🚪';
     document.getElementById('discTitle').textContent = `${name || '상대방'}님이 ${disconnected ? '연결이 끊겼습니다' : '퇴장하셨습니다'}`;
     document.getElementById('discSub').textContent = '방이 닫혔습니다.';
+    const box = document.getElementById('discBox');
+    box.classList.remove('pop-in'); void box.offsetWidth; box.classList.add('pop-in');
     document.getElementById('discOverlay').classList.add('show');
   });
 
@@ -657,10 +799,22 @@ function initSocket() {
   });
 
   socket.on('end-request-declined', () => {
+    hideToast();
     alert('상대방이 종료 요청을 거절했습니다. 게임을 계속합니다.');
   });
 
+  socket.on('surrender-request-received', ({ fromName }) => {
+    const accept = confirm(`🏳️ ${fromName} 님이 항복을 요청했습니다.\n수락하면 이번 라운드는 내 승리(+25점)로 처리됩니다. 수락하시겠습니까?`);
+    socket.emit('surrender-respond', { accept });
+  });
+
+  socket.on('surrender-declined', () => {
+    hideToast();
+    alert('상대방이 항복 요청을 거절했습니다. 게임을 계속합니다.');
+  });
+
   socket.on('match-ended', ({ winnerIdx, scores: sc, names: ns }) => {
+    hideToast();
     scores = sc;
     document.getElementById('resultOverlay').classList.remove('show');
     const iWon = winnerIdx === myIdx;
@@ -668,6 +822,10 @@ function initSocket() {
     document.getElementById('matchEndEmoji').textContent = tie ? '🤝' : (iWon ? '🏆' : '💔');
     document.getElementById('matchEndTitle').textContent = tie ? '무승부로 종료!' : (iWon ? '최종 승리!' : `${oppName()} 승리...`);
     document.getElementById('matchEndDetail').textContent = `최종 점수 — 나: ${sc[myIdx]}점 | ${oppName()}: ${sc[1-myIdx]}점`;
+    const box = document.getElementById('matchEndBox');
+    box.className = 'result-box ' + (tie ? 'pop-neutral' : (iWon ? 'pop-win' : 'pop-lose'));
+    document.getElementById('matchEndEmoji').classList.toggle('big-bounce', iWon);
+    if (iWon) spawnConfetti();
     document.getElementById('matchEndOverlay').classList.add('show');
   });
 
@@ -690,6 +848,7 @@ function initSocket() {
     scores = data.scores;
     if (data.chars) chars = data.chars;
     away = [false, false];
+    aiControlled = [false, false];
     oppCardCount = 10;
     document.getElementById('myFaceOverlay').textContent = '';
     document.getElementById('oppFaceOverlay').textContent = '';
@@ -737,15 +896,23 @@ function initSocket() {
     document.getElementById('resPts').textContent = '점수 변동 없음';
     document.getElementById('resMelds').innerHTML = '';
     document.getElementById('resScoreBar').textContent = `나: ${scores[myIdx]}점 | ${oppName()}: ${scores[1-myIdx]}점`;
-    document.getElementById('rematchStatus').textContent = '';
+    document.getElementById('rematchStatus').className = 'rematch-banner';
+    document.getElementById('rematchStatus').innerHTML = '';
   });
 
   socket.on('rematch-update', ({ rematch }) => {
     const myReady = rematch[myIdx], oppReady = rematch[1-myIdx];
-    let txt = '';
-    if (myReady && !oppReady) txt = `${oppName()} 의 수락을 기다리는 중...`;
-    else if (!myReady && oppReady) txt = `${oppName()} 이(가) 한 판 더 원합니다!`;
-    document.getElementById('rematchStatus').textContent = txt;
+    const banner = document.getElementById('rematchStatus');
+    banner.className = 'rematch-banner';
+    if (myReady && !oppReady) {
+      banner.classList.add('show-waiting');
+      banner.innerHTML = `<span class="rematch-spinner">⏳</span> ${oppName()} 의 수락을 기다리는 중...`;
+    } else if (!myReady && oppReady) {
+      banner.classList.add('show-incoming');
+      banner.innerHTML = `🔔 ${oppName()} 이(가) 한 판 더를 원해요! "한 판 더" 버튼을 눌러주세요`;
+    } else {
+      banner.innerHTML = '';
+    }
   });
 
 }
@@ -798,9 +965,9 @@ function onOpponentJoined(name, char) {
   names[1-myIdx] = name;
   if (char) chars[1-myIdx] = char;
   document.getElementById('slotName' + oppSlotIdx).textContent = name;
-  document.getElementById('slotIcon1').textContent = char || '🐶';
-  document.getElementById('slotStatus1').textContent = '연결됨';
-  document.getElementById('slot1').className = 'player-slot connected';
+  document.getElementById('slotIcon' + oppSlotIdx).textContent = char || '🐶';
+  document.getElementById('slotStatus' + oppSlotIdx).textContent = '연결됨';
+  document.getElementById('slot' + oppSlotIdx).className = 'player-slot connected';
   document.getElementById('readyBtn').disabled = false;
 }
 
@@ -898,7 +1065,7 @@ function renderGame() {
   sorted.forEach(card => {
     const isSel = selected && selected.id === card.id;
     const inM = meldIds.has(card.id);
-    const canClick = isMyTurn() && currentPhase === 'discard';
+    const canClick = !aiControlled[myIdx] && isMyTurn() && currentPhase === 'discard';
     const el = makeCard(card, { selected: isSel, inMeld: inM, clickable: canClick });
     if (card.id === lastDrawnId && !isSel) el.classList.add('just-drawn');
     if (canClick) el.onclick = () => toggleSelect(card);
@@ -909,18 +1076,22 @@ function renderGame() {
   const slot = document.getElementById('discardSlot');
   slot.innerHTML = '';
   if (discardTop) {
-    const canDraw = isMyTurn() && currentPhase === 'draw';
+    const canDraw = !aiControlled[myIdx] && isMyTurn() && currentPhase === 'draw';
     const el = makeCard(discardTop, { clickable: canDraw });
     if (canDraw) el.onclick = actDrawDiscard;
+    if (discardTop.id !== lastDiscardTopId) el.classList.add('discard-pop');
     slot.appendChild(el);
+    lastDiscardTopId = discardTop.id;
   } else {
     slot.textContent = '비어있음';
+    lastDiscardTopId = null;
   }
 
   // Deck
   document.getElementById('deckCountTxt').textContent = deckCount + '장';
   const deckEl = document.getElementById('deckPile');
-  deckEl.className = 'deck-pile' + (isMyTurn() && currentPhase === 'draw' ? '' : ' no-click');
+  const canDrawDeck = !aiControlled[myIdx] && isMyTurn() && currentPhase === 'draw';
+  deckEl.className = 'deck-pile' + (canDrawDeck ? '' : ' no-click');
 
   // Score
   document.getElementById('scoreBox').textContent = `나: ${scores[myIdx]} | ${oppName()}: ${scores[1-myIdx]}`;
@@ -939,8 +1110,13 @@ function renderGame() {
   document.getElementById('oppAvatarCard').classList.toggle('my-turn', !isMyTurn());
   document.getElementById('myStatusPill').classList.toggle('show', away[myIdx]);
   document.getElementById('oppStatusPill').classList.toggle('show', away[1-myIdx]);
+  document.getElementById('myStatusPill').textContent = aiControlled[myIdx] ? '🤖 AI 대리 플레이중' : '⏸ 자리비움';
+  document.getElementById('oppStatusPill').textContent = aiControlled[1-myIdx] ? '🤖 AI 대리 플레이중' : '⏸ 자리비움';
   document.getElementById('awayBtn').classList.toggle('away-on', away[myIdx]);
   document.getElementById('awayBtn').textContent = away[myIdx] ? '▶ 복귀하기' : '⏸ 자리비움';
+  document.getElementById('aiTakeoverBtn').style.display = (away[myIdx] && !vsAI) ? '' : 'none';
+  document.getElementById('aiTakeoverBtn').classList.toggle('away-on', aiControlled[myIdx]);
+  document.getElementById('aiTakeoverBtn').textContent = aiControlled[myIdx] ? '🤖 AI 대신 중 (끄기)' : '🤖 AI 대신 플레이';
 
   // DW badge
   const dwEl = document.getElementById('myDwBadge');
@@ -948,10 +1124,14 @@ function renderGame() {
   dwEl.className = 'dw-badge ' + (dw === 0 ? 'dw-good' : dw <= 10 ? 'dw-warn' : 'dw-bad');
 
   // Buttons
-  const canAct = isMyTurn() && currentPhase === 'discard';
+  const canAct = !aiControlled[myIdx] && isMyTurn() && currentPhase === 'discard';
+  const canKnock = canAct && selected && dw <= 10 && dw > 0;
+  const canGin   = canAct && selected && dw === 0;
   document.getElementById('btnDiscard').disabled = !(canAct && selected);
-  document.getElementById('btnKnock').disabled   = !(canAct && selected && dw <= 10 && dw > 0);
-  document.getElementById('btnGin').disabled     = !(canAct && selected && dw === 0);
+  document.getElementById('btnKnock').disabled   = !canKnock;
+  document.getElementById('btnGin').disabled     = !canGin;
+  document.getElementById('btnKnock').classList.toggle('ready-glow', canKnock);
+  document.getElementById('btnGin').classList.toggle('ready-glow', canGin);
 }
 
 function setStatus(msg, hint = '') {
@@ -968,22 +1148,22 @@ function setSort(mode) {
 }
 
 function toggleSelect(card) {
-  if (!isMyTurn() || currentPhase !== 'discard') return;
+  if (aiControlled[myIdx] || !isMyTurn() || currentPhase !== 'discard') return;
   selected = (selected && selected.id === card.id) ? null : card;
   renderGame();
 }
 
 // ===== Game actions =====
 function actDrawDeck() {
-  if (!isMyTurn() || currentPhase !== 'draw') return;
+  if (aiControlled[myIdx] || !isMyTurn() || currentPhase !== 'draw') return;
   socket.emit('action', { type: 'draw-deck' });
 }
 function actDrawDiscard() {
-  if (!isMyTurn() || currentPhase !== 'draw') return;
+  if (aiControlled[myIdx] || !isMyTurn() || currentPhase !== 'draw') return;
   socket.emit('action', { type: 'draw-discard' });
 }
 function actDiscard() {
-  if (!selected) return;
+  if (aiControlled[myIdx] || !selected) return;
   const cardId = selected.id;
   myHand = myHand.filter(c => c.id !== cardId);
   discardTop = selected;
@@ -992,11 +1172,11 @@ function actDiscard() {
   socket.emit('action', { type: 'discard', cardId });
 }
 function actKnock() {
-  if (!selected) return;
+  if (aiControlled[myIdx] || !selected) return;
   socket.emit('action', { type: 'knock', cardId: selected.id });
 }
 function actGin() {
-  if (!selected) return;
+  if (aiControlled[myIdx] || !selected) return;
   socket.emit('action', { type: 'gin', cardId: selected.id });
 }
 
@@ -1005,9 +1185,19 @@ function toggleAway() {
   socket.emit('toggle-status');
 }
 
+function toggleAITakeover() {
+  socket.emit('toggle-ai-takeover');
+}
+
 function confirmSurrender() {
-  if (!confirm('정말 항복하시겠습니까? 이번 라운드는 상대방의 승리(+25점)로 처리됩니다.')) return;
-  socket.emit('surrender');
+  if (vsAI) {
+    if (!confirm('정말 항복하시겠습니까? 이번 라운드는 AI의 승리(+25점)로 처리됩니다.')) return;
+    socket.emit('surrender-request');
+    return;
+  }
+  if (!confirm(`${oppName()}에게 항복을 요청할까요? 상대가 수락하면 이번 라운드는 상대방의 승리(+25점)로 처리됩니다.`)) return;
+  socket.emit('surrender-request');
+  showToast('🏳️ <span class="rematch-spinner">⏳</span> 항복 승인 대기 중...', 'waiting');
 }
 
 function confirmLeave() {
@@ -1019,11 +1209,12 @@ function confirmLeave() {
 function requestEnd() {
   if (!confirm('상대방에게 게임 종료를 요청할까요? 상대가 수락하면 현재 점수로 매치가 종료됩니다.')) return;
   socket.emit('request-end');
-  setStatus('🛑 게임 종료 요청을 보냈습니다. 상대방 응답을 기다리는 중...');
+  showToast('🛑 <span class="rematch-spinner">⏳</span> 게임 종료 승인 대기 중...', 'waiting');
 }
 
 // ===== Result =====
 function showResult(data) {
+  hideToast();
   const { resultType, winnerIdx, pts, knockerIdx, hands, melds, dw, rawDw, layoff, scores: sc, names: ns } = data;
   scores = sc;
 
@@ -1056,6 +1247,14 @@ function showResult(data) {
   document.getElementById('resEmoji').textContent = emojis[resultType] || (iWon ? '🎉' : '😢');
   document.getElementById('resTitle').textContent = titles[resultType] || (iWon ? '승리!' : '패배...');
   document.getElementById('resPts').textContent = pts > 0 ? `${iWon ? '+' : 'AI +'}`+ pts + '점' : '점수 변동 없음';
+
+  // Big win/lose entrance effect
+  const isTie = winnerIdx === -1;
+  const box = document.getElementById('resBox');
+  box.className = 'result-box'; void box.offsetWidth;
+  box.className = 'result-box ' + (isTie ? 'pop-neutral' : (iWon ? 'pop-win' : 'pop-lose'));
+  document.getElementById('resEmoji').classList.toggle('big-bounce', iWon && !isTie);
+  if (iWon && !isTie) spawnConfetti();
 
   function cardSpan(c) { return `<span class="mini-card ${IS_RED[c.suit]?'red':''}">${c.rank}${SUITS_SYM[c.suit]}</span>`; }
 
@@ -1090,15 +1289,18 @@ function showResult(data) {
     </div>
   `;
   document.getElementById('resScoreBar').textContent = `나: ${sc[myIdx]}점 | ${oppName()}: ${sc[1-myIdx]}점`;
-  document.getElementById('rematchStatus').textContent = '';
-  document.getElementById('resultOverlay').querySelector('.btn-primary').disabled = false;
+  document.getElementById('rematchStatus').className = 'rematch-banner';
+  document.getElementById('rematchStatus').innerHTML = '';
+  document.getElementById('rematchBtn').disabled = false;
   document.getElementById('resultOverlay').classList.add('show');
 }
 
 function playAgain() {
   socket.emit('play-again');
-  document.getElementById('rematchStatus').textContent = `${oppName()} 의 수락을 기다리는 중...`;
-  document.getElementById('resultOverlay').querySelector('.btn-primary').disabled = true;
+  const banner = document.getElementById('rematchStatus');
+  banner.className = 'rematch-banner show-waiting';
+  banner.innerHTML = `<span class="rematch-spinner">⏳</span> ${oppName()} 의 수락을 기다리는 중...`;
+  document.getElementById('rematchBtn').disabled = true;
 }
 
 // ===== Screen helpers =====
@@ -1109,6 +1311,8 @@ function showScreen(id) {
 
 function showGame() {
   showScreen('gameScreen');
+  hideToast();
+  lastDiscardTopId = null;
   document.getElementById('resultOverlay').classList.remove('show');
   document.getElementById('discOverlay').classList.remove('show');
   document.getElementById('matchEndOverlay').classList.remove('show');

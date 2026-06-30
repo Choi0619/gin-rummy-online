@@ -135,6 +135,7 @@ io.on('connection', socket => {
       names: [name || '플레이어1', ''],
       chars: [char || '🐱', ''],
       away: [false, false],
+      aiControlled: [false, false],
       ready: [false, false],
       game: null,
       scores: [0, 0],
@@ -195,12 +196,42 @@ io.on('connection', socket => {
     const idx = socket.data.idx;
     room.away[idx] = !room.away[idx];
     io.to(room.code).emit('status-update', { idx, away: room.away[idx] });
+
+    if (!room.away[idx]) {
+      // Returning from away: turn off AI takeover and re-sync this player's view
+      if (room.aiControlled && room.aiControlled[idx]) {
+        room.aiControlled[idx] = false;
+        io.to(room.code).emit('ai-takeover-update', { idx, enabled: false });
+      }
+      if (room.game && !room.game.over) {
+        const g = room.game;
+        socket.emit('sync-state', {
+          hand: g.hands[idx],
+          discardTop: g.discardPile[g.discardPile.length - 1] || null,
+          deckCount: g.deck.length,
+          turn: g.turn,
+          phase: g.phase,
+          oppCardCount: g.hands[1 - idx].length,
+          scores: room.scores,
+        });
+      }
+    }
   });
 
-  socket.on('surrender', () => {
+  socket.on('toggle-ai-takeover', () => {
     const room = rooms.get(socket.data.room);
-    if (!room || !room.game || room.game.over) return;
+    if (!room || !room.game || room.game.over || room.vsAI) return;
     const idx = socket.data.idx;
+    if (!room.aiControlled) room.aiControlled = [false, false];
+    room.aiControlled[idx] = !room.aiControlled[idx];
+    const enabled = room.aiControlled[idx];
+    io.to(room.code).emit('ai-takeover-update', { idx, enabled });
+    if (enabled && room.game.turn === idx) {
+      setTimeout(() => aiPlayTurnFor(room, idx), 900 + Math.random() * 700);
+    }
+  });
+
+  function resolveSurrender(room, idx) {
     const oppIdx = 1 - idx;
     room.game.over = true;
     room.scores[oppIdx] += 25;
@@ -219,6 +250,44 @@ io.on('connection', socket => {
       surrenderBy: idx,
     });
     room.rematch = [false, false];
+  }
+
+  socket.on('surrender-request', () => {
+    const room = rooms.get(socket.data.room);
+    if (!room || !room.game || room.game.over) return;
+    const idx = socket.data.idx;
+    if (room.vsAI) { resolveSurrender(room, idx); return; }
+    room.surrenderRequest = idx;
+    emitToPlayer(room, 1 - idx, 'surrender-request-received', { fromName: room.names[idx] });
+  });
+
+  socket.on('surrender-respond', ({ accept }) => {
+    const room = rooms.get(socket.data.room);
+    if (!room || room.surrenderRequest === undefined || room.surrenderRequest === null) return;
+    const idx = room.surrenderRequest;
+    room.surrenderRequest = null;
+    if (!room.game || room.game.over) return;
+    if (accept) {
+      resolveSurrender(room, idx);
+    } else {
+      emitToPlayer(room, idx, 'surrender-declined', {});
+    }
+  });
+
+  socket.on('request-sync', () => {
+    const room = rooms.get(socket.data.room);
+    if (!room || !room.game) return;
+    const idx = socket.data.idx;
+    const g = room.game;
+    socket.emit('sync-state', {
+      hand: g.hands[idx],
+      discardTop: g.discardPile[g.discardPile.length - 1] || null,
+      deckCount: g.deck.length,
+      turn: g.turn,
+      phase: g.phase,
+      oppCardCount: g.hands[1 - idx].length,
+      scores: room.scores,
+    });
   });
 
   socket.on('leave-game', () => {
@@ -306,6 +375,7 @@ function startGame(room) {
     over: false,
   };
   room.away = [false, false];
+  room.aiControlled = [false, false];
   room.players.forEach((sid, i) => {
     io.to(sid).emit('game-started', {
       hand: room.game.hands[i],
@@ -323,6 +393,7 @@ function startGame(room) {
 
 function handleAction(room, idx, type, cardId, socket) {
   const g = room.game;
+  if (room.aiControlled && room.aiControlled[idx]) { socket.emit('err', 'AI가 대신 플레이 중입니다. 먼저 복귀하세요.'); return; }
   if (g.turn !== idx) { socket.emit('err', '내 턴이 아닙니다.'); return; }
   const oppIdx = 1 - idx;
 
@@ -360,7 +431,11 @@ function handleAction(room, idx, type, cardId, socket) {
         nextTurn: g.turn,
         deckCount: g.deck.length,
       });
-      if (room.vsAI && oppIdx === 1) setTimeout(() => aiPlayTurn(room), 900 + Math.random()*700);
+      if (room.vsAI && oppIdx === 1) {
+        setTimeout(() => aiPlayTurnFor(room, 1), 900 + Math.random()*700);
+      } else if (room.aiControlled && room.aiControlled[oppIdx]) {
+        setTimeout(() => aiPlayTurnFor(room, oppIdx), 900 + Math.random()*700);
+      }
     } else {
       const isGin = (type === 'gin');
       const { dw } = bestMelds(g.hands[idx]);
@@ -419,18 +494,19 @@ function resolveRound(room, knockerIdx, isGin) {
   room.rematch = [false, false];
 }
 
-// ===== AI opponent (idx 1) =====
-function aiPlayTurn(room) {
+// ===== AI plays a turn on behalf of player `idx` (dedicated AI opponent or a "away" takeover) =====
+function aiPlayTurnFor(room, idx) {
   const g = room.game;
-  if (!g || g.over || g.turn !== 1) return;
-  const humanSid = room.players[0];
+  if (!g || g.over || g.turn !== idx) return;
+  const oppIdx = 1 - idx;
+  const notifySid = room.players[oppIdx]; // the other (real) player watches the moves live
 
   // --- Draw decision: take discard if it strictly improves deadwood, else deck ---
   const topDiscard = g.discardPile[g.discardPile.length - 1];
   let takeDiscard = false;
   if (topDiscard) {
-    const curDW = bestMelds(g.hands[1]).dw;
-    const testDW = bestMelds([...g.hands[1], topDiscard]).dw;
+    const curDW = bestMelds(g.hands[idx]).dw;
+    const testDW = bestMelds([...g.hands[idx], topDiscard]).dw;
     takeDiscard = testDW < curDW;
   }
 
@@ -443,17 +519,19 @@ function aiPlayTurn(room) {
     drawnCard = g.deck.pop();
     drewFrom = 'deck';
   }
-  g.hands[1].push(drawnCard);
+  g.hands[idx].push(drawnCard);
 
   const newTop = g.discardPile[g.discardPile.length - 1] || null;
-  io.to(humanSid).emit('opp-drew', {
-    from: drewFrom,
-    deckCount: g.deck.length,
-    newDiscardTop: drewFrom === 'discard' ? newTop : undefined,
-  });
+  if (notifySid) {
+    io.to(notifySid).emit('opp-drew', {
+      from: drewFrom,
+      deckCount: g.deck.length,
+      newDiscardTop: drewFrom === 'discard' ? newTop : undefined,
+    });
+  }
 
   // --- Discard decision: full search — try removing each card, keep the hand with lowest deadwood ---
-  const hand = g.hands[1];
+  const hand = g.hands[idx];
   let bestPick = null;
   for (const card of hand) {
     const rest = hand.filter(c => c.id !== card.id);
@@ -463,19 +541,24 @@ function aiPlayTurn(room) {
     }
   }
   const discardCard = bestPick.card;
-  g.hands[1] = hand.filter(c => c.id !== discardCard.id);
+  g.hands[idx] = hand.filter(c => c.id !== discardCard.id);
   g.discardPile.push(discardCard);
 
-  const { dw: afterDW } = bestMelds(g.hands[1]);
+  const { dw: afterDW } = bestMelds(g.hands[idx]);
 
   setTimeout(() => {
-    if (afterDW === 0) { resolveRound(room, 1, true); return; }
-    if (afterDW <= 10) { resolveRound(room, 1, false); return; }
+    if (afterDW === 0) { resolveRound(room, idx, true); return; }
+    if (afterDW <= 10) { resolveRound(room, idx, false); return; }
     g.phase = 'draw';
-    g.turn = 0;
-    io.to(humanSid).emit('card-discarded', {
-      card: discardCard, byIdx: 1, nextTurn: 0, deckCount: g.deck.length,
-    });
+    g.turn = oppIdx;
+    if (notifySid) {
+      io.to(notifySid).emit('card-discarded', {
+        card: discardCard, byIdx: idx, nextTurn: oppIdx, deckCount: g.deck.length,
+      });
+    }
+    if (room.aiControlled && room.aiControlled[oppIdx]) {
+      setTimeout(() => aiPlayTurnFor(room, oppIdx), 900 + Math.random() * 700);
+    }
   }, 500);
 }
 
