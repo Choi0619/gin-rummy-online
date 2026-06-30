@@ -415,6 +415,12 @@ function handleAction(room, idx, type, cardId, socket) {
     socket.emit('you-drew', { card, deckCount: g.deck.length, newDiscardTop: newTop });
     emitToPlayer(room, oppIdx, 'opp-drew', { from: 'discard', deckCount: g.deck.length, newDiscardTop: newTop });
 
+  } else if (type === 'big-gin') {
+    if (g.phase !== 'discard') { socket.emit('err', '지금은 빅진을 선언할 수 없습니다.'); return; }
+    const { dw } = bestMelds(g.hands[idx]); // full 11-card hand, no discard
+    if (dw !== 0) { socket.emit('err', '빅진 조건 불충족 (11장 전부 멜드여야 합니다).'); return; }
+    resolveBigGin(room, idx);
+
   } else if (['discard','knock','gin'].includes(type)) {
     if (g.phase !== 'discard') { socket.emit('err', '지금은 버릴 수 없습니다.'); return; }
     const ci = g.hands[idx].findIndex(c => c.id === cardId);
@@ -444,6 +450,34 @@ function handleAction(room, idx, type, cardId, socket) {
       resolveRound(room, idx, isGin);
     }
   }
+}
+
+// Big Gin: all 11 cards (after drawing, before discarding) form valid melds.
+// No lay-offs are allowed (same as regular Gin); bonus is 31 instead of 25.
+function resolveBigGin(room, knockerIdx) {
+  const g = room.game;
+  g.over = true;
+  const defIdx = 1 - knockerIdx;
+  const { melds: kMelds } = bestMelds(g.hands[knockerIdx]);
+  const { melds: dMelds, dw: defDW } = bestMelds(g.hands[defIdx]);
+
+  const pts = 31 + defDW;
+  room.scores[knockerIdx] += pts;
+
+  io.to(room.code).emit('round-end', {
+    resultType: 'big-gin',
+    winnerIdx: knockerIdx,
+    pts,
+    knockerIdx,
+    hands: [g.hands[0], g.hands[1]],
+    melds: knockerIdx === 0 ? [kMelds, dMelds] : [dMelds, kMelds],
+    dw: knockerIdx === 0 ? [0, defDW] : [defDW, 0],
+    rawDw: knockerIdx === 0 ? [0, defDW] : [defDW, 0],
+    layoff: [[], []],
+    scores: room.scores,
+    names: room.names,
+  });
+  room.rematch = [false, false];
 }
 
 function resolveRound(room, knockerIdx, isGin) {
@@ -528,6 +562,12 @@ function aiPlayTurnFor(room, idx) {
       deckCount: g.deck.length,
       newDiscardTop: drewFrom === 'discard' ? newTop : undefined,
     });
+  }
+
+  // --- Big Gin check: if all 11 cards already melded, declare immediately, no discard needed ---
+  if (bestMelds(g.hands[idx]).dw === 0) {
+    setTimeout(() => resolveBigGin(room, idx), 500);
+    return;
   }
 
   // --- Discard decision: full search — try removing each card, keep the hand with lowest deadwood ---
