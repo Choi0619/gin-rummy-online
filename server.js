@@ -119,6 +119,14 @@ function makeCode() {
 
 function getIdx(room, sid) { return room.players.indexOf(sid); }
 
+// Match target score: a multiple of 50 between 100 and 500, or null for unlimited.
+function normalizeTargetScore(v) {
+  if (v === null || v === 'unlimited') return null;
+  const n = parseInt(v, 10);
+  if (!Number.isFinite(n) || n < 100 || n > 500 || n % 50 !== 0) return 100;
+  return n;
+}
+
 function emitToPlayer(room, idx, event, data) {
   if (room.players[idx]) io.to(room.players[idx]).emit(event, data);
 }
@@ -127,7 +135,7 @@ function emitToPlayer(room, idx, event, data) {
 io.on('connection', socket => {
   console.log('connect', socket.id);
 
-  socket.on('create-room', ({ name, char }) => {
+  socket.on('create-room', ({ name, char, targetScore }) => {
     const code = makeCode();
     rooms.set(code, {
       code,
@@ -140,14 +148,15 @@ io.on('connection', socket => {
       game: null,
       scores: [0, 0],
       endRequest: null,
+      targetScore: normalizeTargetScore(targetScore),
     });
     socket.join(code);
     socket.data.room = code;
     socket.data.idx = 0;
-    socket.emit('room-created', { code, playerIndex: 0 });
+    socket.emit('room-created', { code, playerIndex: 0, targetScore: rooms.get(code).targetScore });
   });
 
-  socket.on('create-ai-room', ({ name, char }) => {
+  socket.on('create-ai-room', ({ name, char, targetScore }) => {
     const code = makeCode();
     const room = {
       code,
@@ -160,6 +169,7 @@ io.on('connection', socket => {
       scores: [0, 0],
       endRequest: null,
       vsAI: true,
+      targetScore: normalizeTargetScore(targetScore),
     };
     rooms.set(code, room);
     socket.join(code);
@@ -178,7 +188,7 @@ io.on('connection', socket => {
     socket.join(code);
     socket.data.room = code;
     socket.data.idx = 1;
-    socket.emit('room-joined', { code, playerIndex: 1, opponentName: room.names[0], opponentChar: room.chars[0] });
+    socket.emit('room-joined', { code, playerIndex: 1, opponentName: room.names[0], opponentChar: room.chars[0], targetScore: room.targetScore });
     emitToPlayer(room, 0, 'opponent-joined', { name: room.names[1], char: room.chars[1] });
   });
 
@@ -232,7 +242,7 @@ io.on('connection', socket => {
     io.to(room.code).emit('ai-takeover-update', { idx, enabled });
     if (enabled && room.game.turn === idx) {
       clearTurnTimers(room);
-      room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, idx), 900 + Math.random() * 700);
+      aiTakeTurn(room, idx);
     } else if (!enabled && room.game.turn === idx) {
       startTurnTimer(room);
     }
@@ -242,6 +252,7 @@ io.on('connection', socket => {
     const oppIdx = 1 - idx;
     room.game.over = true;
     clearTurnTimers(room);
+    if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
     room.scores[oppIdx] += 25;
     io.to(room.code).emit('round-end', {
       resultType: 'surrender',
@@ -258,6 +269,7 @@ io.on('connection', socket => {
       surrenderBy: idx,
     });
     room.rematch = [false, false];
+    setTimeout(() => checkMatchEnd(room), 1500);
   }
 
   socket.on('surrender-request', () => {
@@ -342,7 +354,11 @@ io.on('connection', socket => {
   socket.on('action', ({ type, cardId }) => {
     const room = rooms.get(socket.data.room);
     if (!room || !room.game || room.game.over) return;
-    handleAction(room, socket.data.idx, type, cardId, socket);
+    if (type === 'take-upcard' || type === 'pass-upcard') {
+      handleUpcardDecision(room, socket.data.idx, type, socket);
+    } else {
+      handleAction(room, socket.data.idx, type, cardId, socket);
+    }
   });
 
   socket.on('play-again', () => {
@@ -378,12 +394,21 @@ io.on('connection', socket => {
 // ===== Game =====
 function startGame(room) {
   const deck = createDeck();
+
+  // The lead ("선") alternates every round.
+  room.firstIdx = (room.firstIdx === undefined) ? 0 : 1 - room.firstIdx;
+  const firstIdx = room.firstIdx;
+  const secondIdx = 1 - firstIdx;
+
   room.game = {
     deck,
     hands: [deck.splice(0,10), deck.splice(0,10)],
     discardPile: [deck.pop()],
-    turn: 0,
-    phase: 'draw',
+    turn: firstIdx,
+    phase: 'upcard-offer',
+    upcardStage: 1,
+    upcardFirstIdx: firstIdx,
+    upcardSecondIdx: secondIdx,
     over: false,
   };
   room.away = [false, false];
@@ -393,15 +418,103 @@ function startGame(room) {
       hand: room.game.hands[i],
       discardTop: room.game.discardPile[room.game.discardPile.length-1],
       deckCount: room.game.deck.length,
-      turn: 0,
+      turn: firstIdx,
+      phase: 'upcard-offer',
       scores: room.scores,
       names: room.names,
       chars: room.chars,
       playerIndex: i,
       vsAI: !!room.vsAI,
+      targetScore: room.targetScore,
     });
   });
   startTurnTimer(room);
+  aiTakeTurn(room, firstIdx);
+}
+
+// If a player's score has reached/exceeded the room's target, end the match.
+function checkMatchEnd(room) {
+  if (room.targetScore === null || room.targetScore === undefined) return;
+  if (room.scores[0] < room.targetScore && room.scores[1] < room.targetScore) return;
+  const winnerIdx = room.scores[0] === room.scores[1] ? -1 : (room.scores[0] > room.scores[1] ? 0 : 1);
+  io.to(room.code).emit('match-ended', {
+    winnerIdx, scores: room.scores, names: room.names, targetReached: true,
+  });
+}
+
+// ===== First-card (up-card) offer procedure =====
+// Standard Gin Rummy opening: the lead player may take the starting up-card
+// or pass; if they pass, the other player gets the same offer; if both
+// decline, the lead player draws blind from the stock to begin normal play.
+function reclaimControlIfNeeded(room, idx) {
+  if ((room.aiControlled && room.aiControlled[idx]) || (room.away && room.away[idx])) {
+    if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
+    if (room.aiControlled) room.aiControlled[idx] = false;
+    if (room.away) room.away[idx] = false;
+    io.to(room.code).emit('status-update', { idx, away: false });
+    io.to(room.code).emit('ai-takeover-update', { idx, enabled: false });
+  }
+}
+
+function handleUpcardDecision(room, idx, type, socket) {
+  const g = room.game;
+  if (!g || g.over || g.phase !== 'upcard-offer') { if (socket) socket.emit('err', '지금은 해당되지 않습니다.'); return; }
+
+  reclaimControlIfNeeded(room, idx);
+  if (g.turn !== idx) { if (socket) socket.emit('err', '내 차례가 아닙니다.'); return; }
+
+  const oppIdx = 1 - idx;
+  const upcard = g.discardPile[g.discardPile.length - 1];
+
+  if (type === 'take-upcard') {
+    g.discardPile.pop();
+    g.hands[idx].push(upcard);
+    g.phase = 'discard';
+    const mySid = room.players[idx];
+    if (mySid) io.to(mySid).emit('you-drew', { card: upcard, deckCount: g.deck.length, newDiscardTop: null });
+    emitToPlayer(room, oppIdx, 'opp-drew', { from: 'discard', deckCount: g.deck.length, newDiscardTop: null });
+  } else { // pass-upcard
+    if (idx === g.upcardFirstIdx && g.upcardStage === 1) {
+      g.upcardStage = 2;
+      g.turn = g.upcardSecondIdx;
+      io.to(room.code).emit('upcard-pass', { byIdx: idx, nextIdx: g.turn, stage: 2 });
+      aiTakeTurn(room, g.turn);
+    } else {
+      const firstIdx = g.upcardFirstIdx;
+      if (g.deck.length === 0) { handleDeckEmpty(room); return; }
+      const card = g.deck.pop();
+      g.hands[firstIdx].push(card);
+      g.phase = 'discard';
+      g.turn = firstIdx;
+      const sid = room.players[firstIdx];
+      if (sid) io.to(sid).emit('you-drew', { card, deckCount: g.deck.length });
+      emitToPlayer(room, 1 - firstIdx, 'opp-drew', { from: 'deck', deckCount: g.deck.length });
+    }
+  }
+
+  if (socket) socket.emit('turn-timer-reset');
+  if (room.game && !room.game.over) startTurnTimer(room);
+}
+
+// Dispatches an AI (or auto-takeover) decision for whoever currently holds
+// the turn, whether that's the upcard offer stage or normal play.
+function aiTakeTurn(room, idx) {
+  const g = room.game;
+  if (!g || g.over || g.turn !== idx) return;
+  const isAI = (room.vsAI && idx === 1) || (room.aiControlled && room.aiControlled[idx]);
+  if (!isAI) return;
+
+  if (g.phase === 'upcard-offer') {
+    room.aiMoveTimer = setTimeout(() => {
+      if (!room.game || room.game.over || room.game.phase !== 'upcard-offer' || room.game.turn !== idx) return;
+      const upcard = room.game.discardPile[room.game.discardPile.length - 1];
+      const curDW = bestMelds(room.game.hands[idx]).dw;
+      const testDW = bestMelds([...room.game.hands[idx], upcard]).dw;
+      handleUpcardDecision(room, idx, testDW < curDW ? 'take-upcard' : 'pass-upcard', null);
+    }, 800 + Math.random() * 600);
+  } else {
+    room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, idx), 800 + Math.random() * 600);
+  }
 }
 
 // ===== Inactivity auto-AI-takeover =====
@@ -431,7 +544,7 @@ function startTurnTimer(room) {
     if (!room.aiControlled) room.aiControlled = [false, false];
     room.aiControlled[idx] = true;
     io.to(room.code).emit('ai-takeover-update', { idx, enabled: true, auto: true });
-    room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, idx), 600);
+    aiTakeTurn(room, idx);
   }, TURN_AI_MS);
 }
 
@@ -440,13 +553,7 @@ function handleAction(room, idx, type, cardId, socket) {
 
   // Taking any action automatically reclaims control: clears "away" and
   // "AI is playing for me" state without needing an explicit "return" click.
-  if ((room.aiControlled && room.aiControlled[idx]) || (room.away && room.away[idx])) {
-    if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
-    if (room.aiControlled) room.aiControlled[idx] = false;
-    if (room.away) room.away[idx] = false;
-    io.to(room.code).emit('status-update', { idx, away: false });
-    io.to(room.code).emit('ai-takeover-update', { idx, enabled: false });
-  }
+  reclaimControlIfNeeded(room, idx);
 
   if (g.turn !== idx) { socket.emit('err', '내 턴이 아닙니다.'); return; }
   const oppIdx = 1 - idx;
@@ -515,6 +622,7 @@ function resolveBigGin(room, knockerIdx) {
   const g = room.game;
   g.over = true;
   clearTurnTimers(room);
+  if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
   const defIdx = 1 - knockerIdx;
   const { melds: kMelds } = bestMelds(g.hands[knockerIdx]);
   const { melds: dMelds, dw: defDW } = bestMelds(g.hands[defIdx]);
@@ -536,12 +644,14 @@ function resolveBigGin(room, knockerIdx) {
     names: room.names,
   });
   room.rematch = [false, false];
+  setTimeout(() => checkMatchEnd(room), 1500);
 }
 
 function resolveRound(room, knockerIdx, isGin) {
   const g = room.game;
   g.over = true;
   clearTurnTimers(room);
+  if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
   const defIdx = 1 - knockerIdx;
   const kHand = g.hands[knockerIdx];
   const dHand = g.hands[defIdx];
@@ -585,6 +695,7 @@ function resolveRound(room, knockerIdx, isGin) {
     discardTop: g.discardPile[g.discardPile.length-1],
   });
   room.rematch = [false, false];
+  setTimeout(() => checkMatchEnd(room), 1500);
 }
 
 // ===== AI plays a turn on behalf of player `idx` (dedicated AI opponent or a "away" takeover) =====
@@ -666,6 +777,7 @@ function aiPlayTurnFor(room, idx) {
 function handleDeckEmpty(room) {
   room.game.over = true;
   clearTurnTimers(room);
+  if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
   io.to(room.code).emit('deck-empty');
   room.rematch = [false, false];
 }
