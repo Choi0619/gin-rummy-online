@@ -330,38 +330,72 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .streak-badge.show { display: inline-flex; }
 @keyframes streakWiggle { 0%,100% { transform: rotate(-4deg) scale(1); } 50% { transform: rotate(4deg) scale(1.08); } }
 
-.game-area { width: 100%; max-width: 960px; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
+.game-area { width: 100%; max-width: 960px; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
 
 .zone-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
 .turn-arrow { font-size: 16px; color: #69f0ae; }
 
-.hand { display: flex; flex-wrap: wrap; gap: 6px; min-height: 106px; align-items: flex-end; }
+/* Hand panel — visible on desktop, transparent on mobile (preserves edge-to-edge scroll) */
+.hand-zone {
+  background: rgba(0,0,0,0.22);
+  border-radius: 16px;
+  padding: 10px 14px 14px;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.28);
+  position: relative;
+  overflow: hidden;
+}
+.hand-zone.my-turn-flash { animation: handZoneTurnFlash 0.7s ease-out; }
+@keyframes handZoneTurnFlash {
+  0%   { box-shadow: inset 0 2px 8px rgba(0,0,0,0.28), 0 0 0 0 rgba(105,240,174,0.55); }
+  35%  { box-shadow: inset 0 2px 8px rgba(0,0,0,0.28), 0 0 0 14px rgba(105,240,174,0.2); }
+  100% { box-shadow: inset 0 2px 8px rgba(0,0,0,0.28), 0 0 0 24px rgba(105,240,174,0); }
+}
+
+.hand { display: flex; flex-wrap: wrap; gap: 7px; min-height: 120px; align-items: flex-end; }
 
 @media (max-width: 680px) {
+  .hand-zone { background: transparent; border: none; box-shadow: none; padding: 0; border-radius: 0; overflow: visible; }
   .hand {
     flex-wrap: nowrap; overflow-x: auto; overflow-y: visible;
     -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
-    padding-top: 20px; padding-bottom: 4px; margin: 0 -16px; padding-left: 16px; padding-right: 16px;
+    padding-top: 22px; padding-bottom: 4px; margin: 0 -16px; padding-left: 16px; padding-right: 16px;
+    min-height: 100px;
   }
   .hand .card { scroll-snap-align: start; }
 }
 
 /* ===== Cards ===== */
 .card {
-  width: 66px; height: 96px;
-  border-radius: 8px; border: 2px solid #bbb;
+  width: 76px; height: 110px;
+  border-radius: 9px; border: 2px solid #bbb;
   background: white;
   padding: 5px 6px;
   position: relative; user-select: none; flex-shrink: 0;
-  transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+  transition: transform 0.15s cubic-bezier(.34,1.3,.64,1), box-shadow 0.15s, border-color 0.15s;
+  will-change: transform;
 }
 .card-inner {
   display: flex; flex-direction: column; justify-content: space-between;
   width: 100%; height: 100%; overflow: hidden;
 }
 .card.clickable { cursor: pointer; }
-.card.clickable:hover { transform: translateY(-10px); box-shadow: 0 10px 22px rgba(0,0,0,0.5); }
-.card.selected { transform: translateY(-16px) !important; box-shadow: 0 14px 28px rgba(255,215,0,0.7) !important; border-color: gold !important; border-width: 3px; }
+.card.clickable:hover:not(.selected) {
+  transform: translateY(-10px) scale(1.03);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.18);
+  z-index: 5;
+}
+.card.selected {
+  transform: translateY(-20px) scale(1.05) !important;
+  border-color: gold !important;
+  border-width: 3px;
+  z-index: 10;
+  animation: selectedGlow 0.9s ease-in-out infinite;
+}
+@keyframes selectedGlow {
+  0%, 100% { box-shadow: 0 16px 32px rgba(255,215,0,0.55), 0 0 0 0px rgba(255,215,0,0.3); }
+  50%       { box-shadow: 0 22px 44px rgba(255,215,0,0.85), 0 0 0 8px rgba(255,215,0,0.1); }
+}
 .card.in-meld { border-color: #00e676; border-width: 2.5px; }
 .card.face-down {
   background: linear-gradient(135deg, #0d47a1, #1565c0);
@@ -373,13 +407,17 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
   background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.05) 4px, rgba(255,255,255,0.05) 5px);
 }
-.card-corner { font-size: 12px; font-weight: 700; line-height: 1; white-space: nowrap; }
+.card-corner { font-size: 13px; font-weight: 700; line-height: 1; white-space: nowrap; }
 .card-corner.bot { transform: rotate(180deg); align-self: flex-end; }
-.card-center { font-size: 24px; text-align: center; }
+.card-center { font-size: 28px; text-align: center; }
 .red-suit { color: #c62828; } .black-suit { color: #111; }
-.meld-dot { position: absolute; top: -5px; right: -5px; width: 11px; height: 11px; background: #00e676; border-radius: 50%; border: 1px solid white; }
-.card.just-drawn { border-color: #fff176 !important; border-width: 3px !important; box-shadow: 0 0 18px rgba(255,241,118,0.8) !important; animation: pulseNew 0.6s ease-out; }
-@keyframes pulseNew { 0%{transform:translateY(-20px);opacity:0} 60%{transform:translateY(-4px)} 100%{transform:translateY(0);opacity:1} }
+.meld-dot { position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; background: #00e676; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 6px rgba(0,230,118,0.6); }
+.card.just-drawn { border-color: #fff176 !important; border-width: 3px !important; box-shadow: 0 0 22px rgba(255,241,118,0.9) !important; animation: pulseNew 0.55s ease-out; }
+@keyframes pulseNew { 0%{transform:translateY(-22px) scale(1.05);opacity:0} 60%{transform:translateY(-4px) scale(1.02)} 100%{transform:translateY(0) scale(1);opacity:1} }
+
+/* DW badge pop when value changes */
+@keyframes dwPop { 0%{transform:scale(1)} 40%{transform:scale(1.4)} 70%{transform:scale(0.92)} 100%{transform:scale(1)} }
+.dw-badge.pop { animation: dwPop 0.38s cubic-bezier(.34,1.56,.64,1); }
 
 /* ===== Sort bar ===== */
 .sort-bar { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
@@ -388,29 +426,60 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .sort-btn:hover { background: rgba(255,255,255,0.18); }
 .sort-btn.active { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); font-weight: bold; }
 
-/* ===== Middle zone ===== */
-.middle-zone { display: flex; gap: 14px; align-items: stretch; }
-.pile-group { display: flex; gap: 10px; align-items: center; }
-.pile-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.pile-lbl { font-size: 10px; color: rgba(255,255,255,0.5); }
+/* ===== Middle zone — felt table surface ===== */
+.middle-zone {
+  display: flex; gap: 14px; align-items: stretch;
+  background: rgba(0,0,0,0.28);
+  border-radius: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: inset 0 2px 14px rgba(0,0,0,0.35), 0 4px 20px rgba(0,0,0,0.18);
+  position: relative;
+}
+.middle-zone::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: 18px; pointer-events: none;
+  background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.012) 0, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 5px);
+}
 
+.pile-group { display: flex; gap: 14px; align-items: center; }
+.pile-wrap { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.pile-lbl { font-size: 10px; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; font-weight: 600; }
+
+/* Stacked deck effect */
 .deck-pile {
-  width: 66px; height: 96px; border-radius: 8px;
+  width: 76px; height: 110px; border-radius: 9px;
   background: linear-gradient(135deg, #0d47a1, #1565c0);
   border: 2px solid #42a5f5;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
   cursor: pointer; font-size: 11px; color: rgba(255,255,255,0.75);
-  transition: transform 0.12s;
+  transition: transform 0.15s cubic-bezier(.34,1.3,.64,1), box-shadow 0.15s;
+  position: relative;
+  box-shadow: 3px 3px 0 rgba(7,32,70,0.9), 6px 6px 0 rgba(7,24,55,0.5);
 }
-.deck-pile:hover { transform: scale(1.05); }
-.deck-pile.no-click { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-.deck-icon { font-size: 26px; }
+.deck-pile::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: 9px;
+  background: repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 5px);
+  pointer-events: none;
+}
+.deck-pile:hover { transform: scale(1.07) translateY(-3px); box-shadow: 3px 6px 0 rgba(7,32,70,0.9), 6px 12px 20px rgba(0,0,0,0.5); }
+.deck-pile.no-click { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: 3px 3px 0 rgba(7,32,70,0.9); }
+.deck-icon { font-size: 28px; }
 
+/* Discard slot — card tray */
 .discard-slot {
-  width: 66px; height: 96px; border-radius: 8px;
-  border: 2px dashed rgba(255,255,255,0.25);
+  width: 76px; height: 110px; border-radius: 9px;
+  border: 2px dashed rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.2);
   display: flex; align-items: center; justify-content: center;
-  color: rgba(255,255,255,0.25); font-size: 11px;
+  color: rgba(255,255,255,0.2); font-size: 11px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.35);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.discard-slot.available {
+  border-color: rgba(105,240,174,0.45);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.35), 0 0 12px rgba(105,240,174,0.15);
 }
 
 /* Status panel */
@@ -750,12 +819,12 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .chat-input-row button:hover { background: #1976d2; }
 
 @media (max-width: 680px) {
-  /* Cards */
-  .card { width: 56px; height: 80px; }
-  .card-center { font-size: 19px; }
-  .card-corner { font-size: 11px; }
-  .deck-pile, .discard-slot { width: 56px; height: 80px; }
-  .deck-icon { font-size: 22px; }
+  /* Cards — slightly larger than before on mobile for readability */
+  .card { width: 64px; height: 92px; }
+  .card-center { font-size: 22px; }
+  .card-corner { font-size: 12px; }
+  .deck-pile, .discard-slot { width: 64px; height: 92px; }
+  .deck-icon { font-size: 24px; }
   .hand { gap: 5px; }
   .room-code-display { font-size: 28px; letter-spacing: 5px; }
 
@@ -772,7 +841,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   .avatar-emoji { font-size: 32px; }
   .avatar-name { font-size: 12px; }
 
-  /* Utility / action buttons: bigger tap targets, wrap nicely */
+  /* Utility / action buttons: bigger tap targets */
   .util-row { padding: 0 10px 6px; gap: 5px; }
   .util-btn { padding: 9px 11px; font-size: 11px; min-height: 38px; }
   .action-row { gap: 6px; }
@@ -780,16 +849,18 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   .sort-bar { gap: 5px; }
   .sort-btn { padding: 6px 12px; min-height: 32px; }
 
-  /* Middle zone keeps deck/discard/status stacked cleanly */
-  .middle-zone { flex-wrap: wrap; gap: 10px; }
+  /* Middle zone: stack piles above status panel, strip heavy shadow */
+  .middle-zone { flex-wrap: wrap; gap: 10px; padding: 10px 12px; border-radius: 14px; }
+  .middle-zone::before { border-radius: 14px; }
   .status-panel { min-width: 0; flex-basis: 100%; }
+  .pile-group { gap: 10px; }
 
   /* Lobby */
   .lobby-card { padding: 22px; }
   .char-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
   .char-opt { font-size: 22px; padding: 6px 0; }
 
-  /* Chat: bottom sheet instead of floating box on small screens */
+  /* Chat: bottom sheet */
   .chat-panel {
     left: 8px; right: 8px; bottom: 0; width: auto; max-width: none;
     height: 72vh; max-height: 72vh; border-radius: 16px 16px 0 0;
@@ -797,21 +868,22 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   .chat-toggle-btn { bottom: 14px; right: 14px; width: 48px; height: 48px; font-size: 20px; }
   .chat-quick-emojis button { font-size: 17px; padding: 5px 6px; }
 
-  /* Overlays: avoid overflow on short screens */
+  /* Overlays */
   .result-box, .howto-box { padding: 24px 20px; max-height: 88vh; }
 }
 
 @media (max-width: 380px) {
-  .card { width: 48px; height: 70px; }
-  .card-center { font-size: 16px; }
-  .deck-pile, .discard-slot { width: 48px; height: 70px; }
+  .card { width: 52px; height: 76px; }
+  .card-center { font-size: 18px; }
+  .card-corner { font-size: 10px; }
+  .deck-pile, .discard-slot { width: 52px; height: 76px; }
+  .deck-icon { font-size: 20px; }
   .util-btn { font-size: 10px; padding: 8px 8px; }
   .avatar-name { max-width: 70px; }
+  .middle-zone { padding: 8px 10px; }
 }
 
-/* ===== Mobile landscape: phones rotated sideways have lots of width but
-   very little height (~320-430px), so compact everything vertically and
-   keep deck/discard/status in one row instead of stacking. ===== */
+/* ===== Mobile landscape ===== */
 @media (orientation: landscape) and (max-height: 500px) {
   body { overflow-y: auto; }
 
@@ -836,19 +908,22 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
   .game-area { padding: 2px 10px; gap: 3px; }
   .zone-label { font-size: 8px; margin-bottom: 1px; gap: 3px; }
+  .hand-zone { padding: 0; background: transparent; border: none; box-shadow: none; border-radius: 0; overflow: visible; }
   .hand {
-    min-height: 58px; gap: 3px; padding-top: 12px;
+    min-height: 62px; gap: 3px; padding-top: 14px;
     flex-wrap: nowrap; overflow-x: auto; overflow-y: visible; -webkit-overflow-scrolling: touch;
   }
-  .card { width: 38px; height: 54px; }
-  .card-center { font-size: 13px; }
+  .card { width: 40px; height: 58px; }
+  .card-center { font-size: 14px; }
   .card-corner { font-size: 7px; }
-  .deck-pile, .discard-slot { width: 38px; height: 54px; }
-  .deck-icon { font-size: 15px; }
+  .deck-pile, .discard-slot { width: 40px; height: 58px; }
+  .deck-icon { font-size: 16px; }
   .pile-lbl { font-size: 7px; }
 
-  .middle-zone { gap: 6px; }
+  .middle-zone { gap: 6px; padding: 6px 8px; border-radius: 10px; }
+  .middle-zone::before { border-radius: 10px; }
   .pile-group { gap: 6px; }
+  .deck-pile { box-shadow: 2px 2px 0 rgba(7,32,70,0.9); }
   .status-panel { padding: 3px 8px; gap: 2px; }
   .status-msg { font-size: 9px; min-height: 11px; }
   .dw-row { font-size: 8px; }
@@ -998,7 +1073,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
   <div class="game-area">
     <!-- Opponent zone -->
-    <div>
+    <div class="hand-zone" id="oppHandZone">
       <div class="zone-label">
         <span id="oppTurnArrow"></span>
         🤖 <span id="oppNameLabel">상대방</span><span data-i18n="handSuffix">의 패</span>
@@ -1041,7 +1116,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     </div>
 
     <!-- My zone -->
-    <div>
+    <div class="hand-zone" id="myHandZone">
       <div class="zone-label">
         <span id="myTurnArrow"></span>
         👤 <span data-i18n="myHand">내 패</span>
@@ -2197,10 +2272,11 @@ function renderGame() {
   const slot = document.getElementById('discardSlot');
   slot.innerHTML = '';
   const isMyDecision = !aiControlled[myIdx] && isMyTurn();
+  const canDrawDiscard = isMyDecision && (currentPhase === 'draw' || currentPhase === 'upcard-offer');
+  slot.classList.toggle('available', !!(discardTop && canDrawDiscard));
   if (discardTop) {
-    const canDraw = isMyDecision && (currentPhase === 'draw' || currentPhase === 'upcard-offer');
-    const el = makeCard(discardTop, { clickable: canDraw });
-    if (canDraw) el.onclick = currentPhase === 'upcard-offer' ? actTakeUpcard : actDrawDiscard;
+    const el = makeCard(discardTop, { clickable: canDrawDiscard });
+    if (canDrawDiscard) el.onclick = currentPhase === 'upcard-offer' ? actTakeUpcard : actDrawDiscard;
     if (discardTop.id !== lastDiscardTopId) el.classList.add('discard-pop');
     slot.appendChild(el);
     lastDiscardTopId = discardTop.id;
@@ -2251,10 +2327,20 @@ function renderGame() {
   document.getElementById('aiTakeoverBtn').classList.toggle('away-on', aiControlled[myIdx]);
   document.getElementById('aiTakeoverBtn').textContent = aiControlled[myIdx] ? '🤖 AI 대신 중 (끄기)' : '🤖 AI 대신 플레이';
 
-  // DW badge
+  // DW badge with pop animation on change
   const dwEl = document.getElementById('myDwBadge');
+  const prevDW = parseInt(dwEl.dataset.dw ?? '-1');
   dwEl.textContent = dw + '점';
   dwEl.className = 'dw-badge ' + (dw === 0 ? 'dw-good' : dw <= 10 ? 'dw-warn' : 'dw-bad');
+  if (prevDW !== -1 && prevDW !== dw) { dwEl.classList.remove('pop'); void dwEl.offsetWidth; dwEl.classList.add('pop'); }
+  dwEl.dataset.dw = dw;
+
+  // Flash my hand zone when turn just became mine
+  if (isMyTurn() && !renderGame._wasMine) {
+    const hz = document.getElementById('myHandZone');
+    hz.classList.remove('my-turn-flash'); void hz.offsetWidth; hz.classList.add('my-turn-flash');
+  }
+  renderGame._wasMine = isMyTurn();
 
   // Buttons
   const canAct = !aiControlled[myIdx] && isMyTurn() && currentPhase === 'discard';
