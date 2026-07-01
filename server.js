@@ -368,8 +368,11 @@ io.on('connection', socket => {
     room.pendingRevenge = null;
     if (accept) {
       room.scores = [0, 0];
-      room.isRevenge = isRevenge;
-      room.revengerIdx = isRevenge ? fromIdx : null;
+      // Always a revenge match; the loser (non-requester) is the revenger.
+      // If the loser requested (isRevenge=true): revenger = fromIdx (loser).
+      // If the winner requested a rematch (isRevenge=false): revenger = 1-fromIdx (loser).
+      room.isRevenge = true;
+      room.revengerIdx = isRevenge ? fromIdx : (1 - fromIdx);
       room.game = null;
       startGame(room);
     } else {
@@ -548,6 +551,8 @@ function handleUpcardDecision(room, idx, type, socket) {
       const sid = room.players[firstIdx];
       if (sid) io.to(sid).emit('you-drew', { card, deckCount: g.deck.length, turn: firstIdx });
       emitToPlayer(room, 1 - firstIdx, 'opp-drew', { from: 'deck', deckCount: g.deck.length, turn: firstIdx });
+      // Trigger AI discard if firstIdx is AI-controlled (vsAI or takeover)
+      aiTakeTurn(room, firstIdx);
     }
   }
 

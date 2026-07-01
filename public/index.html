@@ -266,12 +266,24 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 }
 @keyframes revengeLblPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
 
+/* Defender: subtle glow */
 .avatar-card.revenge-fire {
-  animation: avatarRevengeFire 1.6s ease-in-out infinite;
+  animation: avatarRevengeFireDefend 2s ease-in-out infinite;
 }
-@keyframes avatarRevengeFire {
-  0%,100% { box-shadow: 0 0 6px rgba(255,100,20,0.4); border-color: rgba(255,100,20,0.4); }
-  50% { box-shadow: 0 0 20px rgba(255,80,10,0.7), 0 0 40px rgba(255,130,20,0.2); border-color: rgba(255,140,40,0.8); }
+@keyframes avatarRevengeFireDefend {
+  0%,100% { box-shadow: 0 0 5px rgba(180,80,0,0.3); border-color: rgba(200,90,0,0.3); }
+  50% { box-shadow: 0 0 14px rgba(220,100,0,0.5), 0 0 28px rgba(200,80,0,0.15); border-color: rgba(220,120,20,0.5); }
+}
+/* Revenger: raging fire */
+.avatar-card.revenge-fire-intense {
+  animation: avatarRevengeFireIntense 0.9s ease-in-out infinite;
+}
+@keyframes avatarRevengeFireIntense {
+  0%   { box-shadow: 0 0 12px rgba(255,80,0,0.7), 0 0 30px rgba(255,50,0,0.35); border-color: rgba(255,110,10,0.8); background: rgba(255,70,0,0.08); }
+  25%  { box-shadow: 0 0 28px rgba(255,140,0,1),   0 0 60px rgba(255,80,0,0.55), 0 0 90px rgba(255,160,0,0.2); border-color: rgba(255,200,0,0.95); background: rgba(255,120,0,0.13); }
+  50%  { box-shadow: 0 0 40px rgba(255,50,0,1),    0 0 80px rgba(255,100,0,0.7), 0 0 110px rgba(255,60,0,0.3); border-color: rgba(255,80,0,1); background: rgba(255,60,0,0.16); }
+  75%  { box-shadow: 0 0 22px rgba(255,120,0,0.9), 0 0 55px rgba(255,80,0,0.5); border-color: rgba(255,170,20,0.9); background: rgba(255,100,0,0.11); }
+  100% { box-shadow: 0 0 12px rgba(255,80,0,0.7), 0 0 30px rgba(255,50,0,0.35); border-color: rgba(255,110,10,0.8); background: rgba(255,70,0,0.08); }
 }
 
 /* ===== Game screen ===== */
@@ -974,6 +986,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       </div>
     </div>
   </div>
+  <div id="revengeProgressLbl" style="display:none;text-align:center;font-size:12px;font-weight:700;padding:4px 0 2px;color:#ff9040;animation:revengeLblPulse 1.4s ease-in-out infinite;"></div>
 
   <div class="util-row">
     <button class="util-btn vs-ai-hide" id="awayBtn" onclick="toggleAway()" data-i18n="away">⏸ 자리비움</button>
@@ -1843,10 +1856,9 @@ function initSocket() {
   });
 
   socket.on('revenge-request-received', ({ fromIdx, isRevenge: ir, fromName }) => {
-    const label = ir ? '🔥 리벤지' : '🔄 리매치';
     const msg = ir
       ? `🔥 ${fromName} 님이 리벤지를 요청했습니다!\n수락하시겠어요?`
-      : `🔄 ${fromName} 님이 리매치를 요청했습니다.\n수락하시겠어요?`;
+      : `🔄 ${fromName} 님이 리매치를 신청했어요.\n리벤지 전으로 설욕하시겠어요?`;
     const accept = confirm(msg);
     socket.emit('respond-revenge', { accept });
     if (!accept) return;
@@ -1887,7 +1899,10 @@ function initSocket() {
     document.getElementById('myFaceOverlay').textContent = '';
     document.getElementById('oppFaceOverlay').textContent = '';
     document.getElementById('targetScoreLbl').textContent = formatTargetScore();
-    document.getElementById('revengeLbl').style.display = isRevenge ? '' : 'none';
+    const rlbl = document.getElementById('revengeLbl');
+    rlbl.style.display = isRevenge ? '' : 'none';
+    if (isRevenge) rlbl.textContent = revengerIdx === myIdx ? '🔥 리벤지 전!' : '🛡️ 리벤지 방어 중';
+    updateRevengeProgress();
     document.querySelectorAll('.vs-ai-hide').forEach(el => el.style.display = vsAI ? 'none' : '');
     showGame();
     renderGame();
@@ -2219,8 +2234,11 @@ function renderGame() {
   document.getElementById('oppAvatarName').textContent = oppName();
   document.getElementById('myAvatarCard').classList.toggle('my-turn', isMyTurn());
   document.getElementById('oppAvatarCard').classList.toggle('my-turn', !isMyTurn());
-  document.getElementById('myAvatarCard').classList.toggle('revenge-fire', isRevenge);
-  document.getElementById('oppAvatarCard').classList.toggle('revenge-fire', isRevenge);
+  const iAmRevenger = isRevenge && revengerIdx === myIdx;
+  document.getElementById('myAvatarCard').classList.toggle('revenge-fire-intense', iAmRevenger);
+  document.getElementById('myAvatarCard').classList.toggle('revenge-fire', isRevenge && !iAmRevenger);
+  document.getElementById('oppAvatarCard').classList.toggle('revenge-fire-intense', isRevenge && !iAmRevenger);
+  document.getElementById('oppAvatarCard').classList.toggle('revenge-fire', iAmRevenger);
   document.getElementById('myStatusPill').classList.toggle('show', away[myIdx] || aiControlled[myIdx]);
   document.getElementById('oppStatusPill').classList.toggle('show', away[1-myIdx] || aiControlled[1-myIdx]);
   document.getElementById('myStatusPill').classList.toggle('ai-mode', aiControlled[myIdx]);
@@ -2353,6 +2371,7 @@ function showResult(data) {
   hideToast();
   const { resultType, winnerIdx, pts, knockerIdx, hands, melds, dw, rawDw, layoff, scores: sc, names: ns } = data;
   scores = sc;
+  updateRevengeProgress();
 
   if (winnerIdx === -1) {
     streaks = [0, 0];
@@ -2451,6 +2470,24 @@ function playAgain() {
   document.getElementById('rematchBtn').disabled = true;
 }
 
+function updateRevengeProgress() {
+  const el = document.getElementById('revengeProgressLbl');
+  if (!el) return;
+  if (!isRevenge || !targetScore || revengerIdx === null) { el.style.display = 'none'; return; }
+  const rScore = scores[revengerIdx];
+  if (rScore <= 0) { el.style.display = 'none'; return; }
+  const pct = rScore / targetScore * 100;
+  const iAmRevenger = revengerIdx === myIdx;
+  const rName = iAmRevenger ? '나' : oppName();
+  let msg;
+  if (pct < 25)      msg = iAmRevenger ? '💪 잘하고 있어! 계속 달려!' : `😤 ${rName}이(가) 쫓아오고 있어...`;
+  else if (pct < 50) msg = iAmRevenger ? '🔥 조금만 더! 이길 수 있어!' : `😰 ${rName}이(가) 따라잡고 있어!`;
+  else if (pct < 75) msg = iAmRevenger ? '🔥🔥 반 넘었다! 거의 다 왔어!' : `😱 ${rName}이(가) 절반 넘었어!!`;
+  else               msg = iAmRevenger ? '🔥🔥🔥 다 왔다!! 마지막 스퍼트!' : `💀 ${rName}이(가) 거의 이긴다!!`;
+  el.textContent = msg;
+  el.style.display = '';
+}
+
 function requestRevenge(ir) {
   socket.emit('request-revenge', { isRevenge: ir });
   const label = ir ? '🔥 리벤지' : '🔄 리매치';
@@ -2481,6 +2518,7 @@ function showGame() {
   document.getElementById('resultOverlay').classList.remove('show');
   document.getElementById('discOverlay').classList.remove('show');
   document.getElementById('matchEndOverlay').classList.remove('show');
+  document.getElementById('revengeProgressLbl').style.display = 'none';
   // Reset revenge overlay buttons for fresh state
   document.getElementById('revengeBtn').disabled = false;
   document.getElementById('rematchBtn2').disabled = false;
