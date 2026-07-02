@@ -135,20 +135,90 @@ body.theme-dark {
   --lobby-grad: radial-gradient(circle at 50% 38%, #3e4a52 0%, #262e33 42%, #0e1316 72%, #050708 100%);
 }
 body.theme-pink {
-  --bg-grad: radial-gradient(ellipse at center, #a0446e 0%, #5a1a3a 100%);
-  --lobby-grad: radial-gradient(circle at 50% 38%, #e8709a 0%, #c44d7a 42%, #7a2550 72%, #3d0e26 100%);
+  --bg-grad: radial-gradient(ellipse at center, #c2527e 0%, #7a2250 100%);
+  --lobby-grad: radial-gradient(circle at 50% 38%, #f082b0 0%, #d85a90 42%, #a03268 72%, #5a1038 100%);
 }
+/* Pink theme — card & UI tint */
+body.theme-pink .card {
+  background: linear-gradient(145deg, #fff0f7 0%, #ffe4f0 100%);
+  border-color: rgba(230, 100, 160, 0.35);
+}
+body.theme-pink .card.meld { border-color: rgba(255, 120, 180, 0.6) !important; background: linear-gradient(145deg, #fff0f7 0%, #ffd6ea 100%); }
+body.theme-pink .card.selected { border-color: #ff69b4 !important; box-shadow: 0 16px 32px rgba(255,105,180,0.6), 0 0 0 8px rgba(255,105,180,0.12); }
+body.theme-pink .middle-zone { border-color: rgba(255,150,200,0.18); box-shadow: inset 0 2px 14px rgba(200,50,120,0.25); }
+body.theme-pink .hand-zone { background: rgba(180,40,100,0.18); border-color: rgba(255,150,200,0.15); }
+body.theme-pink .score-bar { border-color: rgba(255,150,200,0.2); }
+@keyframes pinkSparkle {
+  0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50%       { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+body.theme-pink .lobby-bg::after {
+  content: '✨ 💕 🌸 ✨ 💗 🌸 💕 ✨';
+  position: absolute; top: 10%; left: 5%; right: 5%;
+  font-size: 22px; letter-spacing: 28px; color: rgba(255,180,220,0.25);
+  pointer-events: none; white-space: nowrap;
+  animation: pinkSparkle 3s ease-in-out infinite;
+}
+
+/* Rainbow theme */
 body.theme-rainbow {
-  --bg-grad: linear-gradient(135deg, #2a0a3a 0%, #0a1a5c 25%, #0a3a1c 50%, #3a1a0a 75%, #3a0a1a 100%);
-  --lobby-grad: radial-gradient(circle at 50% 38%, #6a0dad 0%, #1a4a8a 35%, #0a6a3a 65%, #6a0a1a 100%);
+  --bg-grad: linear-gradient(135deg, #3d0a5a 0%, #0a1f7a 20%, #0a5a2a 40%, #6a4a00 60%, #5a0a0a 80%, #3d0a5a 100%);
+  --lobby-grad: radial-gradient(circle at 50% 38%, #8b1fcf 0%, #1a5fb0 28%, #0d8a50 55%, #9a5000 80%, #8b1fcf 100%);
 }
-@keyframes rainbowBg {
-  0%   { filter: hue-rotate(0deg); }
-  100% { filter: hue-rotate(360deg); }
+@keyframes rainbowBgShift {
+  0%   { filter: hue-rotate(0deg) saturate(1.4) brightness(1.1); }
+  100% { filter: hue-rotate(360deg) saturate(1.4) brightness(1.1); }
 }
 body.theme-rainbow .lobby-bg,
 body.theme-rainbow .game-bg {
-  animation: rainbowBg 8s linear infinite;
+  animation: rainbowBgShift 7s linear infinite;
+}
+@keyframes rainbowBorder {
+  0%   { border-color: rgba(255,80,80,0.7); }
+  16%  { border-color: rgba(255,160,0,0.7); }
+  33%  { border-color: rgba(255,220,0,0.7); }
+  50%  { border-color: rgba(60,220,100,0.7); }
+  66%  { border-color: rgba(0,180,255,0.7); }
+  83%  { border-color: rgba(160,80,255,0.7); }
+  100% { border-color: rgba(255,80,80,0.7); }
+}
+@keyframes rainbowGlow {
+  0%   { box-shadow: 0 0 12px rgba(255,80,80,0.5); }
+  16%  { box-shadow: 0 0 12px rgba(255,160,0,0.5); }
+  33%  { box-shadow: 0 0 12px rgba(255,220,0,0.5); }
+  50%  { box-shadow: 0 0 12px rgba(60,220,100,0.5); }
+  66%  { box-shadow: 0 0 12px rgba(0,180,255,0.5); }
+  83%  { box-shadow: 0 0 12px rgba(160,80,255,0.5); }
+  100% { box-shadow: 0 0 12px rgba(255,80,80,0.5); }
+}
+@keyframes rainbowText {
+  0%   { color: #ff6060; }
+  16%  { color: #ffb040; }
+  33%  { color: #ffe040; }
+  50%  { color: #50e880; }
+  66%  { color: #40c8ff; }
+  83%  { color: #c060ff; }
+  100% { color: #ff6060; }
+}
+body.theme-rainbow .card {
+  animation: rainbowBorder 3s linear infinite;
+  background: linear-gradient(145deg, #fafcff 0%, #f0f8ff 100%);
+}
+body.theme-rainbow .card.selected {
+  animation: rainbowBorder 1s linear infinite !important;
+  box-shadow: 0 16px 32px rgba(200,100,255,0.6), 0 0 0 8px rgba(160,80,255,0.15) !important;
+}
+body.theme-rainbow .middle-zone { animation: rainbowGlow 4s linear infinite; }
+body.theme-rainbow .logo-title,
+body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
+
+/* Rainbow swatch locked state */
+.theme-swatch[data-theme="rainbow"].locked { position: relative; }
+.theme-swatch[data-theme="rainbow"].locked::after {
+  content: '🔒'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; background: rgba(0,0,0,0.55); border-radius: 50%;
+  line-height: 34px; text-align: center;
 }
 
 .lobby-card {
@@ -1223,6 +1293,19 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   </div>
 </div>
 
+<!-- ===== IN-GAME CONFIRM MODAL ===== -->
+<div class="overlay" id="confirmModalOverlay" style="z-index:600">
+  <div class="result-box" id="confirmModalBox" style="max-width:380px;text-align:center;gap:12px">
+    <div style="font-size:52px" id="confirmModalEmoji">❓</div>
+    <div class="result-title" id="confirmModalTitle" style="font-size:18px"></div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.5" id="confirmModalSub"></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:8px">
+      <button class="btn btn-primary" id="confirmModalAccept" style="min-width:120px;font-size:16px"></button>
+      <button class="btn btn-secondary" id="confirmModalDecline" style="min-width:100px;font-size:15px"></button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== MATCH HISTORY MODAL ===== -->
 <div class="overlay" id="historyOverlay">
   <div class="howto-box" style="max-width:500px;width:92vw">
@@ -1525,11 +1608,88 @@ const HOWTO_HTML = {
 };
 
 // ===== Themes =====
+const RAINBOW_UNLOCK_WINS = 10;
+
+function getTotalWins() {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  return history.filter(h => h.result === 'win').length;
+}
+
+function isRainbowUnlocked() {
+  return getTotalWins() >= RAINBOW_UNLOCK_WINS;
+}
+
+function updateRainbowSwatch() {
+  const swatch = document.querySelector('.theme-swatch[data-theme="rainbow"]');
+  if (!swatch) return;
+  const unlocked = isRainbowUnlocked();
+  swatch.classList.toggle('locked', !unlocked);
+  const wins = getTotalWins();
+  swatch.title = unlocked
+    ? '🌈 무지개 테마 (잠금 해제됨!)'
+    : `🔒 무지개 테마 (${wins}/${RAINBOW_UNLOCK_WINS}승 달성 시 해금)`;
+}
+
 function setTheme(theme) {
+  if (theme === 'rainbow' && !isRainbowUnlocked()) {
+    const wins = getTotalWins();
+    alert(`🔒 무지개 테마는 누적 ${RAINBOW_UNLOCK_WINS}승 달성 시 해금됩니다!\n현재: ${wins}/${RAINBOW_UNLOCK_WINS}승`);
+    return;
+  }
   document.body.className = document.body.className.replace(/theme-\S+/g, '').trim();
   if (theme !== 'green') document.body.classList.add('theme-' + theme);
   localStorage.setItem('grTheme', theme);
   document.querySelectorAll('.theme-swatch').forEach(el => el.classList.toggle('selected', el.dataset.theme === theme));
+}
+
+// ===== Rainbow celebration =====
+function spawnRainbowCelebration() {
+  const layer = document.getElementById('confettiLayer');
+  const rainbowEmojis = ['🌈','✨','💎','🌟','💫','🎆','🎇','⭐','🌠','💥'];
+  const colors = ['#ff6060','#ffb040','#ffe040','#50e880','#40c8ff','#c060ff','#ff80c0'];
+
+  // Rainbow confetti
+  for (let i = 0; i < 70; i++) {
+    const span = document.createElement('span');
+    span.className = 'confetti-piece';
+    span.textContent = rainbowEmojis[Math.floor(Math.random() * rainbowEmojis.length)];
+    span.style.left = Math.random() * 100 + 'vw';
+    span.style.fontSize = (18 + Math.random() * 20) + 'px';
+    const dur = 1.6 + Math.random() * 1.4;
+    const delay = Math.random() * 0.6;
+    span.style.animationDuration = dur + 's';
+    span.style.animationDelay = delay + 's';
+    layer.appendChild(span);
+    setTimeout(() => span.remove(), (dur + delay) * 1000 + 200);
+  }
+
+  // Rainbow arc banner at the top
+  const arc = document.createElement('div');
+  arc.style.cssText = 'position:fixed;top:8vh;left:50%;transform:translateX(-50%);font-size:52px;z-index:400;pointer-events:none;animation:bigPopIn 0.5s cubic-bezier(.34,1.56,.64,1);';
+  arc.textContent = '🌈';
+  document.body.appendChild(arc);
+  setTimeout(() => arc.remove(), 2200);
+
+  // Color burst from center
+  for (let i = 0; i < 7; i++) {
+    setTimeout(() => {
+      const burst = document.createElement('div');
+      burst.style.cssText = `position:fixed;top:50%;left:50%;width:6px;height:6px;border-radius:50%;background:${colors[i]};z-index:400;pointer-events:none;transition:all 0.8s ease-out;transform:translate(-50%,-50%)`;
+      document.body.appendChild(burst);
+      requestAnimationFrame(() => {
+        const angle = (i / 7) * Math.PI * 2;
+        const dist = 220 + Math.random() * 140;
+        burst.style.transform = `translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px)) scale(14)`;
+        burst.style.opacity = '0';
+      });
+      setTimeout(() => burst.remove(), 900);
+    }, i * 60);
+  }
+
+  const flash = document.createElement('div');
+  flash.className = 'big-flash';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 650);
 }
 
 function showSettings() { document.getElementById('settingsOverlay').classList.add('show'); }
@@ -1641,6 +1801,7 @@ function escapeHtml(s) {
 
 setTheme(localStorage.getItem('grTheme') || 'green');
 applyLanguage();
+updateRainbowSwatch();
 
 // ===== Constants =====
 const SUITS_SYM = { S:'♠', H:'♥', D:'♦', C:'♣' };
@@ -2036,23 +2197,37 @@ function initSocket() {
   });
 
   socket.on('end-request-received', ({ fromName }) => {
-    const accept = confirm(`${fromName} 님이 게임 종료를 요청했습니다.\n현재 점수로 매치를 종료할까요?\n(나: ${scores[myIdx]}점 | ${fromName}: ${scores[1-myIdx]}점)`);
-    socket.emit('respond-end', { accept });
+    showConfirmModal({
+      emoji: '🛑',
+      title: `${fromName} 님이 게임 종료를 요청했어요`,
+      sub: `현재 점수로 매치를 종료할까요?<br><span style="color:rgba(255,255,255,0.5);font-size:12px">나: ${scores[myIdx]}점 | ${fromName}: ${scores[1-myIdx]}점</span>`,
+      acceptLabel: '✅ 종료 수락',
+      declineLabel: '계속 플레이',
+      onAccept: () => socket.emit('respond-end', { accept: true }),
+      onDecline: () => socket.emit('respond-end', { accept: false }),
+    });
   });
 
   socket.on('end-request-declined', () => {
     hideToast();
-    alert('상대방이 종료 요청을 거절했습니다. 게임을 계속합니다.');
+    showConfirmModal({ emoji: '❌', title: '종료 요청이 거절됐어요', sub: '게임을 계속 진행합니다.', acceptLabel: '확인', declineLabel: null, onAccept: () => {} });
   });
 
   socket.on('surrender-request-received', ({ fromName }) => {
-    const accept = confirm(`🏳️ ${fromName} 님이 항복을 요청했습니다.\n수락하면 이번 라운드는 내 승리(+25점)로 처리됩니다. 수락하시겠습니까?`);
-    socket.emit('surrender-respond', { accept });
+    showConfirmModal({
+      emoji: '🏳️',
+      title: `${fromName} 님이 항복을 요청했어요`,
+      sub: `수락하면 이번 라운드는 내 승리(+25점)로 처리됩니다.`,
+      acceptLabel: '✅ 수락',
+      declineLabel: '거절',
+      onAccept: () => socket.emit('surrender-respond', { accept: true }),
+      onDecline: () => socket.emit('surrender-respond', { accept: false }),
+    });
   });
 
   socket.on('surrender-declined', () => {
     hideToast();
-    alert('상대방이 항복 요청을 거절했습니다. 게임을 계속합니다.');
+    showConfirmModal({ emoji: '❌', title: '항복 요청이 거절됐어요', sub: '게임을 계속 진행합니다.', acceptLabel: '확인', declineLabel: null, onAccept: () => {} });
   });
 
   socket.on('match-ended', ({ winnerIdx, scores: sc, names: ns, targetReached, wasRevenge, revengeSuccess }) => {
@@ -2068,6 +2243,11 @@ function initSocket() {
       result: matchResult,
       mode: vsAI ? 'vsAI' : 'pvp',
     });
+    updateRainbowSwatch();
+    // Notify on unlock milestone
+    if (matchResult === 'win' && getTotalWins() === RAINBOW_UNLOCK_WINS) {
+      setTimeout(() => alert('🌈 무지개 테마가 해금됐어요! 누적 10승 달성!'), 2000);
+    }
     const iWon = winnerIdx === myIdx;
     const tie = winnerIdx === -1;
     const iAmRevenger = revengerIdx === myIdx;
@@ -2093,7 +2273,11 @@ function initSocket() {
     const box = document.getElementById('matchEndBox');
     box.className = 'result-box ' + (tie ? 'pop-neutral' : (iWon ? (wasRevenge && revengeSuccess ? 'pop-biggin' : 'pop-win') : 'pop-lose'));
     document.getElementById('matchEndEmoji').classList.toggle('big-bounce', iWon);
-    if (iWon) { wasRevenge && revengeSuccess ? spawnFireworks() : spawnConfetti(); }
+    if (iWon) {
+      if (document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
+      else if (wasRevenge && revengeSuccess) spawnFireworks();
+      else spawnConfetti();
+    }
 
     // Show revenge/rematch/leave buttons based on role (only for human vs human)
     const revengeBtn = document.getElementById('revengeBtn');
@@ -2111,13 +2295,20 @@ function initSocket() {
   });
 
   socket.on('revenge-request-received', ({ fromIdx, isRevenge: ir, fromName }) => {
-    const msg = ir
-      ? `🔥 ${fromName} 님이 리벤지를 요청했습니다!\n수락하시겠어요?`
-      : `🔄 ${fromName} 님이 리매치를 신청했어요.\n리벤지 전으로 설욕하시겠어요?`;
-    const accept = confirm(msg);
-    socket.emit('respond-revenge', { accept });
-    if (!accept) return;
-    document.getElementById('revengeStatus').textContent = '수락! 새 게임 시작 중...';
+    showConfirmModal({
+      emoji: ir ? '🔥' : '🔄',
+      title: ir ? `${fromName} 님이 리벤지를 요청했어요!` : `${fromName} 님이 리매치를 신청했어요!`,
+      sub: ir
+        ? `설욕전을 받아들이시겠어요?<br><span style="color:#ff9040;font-size:12px">수락 시 리벤지 전으로 진행됩니다</span>`
+        : `리벤지 전으로 설욕하시겠어요?<br><span style="color:#ffd76a;font-size:12px">수락 시 리벤지 전으로 진행됩니다</span>`,
+      acceptLabel: ir ? '🔥 받아들인다' : '🔄 수락',
+      declineLabel: '거절',
+      onAccept: () => {
+        socket.emit('respond-revenge', { accept: true });
+        document.getElementById('revengeStatus').textContent = '수락! 새 게임 시작 중...';
+      },
+      onDecline: () => socket.emit('respond-revenge', { accept: false }),
+    });
   });
 
   socket.on('revenge-declined', ({ isRevenge: ir }) => {
@@ -2696,7 +2887,8 @@ function showResult(data) {
   box.className = 'result-box'; void box.offsetWidth;
   box.className = 'result-box ' + (isTie ? 'pop-neutral' : (iWon ? (isBigGin ? 'pop-biggin' : 'pop-win') : 'pop-lose'));
   document.getElementById('resEmoji').classList.toggle('big-bounce', iWon && !isTie);
-  if (iWon && isBigGin) spawnFireworks();
+  if (iWon && document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
+  else if (iWon && isBigGin) spawnFireworks();
   else if (iWon && !isTie) spawnConfetti();
 
   function cardSpan(c) { return `<span class="mini-card ${IS_RED[c.suit]?'red':''}">${c.rank}${SUITS_SYM[c.suit]}</span>`; }
@@ -2762,6 +2954,26 @@ function updateRevengeProgress() {
   else               msg = iAmRevenger ? '🔥🔥🔥 다 왔다!! 마지막 스퍼트!' : `💀 ${rName}이(가) 거의 이긴다!!`;
   el.textContent = msg;
   el.style.display = '';
+}
+
+// ===== In-game confirm modal =====
+function showConfirmModal({ emoji, title, sub, acceptLabel, declineLabel, onAccept, onDecline }) {
+  document.getElementById('confirmModalEmoji').textContent = emoji || '❓';
+  document.getElementById('confirmModalTitle').textContent = title || '';
+  document.getElementById('confirmModalSub').innerHTML = sub || '';
+  const acceptBtn = document.getElementById('confirmModalAccept');
+  const declineBtn = document.getElementById('confirmModalDecline');
+  acceptBtn.textContent = acceptLabel || '수락';
+  declineBtn.textContent = declineLabel || '거절';
+  declineBtn.style.display = declineLabel ? '' : 'none';
+  acceptBtn.onclick = () => { hideConfirmModal(); onAccept && onAccept(); };
+  declineBtn.onclick = () => { hideConfirmModal(); onDecline && onDecline(); };
+  const box = document.getElementById('confirmModalBox');
+  box.classList.remove('pop-in'); void box.offsetWidth; box.classList.add('pop-in');
+  document.getElementById('confirmModalOverlay').classList.add('show');
+}
+function hideConfirmModal() {
+  document.getElementById('confirmModalOverlay').classList.remove('show');
 }
 
 function requestRevenge(ir) {

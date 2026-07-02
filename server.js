@@ -437,8 +437,12 @@ io.on('connection', socket => {
       io.to(code).emit('ai-takeover-update', { idx, enabled: true, auto: true });
       emitToPlayer(room, 1 - idx, 'opponent-disconnected-info', { name: room.names[idx] });
       if (room.game.turn === idx) aiTakeTurn(room, idx);
+    } else if (room.game && room.game.over) {
+      // Between rounds (match-end / round-end screen showing): treat as explicit leave
+      emitToPlayer(room, 1 - idx, 'player-left', { name: room.names[idx], disconnected: true });
+      rooms.delete(room.code);
     } else {
-      // Not mid-round (waiting room / between rounds): just notify, stay put.
+      // Waiting room (before game starts): just notify
       if (room.ready) room.ready = [false, false];
       emitToPlayer(room, 1 - idx, 'opponent-disconnected-info', { name: room.names[idx] });
     }
@@ -737,10 +741,9 @@ function resolveRound(room, knockerIdx, isGin) {
     winnerIdx = knockerIdx; pts = 25 + rawDDW; resultType = 'gin';
   } else if (kDW < defDW) {
     winnerIdx = knockerIdx; pts = defDW - kDW; resultType = 'knock';
-  } else if (defDW < kDW) {
-    winnerIdx = defIdx; pts = kDW - defDW + 25; resultType = 'undercut';
   } else {
-    resultType = 'tie';
+    // defDW <= kDW: defender ties or beats knocker → undercut (defender wins +25)
+    winnerIdx = defIdx; pts = kDW - defDW + 25; resultType = 'undercut';
   }
 
   if (winnerIdx >= 0) room.scores[winnerIdx] += pts;
