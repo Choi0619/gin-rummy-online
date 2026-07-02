@@ -133,6 +133,22 @@ body.theme-dark {
   --bg-grad: radial-gradient(ellipse at center, #2c343a 0%, #0c0f11 100%);
   --lobby-grad: radial-gradient(circle at 50% 38%, #3e4a52 0%, #262e33 42%, #0e1316 72%, #050708 100%);
 }
+body.theme-pink {
+  --bg-grad: radial-gradient(ellipse at center, #7a2055 0%, #35082a 100%);
+  --lobby-grad: radial-gradient(circle at 50% 38%, #c0397a 0%, #8c2458 42%, #4a0d2e 72%, #250616 100%);
+}
+body.theme-rainbow {
+  --bg-grad: linear-gradient(135deg, #2a0a3a 0%, #0a1a5c 25%, #0a3a1c 50%, #3a1a0a 75%, #3a0a1a 100%);
+  --lobby-grad: radial-gradient(circle at 50% 38%, #6a0dad 0%, #1a4a8a 35%, #0a6a3a 65%, #6a0a1a 100%);
+}
+@keyframes rainbowBg {
+  0%   { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+body.theme-rainbow .lobby-bg,
+body.theme-rainbow .game-bg {
+  animation: rainbowBg 8s linear infinite;
+}
 
 .lobby-card {
   position: relative; z-index: 1;
@@ -986,6 +1002,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
   <div class="lobby-top-row">
     <button class="btn-howto" onclick="showHowTo()" data-i18n="howToBtn">📖 게임 방법 보기</button>
+    <button class="btn-howto" onclick="showHistory()" style="background:rgba(255,215,120,0.12);border-color:rgba(255,215,120,0.3)">📊 전적</button>
     <button class="btn-settings" onclick="showSettings()" title="Settings">⚙️</button>
   </div>
 
@@ -1205,6 +1222,22 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   </div>
 </div>
 
+<!-- ===== MATCH HISTORY MODAL ===== -->
+<div class="overlay" id="historyOverlay">
+  <div class="howto-box" style="max-width:460px">
+    <button class="howto-close" onclick="hideHistory()">✕</button>
+    <div class="howto-title">📊 전적 기록</div>
+    <div class="howto-scroll" style="max-height:70vh">
+      <div id="historyStats" style="display:flex;gap:16px;margin-bottom:16px;justify-content:center;flex-wrap:wrap"></div>
+      <div id="historyList"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-primary" onclick="hideHistory()" style="flex:1">닫기</button>
+      <button class="btn btn-secondary" onclick="clearHistory()" style="flex:0 0 auto;padding:0 16px;font-size:12px">기록 삭제</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== HOW TO PLAY MODAL ===== -->
 <div class="overlay" id="howToOverlay">
   <div class="howto-box">
@@ -1224,11 +1257,13 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       <div class="howto-section">
         <h3 data-i18n="settingsTheme">🎨 배경 테마</h3>
         <div class="theme-grid" id="themeGrid">
-          <button class="theme-swatch" data-theme="green" onclick="setTheme('green')" style="background:linear-gradient(135deg,#1f7a3d,#0a3015)"></button>
-          <button class="theme-swatch" data-theme="blue" onclick="setTheme('blue')" style="background:linear-gradient(135deg,#1e6f9e,#0a2a3f)"></button>
-          <button class="theme-swatch" data-theme="purple" onclick="setTheme('purple')" style="background:linear-gradient(135deg,#7c3fb0,#2d1245)"></button>
-          <button class="theme-swatch" data-theme="red" onclick="setTheme('red')" style="background:linear-gradient(135deg,#a8233f,#3f0a16)"></button>
-          <button class="theme-swatch" data-theme="dark" onclick="setTheme('dark')" style="background:linear-gradient(135deg,#3e4a52,#0e1316)"></button>
+          <button class="theme-swatch" data-theme="green" onclick="setTheme('green')" style="background:linear-gradient(135deg,#1f7a3d,#0a3015)" title="초록"></button>
+          <button class="theme-swatch" data-theme="blue" onclick="setTheme('blue')" style="background:linear-gradient(135deg,#1e6f9e,#0a2a3f)" title="파랑"></button>
+          <button class="theme-swatch" data-theme="purple" onclick="setTheme('purple')" style="background:linear-gradient(135deg,#7c3fb0,#2d1245)" title="보라"></button>
+          <button class="theme-swatch" data-theme="red" onclick="setTheme('red')" style="background:linear-gradient(135deg,#a8233f,#3f0a16)" title="빨강"></button>
+          <button class="theme-swatch" data-theme="dark" onclick="setTheme('dark')" style="background:linear-gradient(135deg,#3e4a52,#0e1316)" title="다크"></button>
+          <button class="theme-swatch" data-theme="pink" onclick="setTheme('pink')" style="background:linear-gradient(135deg,#c0397a,#4a0d2e)" title="핑크">🌸</button>
+          <button class="theme-swatch" data-theme="rainbow" onclick="setTheme('rainbow')" style="background:conic-gradient(#ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff,#ff4e4e)" title="무지개">🌈</button>
         </div>
       </div>
       <div class="howto-section">
@@ -1498,6 +1533,110 @@ function setTheme(theme) {
 
 function showSettings() { document.getElementById('settingsOverlay').classList.add('show'); }
 function hideSettings() { document.getElementById('settingsOverlay').classList.remove('show'); }
+
+// ===== Match History =====
+const HISTORY_KEY = 'grMatchHistory';
+const MAX_HISTORY = 50;
+
+function saveMatchResult({ opponentName, myScore, oppScore, result, mode }) {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  history.unshift({
+    opponentName,
+    myScore,
+    oppScore,
+    result, // 'win' | 'lose' | 'tie'
+    mode,   // 'vsAI' | 'pvp'
+    date: Date.now(),
+  });
+  if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
+
+function showHistory() {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  const statsEl = document.getElementById('historyStats');
+  const listEl = document.getElementById('historyList');
+
+  if (history.length === 0) {
+    statsEl.innerHTML = '';
+    listEl.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:32px 0">아직 기록이 없어요<br><span style="font-size:28px">📭</span></div>';
+  } else {
+    const wins = history.filter(h => h.result === 'win').length;
+    const loses = history.filter(h => h.result === 'lose').length;
+    const ties = history.filter(h => h.result === 'tie').length;
+    const total = history.length;
+    const winRate = total > 0 ? Math.round((wins / (total - ties || 1)) * 100) : 0;
+
+    // Opponent stats
+    const oppMap = {};
+    history.forEach(h => {
+      if (h.mode === 'vsAI') return;
+      if (!oppMap[h.opponentName]) oppMap[h.opponentName] = { win: 0, lose: 0 };
+      if (h.result === 'win') oppMap[h.opponentName].win++;
+      else if (h.result === 'lose') oppMap[h.opponentName].lose++;
+    });
+
+    statsEl.innerHTML = `
+      <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px">
+        <div style="font-size:22px;font-weight:700;color:#69f0ae">${wins}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.5)">승리</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px">
+        <div style="font-size:22px;font-weight:700;color:#ef5350">${loses}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.5)">패배</div>
+      </div>
+      ${ties > 0 ? `<div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px">
+        <div style="font-size:22px;font-weight:700;color:#ffd76a">${ties}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.5)">무승부</div>
+      </div>` : ''}
+      <div style="background:rgba(255,215,120,0.1);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px;border:1px solid rgba(255,215,120,0.2)">
+        <div style="font-size:22px;font-weight:700;color:#ffd76a">${winRate}%</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.5)">승률</div>
+      </div>
+    `;
+
+    const oppEntries = Object.entries(oppMap).sort((a,b) => (b[1].win+b[1].lose) - (a[1].win+a[1].lose));
+    const oppHtml = oppEntries.length > 0 ? `
+      <div style="margin:12px 0 8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em">상대별 전적 (PVP)</div>
+      ${oppEntries.map(([name, r]) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:4px;font-size:13px">
+          <span style="color:rgba(255,255,255,0.85)">${escapeHtml(name)}</span>
+          <span><span style="color:#69f0ae">${r.win}승</span> <span style="color:rgba(255,255,255,0.3)"> / </span> <span style="color:#ef5350">${r.lose}패</span></span>
+        </div>
+      `).join('')}
+      <div style="margin-top:14px;margin-bottom:8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em">최근 기록</div>
+    ` : `<div style="margin:12px 0 6px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5)">최근 기록</div>`;
+
+    listEl.innerHTML = oppHtml + history.map(h => {
+      const d = new Date(h.date);
+      const dateStr = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      const resultColor = h.result === 'win' ? '#69f0ae' : h.result === 'lose' ? '#ef5350' : '#ffd76a';
+      const resultTxt = h.result === 'win' ? '승' : h.result === 'lose' ? '패' : '무';
+      const modeTag = h.mode === 'vsAI' ? '🤖 AI전' : '👤 PVP';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:rgba(255,255,255,0.04);font-size:13px">
+        <span style="font-weight:700;color:${resultColor};min-width:20px">${resultTxt}</span>
+        <span style="flex:1;padding:0 8px;color:rgba(255,255,255,0.8)">${escapeHtml(h.opponentName)}</span>
+        <span style="color:rgba(255,255,255,0.4);font-size:11px;margin-right:8px">${h.myScore ?? '?'} - ${h.oppScore ?? '?'}</span>
+        <span style="color:rgba(255,255,255,0.3);font-size:10px;margin-right:6px">${modeTag}</span>
+        <span style="color:rgba(255,255,255,0.25);font-size:10px">${dateStr}</span>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('historyOverlay').classList.add('show');
+}
+
+function hideHistory() { document.getElementById('historyOverlay').classList.remove('show'); }
+
+function clearHistory() {
+  if (!confirm('전적 기록을 모두 삭제할까요?')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  showHistory();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
 setTheme(localStorage.getItem('grTheme') || 'green');
 applyLanguage();
@@ -1919,6 +2058,15 @@ function initSocket() {
     hideToast();
     scores = sc;
     document.getElementById('resultOverlay').classList.remove('show');
+    // Save to match history
+    const matchResult = winnerIdx === -1 ? 'tie' : (winnerIdx === myIdx ? 'win' : 'lose');
+    saveMatchResult({
+      opponentName: ns[1 - myIdx] || '상대방',
+      myScore: sc[myIdx],
+      oppScore: sc[1 - myIdx],
+      result: matchResult,
+      mode: vsAI ? 'vsAI' : 'pvp',
+    });
     const iWon = winnerIdx === myIdx;
     const tie = winnerIdx === -1;
     const iAmRevenger = revengerIdx === myIdx;
