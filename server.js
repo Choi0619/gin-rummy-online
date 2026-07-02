@@ -535,6 +535,7 @@ function handleUpcardDecision(room, idx, type, socket) {
     const mySid = room.players[idx];
     if (mySid) io.to(mySid).emit('you-drew', { card: upcard, deckCount: g.deck.length, newDiscardTop: null });
     emitToPlayer(room, oppIdx, 'opp-drew', { from: 'discard', deckCount: g.deck.length, newDiscardTop: null });
+    aiTakeTurn(room, idx); // AI took upcard → needs to discard next
   } else { // pass-upcard
     if (idx === g.upcardFirstIdx && g.upcardStage === 1) {
       g.upcardStage = 2;
@@ -769,33 +770,36 @@ function aiPlayTurnFor(room, idx) {
   const oppIdx = 1 - idx;
   const notifySid = room.players[oppIdx]; // the other (real) player watches the moves live
 
-  // --- Draw decision: take discard if it strictly improves deadwood, else deck ---
-  const topDiscard = g.discardPile[g.discardPile.length - 1];
-  let takeDiscard = false;
-  if (topDiscard) {
-    const curDW = bestMelds(g.hands[idx]).dw;
-    const testDW = bestMelds([...g.hands[idx], topDiscard]).dw;
-    takeDiscard = testDW < curDW;
-  }
+  // --- Draw decision (only if still in draw phase; skip if already holding 11 cards e.g. after forced upcard draw) ---
+  if (g.phase === 'draw') {
+    const topDiscard = g.discardPile[g.discardPile.length - 1];
+    let takeDiscard = false;
+    if (topDiscard) {
+      const curDW = bestMelds(g.hands[idx]).dw;
+      const testDW = bestMelds([...g.hands[idx], topDiscard]).dw;
+      takeDiscard = testDW < curDW;
+    }
 
-  let drawnCard, drewFrom;
-  if (takeDiscard) {
-    drawnCard = g.discardPile.pop();
-    drewFrom = 'discard';
-  } else {
-    if (g.deck.length === 0) { handleDeckEmpty(room); return; }
-    drawnCard = g.deck.pop();
-    drewFrom = 'deck';
-  }
-  g.hands[idx].push(drawnCard);
+    let drawnCard, drewFrom;
+    if (takeDiscard) {
+      drawnCard = g.discardPile.pop();
+      drewFrom = 'discard';
+    } else {
+      if (g.deck.length === 0) { handleDeckEmpty(room); return; }
+      drawnCard = g.deck.pop();
+      drewFrom = 'deck';
+    }
+    g.hands[idx].push(drawnCard);
+    g.phase = 'discard';
 
-  const newTop = g.discardPile[g.discardPile.length - 1] || null;
-  if (notifySid) {
-    io.to(notifySid).emit('opp-drew', {
-      from: drewFrom,
-      deckCount: g.deck.length,
-      newDiscardTop: drewFrom === 'discard' ? newTop : undefined,
-    });
+    const newTop = g.discardPile[g.discardPile.length - 1] || null;
+    if (notifySid) {
+      io.to(notifySid).emit('opp-drew', {
+        from: drewFrom,
+        deckCount: g.deck.length,
+        newDiscardTop: drewFrom === 'discard' ? newTop : undefined,
+      });
+    }
   }
 
   // --- Big Gin check: if all 11 cards already melded, declare immediately, no discard needed ---
