@@ -181,15 +181,43 @@ io.on('connection', socket => {
   socket.on('join-room', ({ code, name, char }) => {
     const room = rooms.get(code.toUpperCase().trim());
     if (!room) { socket.emit('err', '방을 찾을 수 없습니다.'); return; }
-    if (room.players.length >= 2 && room.players[1]) { socket.emit('err', '방이 가득 찼습니다.'); return; }
-    room.players[1] = socket.id;
-    room.names[1] = name || '플레이어2';
-    room.chars[1] = char || '🐶';
+
+    // Find an empty (null = disconnected) slot
+    let slotIdx = -1;
+    if (!room.players[0]) slotIdx = 0;
+    else if (room.players.length < 2 || !room.players[1]) slotIdx = 1;
+
+    if (slotIdx === -1) { socket.emit('err', '방이 가득 찼습니다.'); return; }
+
+    const oppIdx = 1 - slotIdx;
+    room.players[slotIdx] = socket.id;
+    room.names[slotIdx] = name || (slotIdx === 0 ? '플레이어1' : '플레이어2');
+    room.chars[slotIdx] = char || (slotIdx === 0 ? '🐱' : '🐶');
     socket.join(code);
     socket.data.room = code;
-    socket.data.idx = 1;
-    socket.emit('room-joined', { code, playerIndex: 1, opponentName: room.names[0], opponentChar: room.chars[0], targetScore: room.targetScore });
-    emitToPlayer(room, 0, 'opponent-joined', { name: room.names[1], char: room.chars[1] });
+    socket.data.idx = slotIdx;
+
+    socket.emit('room-joined', {
+      code, playerIndex: slotIdx,
+      opponentName: room.names[oppIdx] || '',
+      opponentChar: room.chars[oppIdx] || '',
+      targetScore: room.targetScore,
+    });
+    emitToPlayer(room, oppIdx, 'opponent-joined', { name: room.names[slotIdx], char: room.chars[slotIdx] });
+
+    // Sync game state if a round is in progress
+    if (room.game && !room.game.over) {
+      const g = room.game;
+      socket.emit('sync-state', {
+        hand: g.hands[slotIdx],
+        discardTop: g.discardPile[g.discardPile.length - 1] || null,
+        deckCount: g.deck.length,
+        turn: g.turn,
+        phase: g.phase,
+        oppCardCount: g.hands[oppIdx].length,
+        scores: room.scores,
+      });
+    }
   });
 
   socket.on('set-character', ({ char }) => {
