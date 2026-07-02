@@ -95,10 +95,11 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
 .btn-settings:hover { background: rgba(255,255,255,0.2); transform: rotate(45deg); }
 
 /* ===== Settings: theme swatches ===== */
-.theme-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.theme-grid { display: flex; gap: 8px; flex-wrap: nowrap; justify-content: space-between; }
 .theme-swatch {
-  width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
+  width: 40px; height: 40px; border-radius: 50%; cursor: pointer; flex-shrink: 0;
   border: 3px solid rgba(255,255,255,0.15); transition: all 0.15s;
+  font-size: 16px; line-height: 34px; text-align: center;
 }
 .theme-swatch:hover { transform: scale(1.1); }
 .theme-swatch.selected { border-color: #ffd76a; box-shadow: 0 0 0 2px rgba(255,215,120,0.4); }
@@ -1224,16 +1225,16 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
 <!-- ===== MATCH HISTORY MODAL ===== -->
 <div class="overlay" id="historyOverlay">
-  <div class="howto-box" style="max-width:460px">
+  <div class="howto-box" style="max-width:500px;width:92vw">
     <button class="howto-close" onclick="hideHistory()">✕</button>
     <div class="howto-title">📊 전적 기록</div>
-    <div class="howto-scroll" style="max-height:70vh">
-      <div id="historyStats" style="display:flex;gap:16px;margin-bottom:16px;justify-content:center;flex-wrap:wrap"></div>
+    <div class="howto-scroll" style="max-height:65vh">
+      <div id="historyStats" style="display:flex;gap:12px;margin-bottom:16px;justify-content:center;flex-wrap:wrap"></div>
       <div id="historyList"></div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-primary" onclick="hideHistory()" style="flex:1">닫기</button>
-      <button class="btn btn-secondary" onclick="clearHistory()" style="flex:0 0 auto;padding:0 16px;font-size:12px">기록 삭제</button>
+    <div style="display:flex;gap:8px;margin-top:14px;align-items:center">
+      <button class="btn btn-primary" onclick="hideHistory()" style="flex:1;min-width:0">닫기</button>
+      <button class="btn btn-secondary" onclick="clearHistory()" style="flex:0 0 90px;font-size:12px;padding:0 10px">기록 삭제</button>
     </div>
   </div>
 </div>
@@ -1262,7 +1263,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
           <button class="theme-swatch" data-theme="purple" onclick="setTheme('purple')" style="background:linear-gradient(135deg,#7c3fb0,#2d1245)" title="보라"></button>
           <button class="theme-swatch" data-theme="red" onclick="setTheme('red')" style="background:linear-gradient(135deg,#a8233f,#3f0a16)" title="빨강"></button>
           <button class="theme-swatch" data-theme="dark" onclick="setTheme('dark')" style="background:linear-gradient(135deg,#3e4a52,#0e1316)" title="다크"></button>
-          <button class="theme-swatch" data-theme="pink" onclick="setTheme('pink')" style="background:linear-gradient(135deg,#c0397a,#4a0d2e)" title="핑크">🌸</button>
+          <button class="theme-swatch" data-theme="pink" onclick="setTheme('pink')" style="background:linear-gradient(135deg,#c0397a,#4a0d2e)" title="핑크"></button>
           <button class="theme-swatch" data-theme="rainbow" onclick="setTheme('rainbow')" style="background:conic-gradient(#ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff,#ff4e4e)" title="무지개">🌈</button>
         </div>
       </div>
