@@ -460,6 +460,73 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .streak-badge.show { display: inline-flex; }
 @keyframes streakWiggle { 0%,100% { transform: rotate(-4deg) scale(1); } 50% { transform: rotate(4deg) scale(1.08); } }
 
+/* 4-5 streak: golden electric */
+.streak-badge.hot {
+  background: linear-gradient(135deg, #ffe000, #ff9800);
+  color: #3a1a00;
+  box-shadow: 0 0 8px rgba(255,200,0,0.7), 0 0 16px rgba(255,150,0,0.4);
+  animation: streakHot 0.4s ease-in-out infinite;
+}
+@keyframes streakHot {
+  0%,100% { transform: rotate(-5deg) scale(1.05); box-shadow: 0 0 8px rgba(255,200,0,0.7), 0 0 16px rgba(255,150,0,0.4); }
+  50%      { transform: rotate(5deg) scale(1.15); box-shadow: 0 0 16px rgba(255,220,0,1), 0 0 28px rgba(255,150,0,0.6); }
+}
+
+/* 6+ streak: rainbow ultra */
+.streak-badge.ultra {
+  background: conic-gradient(#ff6060,#ffb040,#ffe040,#50e880,#40c8ff,#c060ff,#ff6060);
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  animation: streakUltra 0.25s linear infinite;
+  font-size: 13px; padding: 2px 9px;
+}
+@keyframes streakUltra {
+  0%   { transform: rotate(-6deg) scale(1.1); filter: brightness(1); }
+  25%  { transform: rotate(3deg) scale(1.18); filter: brightness(1.3); }
+  50%  { transform: rotate(-3deg) scale(1.22); filter: brightness(1); }
+  75%  { transform: rotate(5deg) scale(1.15); filter: brightness(1.3); }
+  100% { transform: rotate(-6deg) scale(1.1); filter: brightness(1); }
+}
+
+/* Rainbow grass element */
+@keyframes grassRise {
+  0%   { transform: translateY(0) scale(0.2) rotate(-10deg); opacity: 0; }
+  15%  { opacity: 1; }
+  70%  { opacity: 0.9; }
+  100% { transform: translateY(-80vh) scale(1.3) rotate(15deg); opacity: 0; }
+}
+.rainbow-grass {
+  position: fixed; pointer-events: none; z-index: 340;
+  animation: grassRise ease-out forwards;
+  user-select: none;
+}
+
+/* Hot streak banner */
+@keyframes hotStreakBanner {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.5); }
+  20%  { opacity: 1; transform: translateX(-50%) scale(1.05); }
+  80%  { opacity: 1; transform: translateX(-50%) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) scale(0.9); }
+}
+.hot-streak-banner {
+  position: fixed; top: 18vh; left: 50%; transform: translateX(-50%);
+  z-index: 420; pointer-events: none;
+  font-size: 28px; font-weight: 900; letter-spacing: 1px;
+  padding: 10px 28px; border-radius: 20px;
+  animation: hotStreakBanner 2.2s ease-in-out forwards;
+  text-align: center; white-space: nowrap;
+}
+.hot-streak-banner.hot-lv {
+  background: linear-gradient(135deg,#ffe000,#ff9800); color: #2a0f00;
+  box-shadow: 0 4px 24px rgba(255,180,0,0.6);
+}
+.hot-streak-banner.ultra-lv {
+  background: conic-gradient(#ff6060,#ffb040,#ffe040,#50e880,#40c8ff,#c060ff,#ff6060);
+  color: white; text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 32px rgba(200,100,255,0.7);
+  font-size: 34px;
+}
+
 .game-area { width: 100%; max-width: 960px; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
 
 .zone-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
@@ -1205,6 +1272,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <button class="util-btn vs-ai-hide" onclick="requestEnd()" data-i18n="requestEndBtn">🛑 게임 종료 요청</button>
     <button class="util-btn danger" onclick="confirmSurrender()" data-i18n="surrenderBtn">🏳️ 항복</button>
     <button class="util-btn danger" onclick="confirmLeave()" data-i18n="leaveBtn">🚪 나가기</button>
+    <button class="util-btn" onclick="showSettings()" title="설정">⚙️</button>
   </div>
 
   <div class="game-area">
@@ -1366,6 +1434,18 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
           <button class="theme-swatch" data-theme="pink" onclick="setTheme('pink')" style="background:linear-gradient(135deg,#c0397a,#4a0d2e)" title="핑크"></button>
           <button class="theme-swatch" data-theme="rainbow" onclick="setTheme('rainbow')" style="background:conic-gradient(#ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff,#ff4e4e)" title="무지개">🌈</button>
         </div>
+      </div>
+      <div class="howto-section" id="grassSection" style="display:none">
+        <h3>🌈 무지개 이펙트</h3>
+        <button class="lang-btn" id="grassToggleBtn" onclick="toggleGrassEffect()" style="width:100%;text-align:center">
+          🌱 자연 흩날리기: <span id="grassToggleState">ON</span>
+        </button>
+      </div>
+      <div class="howto-section" id="petalSection" style="display:none">
+        <h3>🌸 핑크 이펙트</h3>
+        <button class="lang-btn" id="petalToggleBtn" onclick="togglePetalEffect()" style="width:100%;text-align:center">
+          🌸 꽃잎 흩날리기: <span id="petalToggleState">OFF</span>
+        </button>
       </div>
       <div class="howto-section">
         <h3 data-i18n="settingsLanguage">🌐 언어 / Language</h3>
@@ -1626,10 +1706,11 @@ const HOWTO_HTML = {
 
 // ===== Pink petal effect =====
 let petalInterval = null;
+let petalEnabled = localStorage.getItem('grPetalEffect') !== 'off'; // default ON
 const PETALS = ['🌸','🌸','🌸','💮','🌺','🌷','💕','✨'];
 
 function startPetals() {
-  if (petalInterval) return;
+  if (petalInterval || !petalEnabled) return;
   petalInterval = setInterval(() => {
     if (!document.body.classList.contains('theme-pink')) { stopPetals(); return; }
     const el = document.createElement('span');
@@ -1649,6 +1730,132 @@ function startPetals() {
 function stopPetals() {
   if (petalInterval) { clearInterval(petalInterval); petalInterval = null; }
   document.querySelectorAll('.pink-petal').forEach(el => el.remove());
+}
+
+function togglePetalEffect() {
+  petalEnabled = !petalEnabled;
+  localStorage.setItem('grPetalEffect', petalEnabled ? 'on' : 'off');
+  updatePetalToggleUI();
+  if (petalEnabled) startPetals(); else stopPetals();
+}
+
+function updatePetalToggleUI() {
+  const stateEl = document.getElementById('petalToggleState');
+  const btn = document.getElementById('petalToggleBtn');
+  if (!stateEl || !btn) return;
+  stateEl.textContent = petalEnabled ? 'ON' : 'OFF';
+  btn.classList.toggle('active', petalEnabled);
+}
+
+function updatePetalSection() {
+  const section = document.getElementById('petalSection');
+  if (!section) return;
+  const isPink = document.body.classList.contains('theme-pink');
+  section.style.display = isPink ? '' : 'none';
+  if (isPink) updatePetalToggleUI();
+}
+
+// ===== Rainbow grass effect =====
+let grassInterval = null;
+let grassEnabled = localStorage.getItem('grGrassEffect') !== 'off';
+const GRASS_ITEMS = ['🌱','🌿','🍀','🌾','🌻','🌼','🌈','✨','🌺','🦋','🍃','🌷'];
+
+function startGrass() {
+  if (grassInterval || !grassEnabled) return;
+  grassInterval = setInterval(() => {
+    if (!document.body.classList.contains('theme-rainbow')) { stopGrass(); return; }
+    const el = document.createElement('span');
+    el.className = 'rainbow-grass';
+    el.textContent = GRASS_ITEMS[Math.floor(Math.random() * GRASS_ITEMS.length)];
+    el.style.left = (Math.random() * 100) + 'vw';
+    el.style.bottom = '0';
+    el.style.top = 'auto';
+    el.style.fontSize = (18 + Math.random() * 20) + 'px';
+    const dur = 3.5 + Math.random() * 4;
+    el.style.animationDuration = dur + 's';
+    el.style.animationDelay = (Math.random() * 1) + 's';
+    el.style.opacity = '0';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), (dur + 1) * 1000 + 200);
+  }, 700);
+}
+
+function stopGrass() {
+  if (grassInterval) { clearInterval(grassInterval); grassInterval = null; }
+  document.querySelectorAll('.rainbow-grass').forEach(el => el.remove());
+}
+
+function toggleGrassEffect() {
+  grassEnabled = !grassEnabled;
+  localStorage.setItem('grGrassEffect', grassEnabled ? 'on' : 'off');
+  updateGrassToggleUI();
+  if (grassEnabled) startGrass(); else stopGrass();
+}
+
+function updateGrassToggleUI() {
+  const stateEl = document.getElementById('grassToggleState');
+  const btn = document.getElementById('grassToggleBtn');
+  if (!stateEl || !btn) return;
+  stateEl.textContent = grassEnabled ? 'ON' : 'OFF';
+  btn.classList.toggle('active', grassEnabled);
+}
+
+function updateGrassSection() {
+  const section = document.getElementById('grassSection');
+  if (!section) return;
+  const isRainbow = document.body.classList.contains('theme-rainbow');
+  section.style.display = isRainbow ? '' : 'none';
+  if (isRainbow) updateGrassToggleUI();
+}
+
+// ===== Streak effects =====
+function updateStreakBadge(streak, badgeEl) {
+  if (!badgeEl) return;
+  badgeEl.classList.remove('hot', 'ultra');
+  if (streak >= 6) badgeEl.classList.add('ultra');
+  else if (streak >= 4) badgeEl.classList.add('hot');
+  // Update emoji prefix
+  const prefix = streak >= 6 ? '👑' : streak >= 4 ? '⚡' : '🔥';
+  const numEl = badgeEl.querySelector('[id$="streakNum"]') || badgeEl.querySelector('span');
+  if (badgeEl.childNodes[0]) badgeEl.childNodes[0].textContent = prefix + ' ';
+}
+
+function showStreakBanner(streak) {
+  if (streak < 4) return;
+  const banner = document.createElement('div');
+  const isUltra = streak >= 6;
+  banner.className = 'hot-streak-banner ' + (isUltra ? 'ultra-lv' : 'hot-lv');
+  banner.textContent = isUltra
+    ? `👑 ${streak}연승!! 무적이다!!`
+    : `⚡ ${streak}연승 HOT STREAK!`;
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 2400);
+}
+
+function spawnStreakCelebration(streak) {
+  if (streak >= 6) {
+    spawnFireworks();
+    setTimeout(spawnFireworks, 600);
+    // Extra confetti burst
+    setTimeout(() => spawnConfetti(60), 300);
+  } else if (streak >= 4) {
+    spawnConfetti(55);
+    // Gold burst from center
+    const layer = document.getElementById('confettiLayer');
+    ['⚡','✨','💫','🌟','⭐'].forEach((em, i) => {
+      setTimeout(() => {
+        const span = document.createElement('span');
+        span.className = 'confetti-piece';
+        span.textContent = em;
+        span.style.left = (30 + Math.random() * 40) + 'vw';
+        span.style.fontSize = (22 + Math.random() * 14) + 'px';
+        const dur = 1.2 + Math.random() * 0.8;
+        span.style.animationDuration = dur + 's';
+        layer.appendChild(span);
+        setTimeout(() => span.remove(), dur * 1000 + 200);
+      }, i * 80);
+    });
+  }
 }
 
 // ===== Themes =====
@@ -1685,6 +1892,9 @@ function setTheme(theme) {
   localStorage.setItem('grTheme', theme);
   document.querySelectorAll('.theme-swatch').forEach(el => el.classList.toggle('selected', el.dataset.theme === theme));
   if (theme === 'pink') startPetals(); else stopPetals();
+  if (theme === 'rainbow') startGrass(); else stopGrass();
+  updatePetalSection();
+  updateGrassSection();
 }
 
 // ===== Rainbow celebration =====
@@ -1737,7 +1947,7 @@ function spawnRainbowCelebration() {
   setTimeout(() => flash.remove(), 650);
 }
 
-function showSettings() { document.getElementById('settingsOverlay').classList.add('show'); }
+function showSettings() { updatePetalSection(); updateGrassSection(); document.getElementById('settingsOverlay').classList.add('show'); }
 function hideSettings() { document.getElementById('settingsOverlay').classList.remove('show'); }
 
 // ===== Match History =====
@@ -1847,6 +2057,8 @@ function escapeHtml(s) {
 setTheme(localStorage.getItem('grTheme') || 'green');
 applyLanguage();
 updateRainbowSwatch();
+updatePetalSection();
+updateGrassSection();
 
 // ===== Constants =====
 const SUITS_SYM = { S:'♠', H:'♥', D:'♦', C:'♣' };
@@ -1987,10 +2199,21 @@ function renderScoreBox() {
   document.getElementById('oppCrown').style.display = oppLead ? '' : 'none';
 
   const myStreak = streaks[myIdx] || 0, oppStreak = streaks[1-myIdx] || 0;
-  document.getElementById('streakBadge').classList.toggle('show', myStreak >= 2);
+  const myBadge = document.getElementById('streakBadge');
+  const oppBadge = document.getElementById('oppStreakBadge');
+  myBadge.classList.toggle('show', myStreak >= 2);
   document.getElementById('streakNum').textContent = myStreak;
-  document.getElementById('oppStreakBadge').classList.toggle('show', oppStreak >= 2);
+  oppBadge.classList.toggle('show', oppStreak >= 2);
   document.getElementById('oppStreakNum').textContent = oppStreak;
+  // Streak tier styling
+  myBadge.classList.remove('hot','ultra'); oppBadge.classList.remove('hot','ultra');
+  if (myStreak >= 6) myBadge.classList.add('ultra'); else if (myStreak >= 4) myBadge.classList.add('hot');
+  if (oppStreak >= 6) oppBadge.classList.add('ultra'); else if (oppStreak >= 4) oppBadge.classList.add('hot');
+  // Emoji prefix per tier
+  const myPrefix = myStreak >= 6 ? '👑' : myStreak >= 4 ? '⚡' : '🔥';
+  const oppPrefix = oppStreak >= 6 ? '👑' : oppStreak >= 4 ? '⚡' : '🔥';
+  if (myBadge.firstChild) myBadge.firstChild.textContent = myPrefix + ' ';
+  if (oppBadge.firstChild) oppBadge.firstChild.textContent = oppPrefix + ' ';
 }
 
 // ===== Toast banner =====
@@ -2932,9 +3155,14 @@ function showResult(data) {
   box.className = 'result-box'; void box.offsetWidth;
   box.className = 'result-box ' + (isTie ? 'pop-neutral' : (iWon ? (isBigGin ? 'pop-biggin' : 'pop-win') : 'pop-lose'));
   document.getElementById('resEmoji').classList.toggle('big-bounce', iWon && !isTie);
+  const myStreak = streaks[myIdx] || 0;
   if (iWon && document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
   else if (iWon && isBigGin) spawnFireworks();
-  else if (iWon && !isTie) spawnConfetti();
+  else if (iWon && !isTie) {
+    if (myStreak >= 4) spawnStreakCelebration(myStreak);
+    else spawnConfetti();
+  }
+  if (iWon && !isTie && myStreak >= 4) showStreakBanner(myStreak);
 
   function cardSpan(c) { return `<span class="mini-card ${IS_RED[c.suit]?'red':''}">${c.rank}${SUITS_SYM[c.suit]}</span>`; }
 
