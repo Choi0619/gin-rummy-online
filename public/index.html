@@ -242,16 +242,13 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 
 /* ===== Theme swatch tooltip ===== */
 .swatch-wrap { position: relative; }
-.swatch-tip {
-  position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%);
-  background: rgba(10,10,18,0.95); color: #e8e8f0; white-space: nowrap;
-  padding: 6px 11px; border-radius: 9px; font-size: 11px; line-height: 1.5;
-  pointer-events: none; opacity: 0; transition: opacity 0.18s;
-  z-index: 700; border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+.swatch-tip { display: none; }
+#themeDesc {
+  margin-top: 8px; min-height: 34px; text-align: center;
+  font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.5;
+  transition: opacity 0.15s;
 }
-.swatch-tip strong { display: block; font-size: 12px; color: #ffd76a; margin-bottom: 1px; }
-.swatch-wrap:hover .swatch-tip { opacity: 1; }
+#themeDesc strong { display: block; font-size: 13px; color: #ffd76a; margin-bottom: 1px; }
 
 /* ===== Auth modal ===== */
 @keyframes authBgShift {
@@ -2114,6 +2111,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="rainbow" onclick="setTheme('rainbow')" style="background:conic-gradient(#ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff,#ff4e4e)">🌈</button><div class="swatch-tip"><strong>🌈 무지개</strong>누적 10승 달성 시 해금</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="aurora" onclick="setTheme('aurora')" style="background:linear-gradient(135deg,#0e2a3a,#030c1a);border-color:rgba(0,220,160,0.5)">🌌</button><div class="swatch-tip"><strong>🌌 오로라 성운</strong>25승 달성 시 해금</div></div>
         </div>
+        <div id="themeDesc"></div>
       </div>
       <div class="howto-section" id="grassSection" style="display:none">
         <h3>🌈 무지개 이펙트</h3>
@@ -2824,7 +2822,25 @@ function spawnRainbowCelebration() {
   setTimeout(() => flash.remove(), 650);
 }
 
-function showSettings() { updatePetalSection(); updateGrassSection(); document.getElementById('settingsOverlay').classList.add('show'); }
+function showSettings() {
+  updatePetalSection();
+  updateGrassSection();
+  document.getElementById('settingsOverlay').classList.add('show');
+  // Wire swatch hover → themeDesc
+  document.querySelectorAll('.swatch-wrap').forEach(wrap => {
+    const tip = wrap.querySelector('.swatch-tip');
+    if (!tip) return;
+    const strong = tip.querySelector('strong');
+    wrap.addEventListener('mouseenter', () => {
+      const desc = document.getElementById('themeDesc');
+      if (desc) desc.innerHTML = (strong ? '<strong>' + strong.textContent + '</strong>' : '') + tip.textContent.replace(strong ? strong.textContent : '', '');
+    });
+    wrap.addEventListener('mouseleave', () => {
+      const desc = document.getElementById('themeDesc');
+      if (desc) desc.innerHTML = '';
+    });
+  });
+}
 function hideSettings() { document.getElementById('settingsOverlay').classList.remove('show'); }
 
 // ===== Supabase Auth & Profile =====
