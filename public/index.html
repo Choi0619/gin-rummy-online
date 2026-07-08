@@ -185,7 +185,7 @@ body.theme-pink .score-bar { border-color: rgba(255,150,200,0.2); }
   100% { transform: translateY(105vh) rotate(540deg) scale(0.7); opacity: 0; }
 }
 .pink-petal {
-  position: fixed; pointer-events: none; z-index: 340;
+  position: fixed; pointer-events: none; z-index: 60;
   animation: petalFall linear forwards;
   user-select: none;
 }
@@ -1305,6 +1305,8 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   border-radius: 14px; margin-bottom: 8px; transition: all 0.15s;
 }
 .room-browser-row:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,215,120,0.3); }
+.history-row { transition: background 0.15s; }
+.history-row[onclick]:hover { background: rgba(255,215,120,0.08) !important; }
 .dm-bubble {
   max-width: 78%; padding: 8px 12px; border-radius: 14px; font-size: 13px; line-height: 1.45;
   word-break: break-word;
@@ -2262,8 +2264,17 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     </div>
     <div style="display:flex;gap:8px;margin-top:14px;align-items:center">
       <button class="btn btn-primary" onclick="hideHistory()" style="flex:1;min-width:0">닫기</button>
-      <button id="clearHistoryBtn" class="btn btn-secondary" onclick="clearHistory()" style="flex:0 0 90px;font-size:12px;padding:0 10px">기록 삭제</button>
     </div>
+  </div>
+</div>
+
+<!-- ===== MATCH DETAIL MODAL ===== -->
+<div class="overlay" id="matchDetailOverlay">
+  <div class="howto-box" style="max-width:380px">
+    <button class="howto-close" onclick="hideMatchDetail()">✕</button>
+    <div class="howto-title" id="matchDetailTitle">경기 결과</div>
+    <div id="matchDetailBody" style="display:flex;flex-direction:column;gap:12px"></div>
+    <button class="btn btn-primary" onclick="hideMatchDetail()" style="margin-top:16px">닫기</button>
   </div>
 </div>
 
@@ -3840,11 +3851,30 @@ function saveMatchResult({ opponentName, myScore, oppScore, result, mode }) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
 
+async function saveMatchToDb({ opponentName, opponentChar, myScore, oppScore, result, gameMode, targetScore: ts }) {
+  if (!supaUser) return;
+  const detail = lastRoundDetail || {};
+  try {
+    await supa.from('match_history').insert({
+      user_id: supaUser.id,
+      opponent_name: opponentName,
+      opponent_char: opponentChar || '🐱',
+      my_score: myScore,
+      opp_score: oppScore,
+      result, // 'win' | 'lose' | 'tie'
+      result_type: lastRoundType || '',
+      my_deadwood: detail.myDW ?? null,
+      opp_deadwood: detail.oppDW ?? null,
+      target_score: ts ?? null,
+      game_mode: gameMode || 'classic',
+    });
+  } catch (e) { /* non-fatal */ }
+}
+
 function switchHistoryTab(tab) {
   const isHistory = tab === 'history';
   document.getElementById('panelHistory').style.display = isHistory ? '' : 'none';
   document.getElementById('panelRanking').style.display = isHistory ? 'none' : '';
-  document.getElementById('clearHistoryBtn').style.display = isHistory ? '' : 'none';
   document.getElementById('tabHistory').style.background = isHistory ? 'rgba(255,215,120,0.2)' : 'none';
   document.getElementById('tabHistory').style.color = isHistory ? '#ffd76a' : 'rgba(255,255,255,0.45)';
   document.getElementById('tabRanking').style.background = isHistory ? 'none' : 'rgba(255,215,120,0.2)';
@@ -3878,6 +3908,7 @@ function renderRankingTab() {
 
 const HISTORY_PAGE_SIZE = 10;
 let _historyPage = 0;
+let _historyPageRows = []; // rows currently shown, for detail-click lookup
 
 function showHistory() {
   _historyPage = 0;
@@ -3885,7 +3916,66 @@ function showHistory() {
   document.getElementById('historyOverlay').classList.add('show');
 }
 
-function _renderHistory() {
+async function _renderHistory() {
+  if (supaUser) return _renderHistoryDb();
+  return _renderHistoryLocal();
+}
+
+async function _renderHistoryDb() {
+  const statsEl = document.getElementById('historyStats');
+  const listEl = document.getElementById('historyList');
+  const pageEl = document.getElementById('historyPagination');
+  listEl.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.3);padding:28px 0"><span class="spinner">⏳</span> 불러오는 중...</div>';
+
+  const [{ count: totalCount }, { count: winCount }, { count: loseCount }, { count: tieCount }] = await Promise.all([
+    supa.from('match_history').select('*', { count: 'exact', head: true }).eq('user_id', supaUser.id),
+    supa.from('match_history').select('*', { count: 'exact', head: true }).eq('user_id', supaUser.id).eq('result', 'win'),
+    supa.from('match_history').select('*', { count: 'exact', head: true }).eq('user_id', supaUser.id).eq('result', 'lose'),
+    supa.from('match_history').select('*', { count: 'exact', head: true }).eq('user_id', supaUser.id).eq('result', 'tie'),
+  ]);
+
+  if (!totalCount) {
+    statsEl.innerHTML = '';
+    listEl.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:32px 0">아직 기록이 없어요<br><span style="font-size:28px">📭</span></div>';
+    pageEl.innerHTML = '';
+    return;
+  }
+
+  const wins = winCount || 0, loses = loseCount || 0, ties = tieCount || 0;
+  const winRate = (wins + loses) > 0 ? Math.round((wins / (wins + loses)) * 100) : 0;
+  statsEl.innerHTML = _historyStatsHtml(wins, loses, ties, winRate);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / HISTORY_PAGE_SIZE));
+  _historyPage = Math.max(0, Math.min(_historyPage, totalPages - 1));
+  const from = _historyPage * HISTORY_PAGE_SIZE;
+  const to = from + HISTORY_PAGE_SIZE - 1;
+
+  let html = '';
+  if (_historyPage === 0) {
+    const { data: recentForOpp } = await supa.from('match_history').select('opponent_name,result')
+      .eq('user_id', supaUser.id).order('created_at', { ascending: false }).limit(300);
+    const oppMap = {};
+    (recentForOpp || []).forEach(h => {
+      if (!oppMap[h.opponent_name]) oppMap[h.opponent_name] = { win: 0, lose: 0 };
+      if (h.result === 'win') oppMap[h.opponent_name].win++;
+      else if (h.result === 'lose') oppMap[h.opponent_name].lose++;
+    });
+    html += _historyOppBreakdownHtml(oppMap);
+  }
+
+  const { data: rows } = await supa.from('match_history').select('*')
+    .eq('user_id', supaUser.id).order('created_at', { ascending: false }).range(from, to);
+  _historyPageRows = rows || [];
+
+  html += '<div style="margin:12px 0 8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em">최근 기록</div>';
+  _historyPageRows.forEach(function(h, i) {
+    html += _historyRowHtml(h, i, true);
+  });
+  listEl.innerHTML = html;
+  pageEl.innerHTML = _historyPaginationHtml(totalPages);
+}
+
+function _renderHistoryLocal() {
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
   const statsEl = document.getElementById('historyStats');
   const listEl = document.getElementById('historyList');
@@ -3893,20 +3983,34 @@ function _renderHistory() {
 
   if (history.length === 0) {
     statsEl.innerHTML = '';
-    listEl.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:32px 0">아직 기록이 없어요<br><span style="font-size:28px">📭</span></div>';
+    listEl.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:32px 0">아직 기록이 없어요<br><span style="font-size:28px">📭</span><br><span style="font-size:12px">로그인하면 PVP 전적이 자동으로 저장돼요</span></div>';
     pageEl.innerHTML = '';
     return;
   }
 
-  const pvp = history.filter(h => h.mode !== 'vsAI');
-  const wins = pvp.filter(h => h.result === 'win').length;
-  const loses = pvp.filter(h => h.result === 'lose').length;
-  const ties = pvp.filter(h => h.result === 'tie').length;
-  const total = pvp.length;
-  const winRate = total > 0 ? Math.round((wins / (total - ties || 1)) * 100) : 0;
+  const wins = history.filter(h => h.result === 'win').length;
+  const loses = history.filter(h => h.result === 'lose').length;
+  const ties = history.filter(h => h.result === 'tie').length;
+  const winRate = (wins + loses) > 0 ? Math.round((wins / (wins + loses)) * 100) : 0;
+  statsEl.innerHTML = _historyStatsHtml(wins, loses, ties, winRate);
 
-  statsEl.innerHTML =
-    '<div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px">' +
+  const totalPages = Math.max(1, Math.ceil(history.length / HISTORY_PAGE_SIZE));
+  _historyPage = Math.max(0, Math.min(_historyPage, totalPages - 1));
+  _historyPageRows = history.slice(_historyPage * HISTORY_PAGE_SIZE, (_historyPage + 1) * HISTORY_PAGE_SIZE);
+
+  let html = '<div style="margin:0 0 8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em">최근 기록 (🤖 AI전 · 로컬 저장)</div>';
+  _historyPageRows.forEach(function(h, i) {
+    html += _historyRowHtml({
+      opponent_name: h.opponentName, my_score: h.myScore, opp_score: h.oppScore,
+      result: h.result, created_at: new Date(h.date).toISOString(),
+    }, i, false);
+  });
+  listEl.innerHTML = html;
+  pageEl.innerHTML = _historyPaginationHtml(totalPages);
+}
+
+function _historyStatsHtml(wins, loses, ties, winRate) {
+  return '<div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px">' +
       '<div style="font-size:22px;font-weight:700;color:#69f0ae">' + wins + '</div>' +
       '<div style="font-size:11px;color:rgba(255,255,255,0.5)">승리</div></div>' +
     '<div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px">' +
@@ -3918,75 +4022,122 @@ function _renderHistory() {
     '<div style="background:rgba(255,215,120,0.1);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px;border:1px solid rgba(255,215,120,0.2)">' +
       '<div style="font-size:22px;font-weight:700;color:#ffd76a">' + winRate + '%</div>' +
       '<div style="font-size:11px;color:rgba(255,255,255,0.5)">승률</div></div>';
+}
 
-  // Pagination
-  const totalPages = Math.ceil(history.length / HISTORY_PAGE_SIZE);
-  _historyPage = Math.max(0, Math.min(_historyPage, totalPages - 1));
-  const pageItems = history.slice(_historyPage * HISTORY_PAGE_SIZE, (_historyPage + 1) * HISTORY_PAGE_SIZE);
-
-  const oppMap = {};
-  history.forEach(h => {
-    if (h.mode === 'vsAI') return;
-    if (!oppMap[h.opponentName]) oppMap[h.opponentName] = { win: 0, lose: 0 };
-    if (h.result === 'win') oppMap[h.opponentName].win++;
-    else if (h.result === 'lose') oppMap[h.opponentName].lose++;
+function _historyOppBreakdownHtml(oppMap) {
+  const oppEntries = Object.entries(oppMap).sort((a,b) => (b[1].win+b[1].lose) - (a[1].win+a[1].lose));
+  if (!oppEntries.length) return '';
+  let html = '<div style="margin:0 0 8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em">상대별 전적</div>';
+  oppEntries.forEach(function(entry) {
+    const name = entry[0], r = entry[1];
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:4px;font-size:13px">' +
+      '<span style="color:rgba(255,255,255,0.85)">' + escapeHtml(name) + '</span>' +
+      '<span><span style="color:#69f0ae">' + r.win + '승</span> <span style="color:rgba(255,255,255,0.3)"> / </span> <span style="color:#ef5350">' + r.lose + '패</span></span></div>';
   });
+  return html;
+}
 
-  let html = '';
-  if (_historyPage === 0) {
-    const oppEntries = Object.entries(oppMap).sort((a,b) => (b[1].win+b[1].lose) - (a[1].win+a[1].lose));
-    if (oppEntries.length > 0) {
-      html += '<div style="margin:0 0 8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em">상대별 전적 (PVP)</div>';
-      oppEntries.forEach(function(entry) {
-        const name = entry[0], r = entry[1];
-        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:4px;font-size:13px">' +
-          '<span style="color:rgba(255,255,255,0.85)">' + escapeHtml(name) + '</span>' +
-          '<span><span style="color:#69f0ae">' + r.win + '승</span> <span style="color:rgba(255,255,255,0.3)"> / </span> <span style="color:#ef5350">' + r.lose + '패</span></span></div>';
-      });
-    }
-    html += '<div style="margin:12px 0 8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em">최근 기록</div>';
-  }
+function _historyRowHtml(h, idx, clickable) {
+  const d = new Date(h.created_at);
+  const dateStr = (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  const resultColor = h.result === 'win' ? '#69f0ae' : h.result === 'lose' ? '#ef5350' : '#ffd76a';
+  const resultTxt = h.result === 'win' ? '승' : h.result === 'lose' ? '패' : '무';
+  const clickAttr = clickable ? ' onclick="showMatchDetail(' + idx + ')" style="cursor:pointer"' : '';
+  return '<div class="history-row"' + clickAttr + ' style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:rgba(255,255,255,0.04);font-size:13px' + (clickable ? ';cursor:pointer' : '') + '">' +
+    '<span style="font-weight:700;color:' + resultColor + ';min-width:20px">' + resultTxt + '</span>' +
+    '<span style="flex:1;padding:0 8px;color:rgba(255,255,255,0.8)">' + escapeHtml(h.opponent_name || '상대방') + '</span>' +
+    '<span style="color:rgba(255,255,255,0.4);font-size:11px;margin-right:8px">' + (h.my_score ?? '?') + ' - ' + (h.opp_score ?? '?') + '</span>' +
+    '<span style="color:rgba(255,255,255,0.25);font-size:10px">' + dateStr + '</span>' +
+    (clickable ? '<span style="color:rgba(255,255,255,0.25);font-size:11px;margin-left:6px">›</span>' : '') +
+    '</div>';
+}
 
-  pageItems.forEach(function(h) {
-    const d = new Date(h.date);
-    const dateStr = (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-    const resultColor = h.result === 'win' ? '#69f0ae' : h.result === 'lose' ? '#ef5350' : '#ffd76a';
-    const resultTxt = h.result === 'win' ? '승' : h.result === 'lose' ? '패' : '무';
-    const modeTag = h.mode === 'vsAI' ? '🤖 AI전' : '👤 PVP';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:rgba(255,255,255,0.04);font-size:13px">' +
-      '<span style="font-weight:700;color:' + resultColor + ';min-width:20px">' + resultTxt + '</span>' +
-      '<span style="flex:1;padding:0 8px;color:rgba(255,255,255,0.8)">' + escapeHtml(h.opponentName) + '</span>' +
-      '<span style="color:rgba(255,255,255,0.4);font-size:11px;margin-right:8px">' + (h.myScore ?? '?') + ' - ' + (h.oppScore ?? '?') + '</span>' +
-      '<span style="color:rgba(255,255,255,0.3);font-size:10px;margin-right:6px">' + modeTag + '</span>' +
-      '<span style="color:rgba(255,255,255,0.25);font-size:10px">' + dateStr + '</span></div>';
-  });
-  listEl.innerHTML = html;
-
-  // Pagination controls
-  if (totalPages <= 1) { pageEl.innerHTML = ''; return; }
-  const btnStyle = 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:5px 14px;border-radius:8px;font-size:13px;cursor:pointer;';
-  const disabledStyle = 'background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);color:rgba(255,255,255,0.25);padding:5px 14px;border-radius:8px;font-size:13px;cursor:default;';
-  pageEl.innerHTML =
-    '<button style="' + (_historyPage > 0 ? btnStyle : disabledStyle) + '" onclick="historyPageNav(-1)" ' + (_historyPage === 0 ? 'disabled' : '') + '>‹ 이전</button>' +
+function _historyPaginationHtml(totalPages) {
+  if (totalPages <= 1) return '';
+  const btnStyle = 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:5px 12px;border-radius:8px;font-size:13px;cursor:pointer;';
+  const disabledStyle = 'background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);color:rgba(255,255,255,0.25);padding:5px 12px;border-radius:8px;font-size:13px;cursor:default;';
+  const atStart = _historyPage === 0, atEnd = _historyPage >= totalPages - 1;
+  return '<button style="' + (!atStart ? btnStyle : disabledStyle) + '" onclick="historyPageJump(0)" ' + (atStart ? 'disabled' : '') + '>« 처음</button>' +
+    '<button style="' + (!atStart ? btnStyle : disabledStyle) + '" onclick="historyPageNav(-1)" ' + (atStart ? 'disabled' : '') + '>‹ 이전</button>' +
     '<span style="font-size:12px;color:rgba(255,255,255,0.45)">' + (_historyPage + 1) + ' / ' + totalPages + '</span>' +
-    '<button style="' + (_historyPage < totalPages - 1 ? btnStyle : disabledStyle) + '" onclick="historyPageNav(1)" ' + (_historyPage >= totalPages - 1 ? 'disabled' : '') + '>다음 ›</button>';
+    '<button style="' + (!atEnd ? btnStyle : disabledStyle) + '" onclick="historyPageNav(1)" ' + (atEnd ? 'disabled' : '') + '>다음 ›</button>' +
+    '<button style="' + (!atEnd ? btnStyle : disabledStyle) + '" onclick="historyPageJump(' + (totalPages - 1) + ')" ' + (atEnd ? 'disabled' : '') + '>끝 »</button>';
 }
 
 function historyPageNav(dir) {
   _historyPage += dir;
   _renderHistory();
 }
+function historyPageJump(page) {
+  _historyPage = page;
+  _renderHistory();
+}
 
 function hideHistory() { document.getElementById('historyOverlay').classList.remove('show'); }
 
-function clearHistory() {
-  if (!confirm('전적 기록을 모두 삭제할까요?')) return;
-  localStorage.removeItem(HISTORY_KEY);
-  showHistory();
+const RESULT_TYPE_LABELS = {
+  gin: '✨ 진 (Gin)', 'big-gin': '💎 빅진 (Big Gin)', undercut: '🔄 언더컷 (Undercut)',
+  knock: '🤜 녹 (Knock)', tie: '🤝 무승부', surrender: '🏳️ 항복',
+};
+
+function showMatchDetail(idx) {
+  const h = _historyPageRows[idx];
+  if (!h) return;
+  const iWon = h.result === 'win';
+  const titleEl = document.getElementById('matchDetailTitle');
+  const bodyEl = document.getElementById('matchDetailBody');
+  const resultTxt = h.result === 'win' ? '승리' : h.result === 'lose' ? '패배' : '무승부';
+  const resultColor = iWon ? '#69f0ae' : h.result === 'lose' ? '#ef5350' : '#ffd76a';
+  titleEl.innerHTML = (iWon ? '🎉' : h.result === 'lose' ? '😢' : '🤝') + ' ' + resultTxt;
+
+  const scoreDiff = (h.my_score ?? 0) - (h.opp_score ?? 0);
+  const diffTxt = scoreDiff > 0 ? '+' + scoreDiff + '점 차이로 승리' : scoreDiff < 0 ? Math.abs(scoreDiff) + '점 차이로 패배' : '동점';
+  const resultTypeTxt = h.result_type ? (RESULT_TYPE_LABELS[h.result_type] || h.result_type) : '';
+  const dwKnown = h.my_deadwood !== null && h.my_deadwood !== undefined;
+
+  let html = '';
+  html += '<div style="text-align:center;padding:16px 0;background:rgba(255,255,255,0.04);border-radius:14px">' +
+    '<div style="font-size:32px;font-weight:800;color:' + resultColor + '">' + (h.my_score ?? '?') + ' : ' + (h.opp_score ?? '?') + '</div>' +
+    '<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px">' + escapeHtml(h.opponent_name || '상대방') + ' 님과의 경기 · ' + diffTxt + '</div>' +
+    '</div>';
+
+  if (resultTypeTxt) {
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:10px">' +
+      '<span style="font-size:12px;color:rgba(255,255,255,0.5)">종료 방식</span>' +
+      '<span style="font-size:14px;font-weight:700">' + resultTypeTxt + '</span></div>';
+  }
+  if (dwKnown) {
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:10px">' +
+      '<span style="font-size:12px;color:rgba(255,255,255,0.5)">마지막 라운드 데드우드</span>' +
+      '<span style="font-size:14px;font-weight:700">나 ' + h.my_deadwood + ' · 상대 ' + h.opp_deadwood + '</span></div>';
+  }
+  if (h.target_score !== null && h.target_score !== undefined) {
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:10px">' +
+      '<span style="font-size:12px;color:rgba(255,255,255,0.5)">목표 점수</span>' +
+      '<span style="font-size:14px;font-weight:700">' + (h.target_score ?? '무제한') + '</span></div>';
+  }
+  const d = new Date(h.created_at);
+  html += '<div style="text-align:center;font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px">' +
+    d.getFullYear() + '.' + (d.getMonth()+1) + '.' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + '</div>';
+
+  bodyEl.innerHTML = html;
+  document.getElementById('matchDetailOverlay').classList.add('show');
 }
+function hideMatchDetail() { document.getElementById('matchDetailOverlay').classList.remove('show'); }
 
 function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// One-time migration: PVP history is now tracked server-side (Supabase);
+// old locally-stored PVP entries used pre-online nicknames and are stale.
+if (!localStorage.getItem('grHistoryResetV3')) {
+  try {
+    const oldHist = JSON.parse(localStorage.getItem('grMatchHistory') || '[]');
+    const keptHist = oldHist.filter(h => h.mode === 'vsAI');
+    localStorage.setItem('grMatchHistory', JSON.stringify(keptHist));
+  } catch (e) { /* ignore */ }
+  localStorage.setItem('grHistoryResetV3', '1');
 }
 
 setTheme(localStorage.getItem('grTheme') || 'green');
@@ -4050,6 +4201,7 @@ let oklahomaCap = null;   // number when Oklahoma Gin, else null
 let handSize = 10;
 let matchTurns = 0;       // discard count this match (for RP calculation)
 let lastRoundType = '';   // resultType of the most recent round
+let lastRoundDetail = null; // { myDW, oppDW, pts, knockerIdx } of the most recent round
 
 // ===== Chat =====
 let chatOpen = false;
@@ -4640,13 +4792,25 @@ function initSocket() {
     // Save to match history
     const matchResult = winnerIdx === -1 ? 'tie' : (winnerIdx === myIdx ? 'win' : 'lose');
     const winsBeforeThisGame = getTotalWins(); // snapshot BEFORE saving
-    saveMatchResult({
-      opponentName: ns[1 - myIdx] || '상대방',
-      myScore: sc[myIdx],
-      oppScore: sc[1 - myIdx],
-      result: matchResult,
-      mode: vsAI ? 'vsAI' : 'pvp',
-    });
+    if (supaUser && !vsAI) {
+      saveMatchToDb({
+        opponentName: ns[1 - myIdx] || '상대방',
+        opponentChar: chars[1 - myIdx],
+        myScore: sc[myIdx],
+        oppScore: sc[1 - myIdx],
+        result: matchResult,
+        gameMode,
+        targetScore,
+      });
+    } else {
+      saveMatchResult({
+        opponentName: ns[1 - myIdx] || '상대방',
+        myScore: sc[myIdx],
+        oppScore: sc[1 - myIdx],
+        result: matchResult,
+        mode: vsAI ? 'vsAI' : 'pvp',
+      });
+    }
     updateLockedSwatches();
 
     // Character unlock check (PVP wins only)
@@ -4884,7 +5048,16 @@ function initSocket() {
     else setStatus(`내가 ${card.rank}${SUITS_SYM[card.suit]} 버렸습니다. ${oppName()} 턴...`);
   });
 
-  socket.on('round-end', data => { lastRoundType = data.resultType || ''; showResult(data); });
+  socket.on('round-end', data => {
+    lastRoundType = data.resultType || '';
+    lastRoundDetail = {
+      myDW: data.dw ? data.dw[myIdx] : null,
+      oppDW: data.dw ? data.dw[1-myIdx] : null,
+      pts: data.pts || 0,
+      knockerIdx: data.knockerIdx,
+    };
+    showResult(data);
+  });
   socket.on('deck-empty', () => {
     document.getElementById('resultOverlay').classList.add('show');
     document.getElementById('resEmoji').textContent = '🤝';
