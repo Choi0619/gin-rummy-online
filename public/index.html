@@ -3077,13 +3077,14 @@ function renderProfileCharGrid() {
   const wins = getTotalWins();
   const chars = ['🐱','🐶','🐰','🦊','🐻','🐼','🐨','🐯','🐢','🦁','🐸','🦝'];
   const grid = document.getElementById('profileCharGrid');
-  grid.innerHTML = chars.map(ch => {
+  grid.innerHTML = chars.map(function(ch) {
     const req = CHAR_UNLOCK_REQ[ch];
     const locked = req && wins < req;
     const selected = (supaProfile.char || '🐱') === ch;
-    const reqTxt = locked ? `<div class="profile-char-req">${req}승</div>` : '';
-    return `<div class="profile-char-opt${selected?' selected':''}${locked?' locked':''}"
-      onclick="${locked ? '' : `selectProfileChar('${ch}')`}">${ch}${reqTxt}</div>`;
+    const reqTxt = locked ? '<div class="profile-char-req">' + req + '승</div>' : '';
+    const cls = 'profile-char-opt' + (selected ? ' selected' : '') + (locked ? ' locked' : '');
+    const clickHandler = locked ? '' : 'selectProfileChar(\'' + ch + '\')';
+    return '<div class="' + cls + '" onclick="' + clickHandler + '">' + ch + reqTxt + '</div>';
   }).join('');
 }
 
@@ -3303,19 +3304,20 @@ function renderRankingTab() {
   document.getElementById('myRankTierLabel').innerHTML = `<span style="color:${myTier.color}">${myTier.emoji} ${myTier.name}</span>`;
   document.getElementById('myRankRP').textContent = rp;
 
-  document.getElementById('tierTable').innerHTML = TIERS.map(t => {
+  document.getElementById('tierTable').innerHTML = TIERS.map(function(t) {
     const isCurrent = myTier.name === t.name;
-    const maxStr = t.max === Infinity ? '∞' : t.max;
-    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;margin-bottom:6px;
-      background:${isCurrent ? 'rgba(255,215,120,0.1)' : 'rgba(255,255,255,0.04)'};
-      border:1px solid ${isCurrent ? 'rgba(255,215,120,0.35)' : 'rgba(255,255,255,0.07)'}">
-      <span style="font-size:22px">${t.emoji}</span>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;color:${t.color}">${t.name}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.35)">${t.min} ~ ${maxStr} RP</div>
-      </div>
-      ${isCurrent ? `<div style="font-size:11px;color:#ffd76a;font-weight:600">▶ 현재 (${rp} RP)</div>` : ''}
-    </div>`;
+    const maxStr = t.max === Infinity ? '∞' : String(t.max);
+    const bg = isCurrent ? 'rgba(255,215,120,0.1)' : 'rgba(255,255,255,0.04)';
+    const border = isCurrent ? 'rgba(255,215,120,0.35)' : 'rgba(255,255,255,0.07)';
+    const currentBadge = isCurrent ? '<div style="font-size:11px;color:#ffd76a;font-weight:600">▶ 현재 (' + rp + ' RP)</div>' : '';
+    return '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;margin-bottom:6px;background:' + bg + ';border:1px solid ' + border + '">'
+      + '<span style="font-size:22px">' + t.emoji + '</span>'
+      + '<div style="flex:1">'
+      + '<div style="font-size:13px;font-weight:700;color:' + t.color + '">' + t.name + '</div>'
+      + '<div style="font-size:11px;color:rgba(255,255,255,0.35)">' + t.min + ' ~ ' + maxStr + ' RP</div>'
+      + '</div>'
+      + currentBadge
+      + '</div>';
   }).join('');
 }
 
