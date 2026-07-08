@@ -321,12 +321,74 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 }
 .auth-import-row label { font-size: 12px; color: rgba(255,255,255,0.7); cursor: pointer; flex: 1; }
 .auth-user-badge {
-  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
-  background: rgba(255,255,255,0.06); border-radius: 8px; margin-bottom: 2px;
+  display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,215,120,0.2);
+  border-radius: 14px; margin-bottom: 2px; cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
 }
-.auth-user-badge .badge-name { font-size: 13px; font-weight: 700; color: #ffd76a; }
-.auth-user-badge .badge-logout { font-size: 11px; color: rgba(255,255,255,0.4); cursor: pointer; margin-left: auto; }
-.auth-user-badge .badge-logout:hover { color: #ef5350; }
+.auth-user-badge:hover { background: rgba(255,255,255,0.11); border-color: rgba(255,215,120,0.4); }
+.auth-user-badge .badge-char { font-size: 28px; line-height: 1; }
+.auth-user-badge .badge-name { font-size: 15px; font-weight: 700; color: #ffd76a; }
+.auth-user-badge .badge-id { font-size: 11px; color: rgba(255,255,255,0.38); }
+.auth-user-badge .badge-rp { font-size: 11px; color: rgba(255,215,120,0.6); }
+.auth-user-badge .badge-logout { font-size: 11px; color: rgba(255,255,255,0.35); cursor: pointer; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); white-space:nowrap; }
+.auth-user-badge .badge-logout:hover { color: #ef5350; border-color: #ef5350; }
+
+/* ===== Profile modal ===== */
+.profile-overlay {
+  position: fixed; inset: 0; z-index: 1100;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+}
+.profile-box {
+  background: linear-gradient(160deg, #173d24, #0a2414);
+  border: 1px solid rgba(255,215,120,0.3); border-radius: 22px;
+  padding: 28px 24px; width: 92%; max-width: 420px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  animation: authBoxIn 0.35s cubic-bezier(.22,.68,0,1.2);
+}
+.profile-avatar { font-size: 56px; text-align: center; margin-bottom: 6px; cursor: default; }
+.profile-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.profile-name-input {
+  flex: 1; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px; padding: 9px 12px; color: #fff; font-size: 15px; font-weight: 700;
+  outline: none;
+}
+.profile-name-input:focus { border-color: rgba(255,215,120,0.5); }
+.profile-save-btn {
+  padding: 9px 14px; background: rgba(255,215,120,0.15); border: 1px solid rgba(255,215,120,0.3);
+  border-radius: 10px; color: #ffd76a; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.profile-save-btn:hover { background: rgba(255,215,120,0.25); }
+.profile-id-box {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.profile-id-label { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 2px; }
+.profile-id-value { font-size: 17px; font-weight: 700; color: #ffd76a; letter-spacing: 0.04em; }
+.profile-copy-btn {
+  margin-left: auto; padding: 7px 12px; background: rgba(255,215,120,0.12);
+  border: 1px solid rgba(255,215,120,0.25); border-radius: 8px;
+  color: #ffd76a; font-size: 13px; cursor: pointer; white-space: nowrap;
+}
+.profile-copy-btn:hover { background: rgba(255,215,120,0.22); }
+.profile-stats-row { display: flex; gap: 10px; margin-bottom: 16px; }
+.profile-stat-box {
+  flex: 1; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px 8px; text-align: center;
+}
+.profile-stat-num { font-size: 20px; font-weight: 700; color: #fff; }
+.profile-stat-lbl { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+.profile-char-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 6px; }
+.profile-char-opt {
+  aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.05); border: 2px solid transparent;
+  border-radius: 12px; cursor: pointer; font-size: 26px; transition: all 0.15s; position: relative;
+}
+.profile-char-opt.selected { border-color: #ffd76a; background: rgba(255,215,120,0.12); }
+.profile-char-opt.locked { opacity: 0.35; cursor: not-allowed; filter: grayscale(0.5); }
+.profile-char-opt.locked::after { content: '🔒'; position: absolute; bottom: 3px; right: 5px; font-size: 10px; }
+.profile-char-req { font-size: 9px; color: rgba(255,255,255,0.35); margin-top: 2px; }
 
 /* ===== Rank / Tier system ===== */
 .rank-display {
@@ -1664,17 +1726,56 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <button class="btn-howto" onclick="showHistory()" style="background:rgba(255,215,120,0.12);border-color:rgba(255,215,120,0.3)">📊 전적</button>
     <button class="btn-settings" onclick="showSettings()" title="Settings">⚙️</button>
   </div>
-  <div id="lobbyUserBadge" class="auth-user-badge" style="display:none;max-width:420px;margin:0 auto 4px">
-    <span id="lobbyUserChar" style="font-size:18px"></span>
-    <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
-      <span class="badge-name" id="lobbyUserName" style="font-size:13px"></span>
-      <span id="lobbyUserId" style="font-size:11px;color:rgba(255,255,255,0.38);display:flex;align-items:center;gap:4px">
-        <span id="lobbyUserIdText"></span>
-        <button onclick="copyGameId()" title="아이디 복사" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:11px;padding:0;line-height:1">📋</button>
-        <span id="lobbyUserIdCopied" style="color:#69f0ae;font-size:10px;display:none">복사됨!</span>
+  <div id="lobbyUserBadge" class="auth-user-badge" style="display:none;max-width:420px;margin:0 auto 4px" onclick="showProfileModal()">
+    <span class="badge-char" id="lobbyUserChar"></span>
+    <span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
+      <span class="badge-name" id="lobbyUserName"></span>
+      <span style="display:flex;align-items:center;gap:6px">
+        <span class="badge-id" id="lobbyUserIdText"></span>
+        <span class="badge-rp" id="lobbyUserRP"></span>
       </span>
     </span>
-    <span class="badge-logout" onclick="doLogout()">로그아웃</span>
+    <span class="badge-logout" onclick="event.stopPropagation();doLogout()">로그아웃</span>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="profile-overlay" id="profileOverlay" style="display:none" onclick="if(event.target===this)hideProfileModal()">
+    <div class="profile-box">
+      <div class="profile-avatar" id="profileAvatar">🐱</div>
+      <div class="profile-name-row">
+        <input class="profile-name-input" id="profileNicknameInput" maxlength="12" placeholder="닉네임">
+        <button class="profile-save-btn" onclick="saveProfileNickname()">저장</button>
+      </div>
+      <div class="profile-id-box">
+        <div>
+          <div class="profile-id-label">내 아이디 (Game ID)</div>
+          <div class="profile-id-value" id="profileIdValue"></div>
+        </div>
+        <button class="profile-copy-btn" id="profileCopyBtn" onclick="copyProfileId()">📋 복사</button>
+      </div>
+      <div class="profile-stats-row">
+        <div class="profile-stat-box">
+          <div class="profile-stat-num" id="profileWins">0</div>
+          <div class="profile-stat-lbl">승리</div>
+        </div>
+        <div class="profile-stat-box">
+          <div class="profile-stat-num" id="profileLosses">0</div>
+          <div class="profile-stat-lbl">패배</div>
+        </div>
+        <div class="profile-stat-box">
+          <div class="profile-stat-num" id="profileRP" style="color:#ffd76a">0</div>
+          <div class="profile-stat-lbl">랭킹 포인트</div>
+        </div>
+        <div class="profile-stat-box">
+          <div class="profile-stat-num" id="profileTier" style="font-size:14px">🥉</div>
+          <div class="profile-stat-lbl">티어</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:8px;font-weight:600">캐릭터 선택</div>
+      <div class="profile-char-grid" id="profileCharGrid"></div>
+      <div id="profileSaveMsg" style="font-size:12px;text-align:center;min-height:16px;margin-top:8px"></div>
+      <button onclick="hideProfileModal()" style="width:100%;margin-top:12px;padding:11px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:rgba(255,255,255,0.6);font-size:14px;cursor:pointer">닫기</button>
+    </div>
   </div>
 
   <div class="logo">🃏</div>
@@ -1920,14 +2021,34 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 <div class="overlay" id="historyOverlay">
   <div class="howto-box" style="max-width:500px;width:92vw">
     <button class="howto-close" onclick="hideHistory()">✕</button>
-    <div class="howto-title">📊 전적 기록</div>
-    <div class="howto-scroll" style="max-height:65vh">
+    <div style="display:flex;gap:0;margin-bottom:16px;background:rgba(255,255,255,0.06);border-radius:10px;padding:3px">
+      <button id="tabHistory" onclick="switchHistoryTab('history')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:rgba(255,215,120,0.2);color:#ffd76a;transition:all 0.2s">📊 전적</button>
+      <button id="tabRanking" onclick="switchHistoryTab('ranking')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:none;color:rgba(255,255,255,0.45);transition:all 0.2s">🏆 랭킹</button>
+    </div>
+    <!-- 전적 탭 -->
+    <div id="panelHistory" class="howto-scroll" style="max-height:62vh">
       <div id="historyStats" style="display:flex;gap:12px;margin-bottom:16px;justify-content:center;flex-wrap:wrap"></div>
       <div id="historyList"></div>
     </div>
+    <!-- 랭킹 탭 -->
+    <div id="panelRanking" class="howto-scroll" style="max-height:62vh;display:none">
+      <div id="myRankCard" style="background:rgba(255,215,120,0.08);border:1px solid rgba(255,215,120,0.25);border-radius:14px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+        <span id="myRankChar" style="font-size:32px"></span>
+        <div style="flex:1">
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:2px">내 현재 랭크</div>
+          <div id="myRankTierLabel" style="font-size:18px;font-weight:700"></div>
+        </div>
+        <div style="text-align:right">
+          <div id="myRankRP" style="font-size:22px;font-weight:700;color:#ffd76a"></div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.35)">RP</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:600;letter-spacing:0.05em;margin-bottom:10px">티어 기준표</div>
+      <div id="tierTable"></div>
+    </div>
     <div style="display:flex;gap:8px;margin-top:14px;align-items:center">
       <button class="btn btn-primary" onclick="hideHistory()" style="flex:1;min-width:0">닫기</button>
-      <button class="btn btn-secondary" onclick="clearHistory()" style="flex:0 0 90px;font-size:12px;padding:0 10px">기록 삭제</button>
+      <button id="clearHistoryBtn" class="btn btn-secondary" onclick="clearHistory()" style="flex:0 0 90px;font-size:12px;padding:0 10px">기록 삭제</button>
     </div>
   </div>
 </div>
@@ -2905,7 +3026,6 @@ async function loadProfile() {
   const { data } = await supa.from('profiles').select('*').eq('id', supaUser.id).single();
   if (!data) return;
   supaProfile = data;
-  // 닉네임 → 로비 입력창 (변경 가능)
   const savedNick = data.username || data.game_id || '';
   document.getElementById('myName').value = savedNick;
   myName = savedNick;
@@ -2913,12 +3033,98 @@ async function loadProfile() {
   renderCharGrid();
   localStorage.setItem(RANK_KEY, String(data.rank_points));
   renderLobbyRank();
-  // 유저 배지
   const gameId = data.game_id || '';
+  const rp = data.rank_points || 0;
+  const tierInfo = getTierInfo(rp);
   document.getElementById('lobbyUserChar').textContent = data.char || myChar;
   document.getElementById('lobbyUserName').textContent = savedNick;
   document.getElementById('lobbyUserIdText').textContent = gameId;
+  document.getElementById('lobbyUserRP').textContent = `${tierInfo.emoji} ${rp} RP`;
   document.getElementById('lobbyUserBadge').style.display = 'flex';
+}
+
+const TIERS = [
+  { name: '브론즈',    emoji: '🥉', min: 0,    max: 499,  color: '#cd7f32' },
+  { name: '실버',     emoji: '🥈', min: 500,  max: 999,  color: '#c0c0c0' },
+  { name: '골드',     emoji: '🥇', min: 1000, max: 1999, color: '#ffd700' },
+  { name: '플래티넘',  emoji: '💎', min: 2000, max: 3499, color: '#4fc3f7' },
+  { name: '다이아',   emoji: '💠', min: 3500, max: 5999, color: '#ce93d8' },
+  { name: '챌린저',   emoji: '🏆', min: 6000, max: Infinity, color: '#ff8c00' },
+];
+function getTierInfo(rp) { return TIERS.slice().reverse().find(t => rp >= t.min) || TIERS[0]; }
+
+function showProfileModal() {
+  if (!supaProfile) return;
+  const rp = supaProfile.rank_points || 0;
+  const tier = getTierInfo(rp);
+  document.getElementById('profileAvatar').textContent = supaProfile.char || '🐱';
+  document.getElementById('profileNicknameInput').value = supaProfile.username || supaProfile.game_id || '';
+  document.getElementById('profileIdValue').textContent = supaProfile.game_id || '';
+  document.getElementById('profileWins').textContent = supaProfile.pvp_wins || 0;
+  document.getElementById('profileLosses').textContent = supaProfile.pvp_losses || 0;
+  document.getElementById('profileRP').textContent = rp;
+  document.getElementById('profileTier').textContent = `${tier.emoji} ${tier.name}`;
+  document.getElementById('profileSaveMsg').textContent = '';
+  renderProfileCharGrid();
+  document.getElementById('profileOverlay').style.display = 'flex';
+}
+
+function hideProfileModal() {
+  document.getElementById('profileOverlay').style.display = 'none';
+}
+
+function renderProfileCharGrid() {
+  const wins = getTotalWins();
+  const chars = ['🐱','🐶','🐰','🦊','🐻','🐼','🐨','🐯','🐢','🦁','🐸','🦝'];
+  const grid = document.getElementById('profileCharGrid');
+  grid.innerHTML = chars.map(ch => {
+    const req = CHAR_UNLOCK_REQ[ch];
+    const locked = req && wins < req;
+    const selected = (supaProfile.char || '🐱') === ch;
+    const reqTxt = locked ? `<div class="profile-char-req">${req}승</div>` : '';
+    return `<div class="profile-char-opt${selected?' selected':''}${locked?' locked':''}"
+      onclick="${locked ? '' : `selectProfileChar('${ch}')`}">${ch}${reqTxt}</div>`;
+  }).join('');
+}
+
+async function selectProfileChar(ch) {
+  if (!supaUser) return;
+  supaProfile.char = ch;
+  document.getElementById('profileAvatar').textContent = ch;
+  renderProfileCharGrid();
+  document.getElementById('lobbyUserChar').textContent = ch;
+  myChar = ch;
+  renderCharGrid();
+  await supa.from('profiles').update({ char: ch }).eq('id', supaUser.id);
+  showMsg('profileSaveMsg', '✅ 캐릭터가 저장되었습니다!', '#69f0ae');
+}
+
+async function saveProfileNickname() {
+  const nick = document.getElementById('profileNicknameInput').value.trim();
+  if (!nick || !supaUser) return;
+  const { error } = await supa.from('profiles').update({ username: nick }).eq('id', supaUser.id);
+  if (error) { showMsg('profileSaveMsg', '저장 실패: ' + error.message, '#ef5350'); return; }
+  supaProfile.username = nick;
+  myName = nick;
+  document.getElementById('myName').value = nick;
+  document.getElementById('lobbyUserName').textContent = nick;
+  showMsg('profileSaveMsg', '✅ 닉네임이 저장되었습니다!', '#69f0ae');
+}
+
+function copyProfileId() {
+  const id = supaProfile?.game_id || '';
+  if (!id) return;
+  navigator.clipboard.writeText(id).then(() => {
+    const btn = document.getElementById('profileCopyBtn');
+    btn.textContent = '✅ 복사됨!';
+    setTimeout(() => { btn.textContent = '📋 복사'; }, 1800);
+  });
+}
+
+function showMsg(elId, msg, color) {
+  const el = document.getElementById(elId);
+  el.textContent = msg; el.style.color = color;
+  setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 2500);
 }
 
 function copyGameId() {
@@ -3076,6 +3282,41 @@ function saveMatchResult({ opponentName, myScore, oppScore, result, mode }) {
   });
   if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
+
+function switchHistoryTab(tab) {
+  const isHistory = tab === 'history';
+  document.getElementById('panelHistory').style.display = isHistory ? '' : 'none';
+  document.getElementById('panelRanking').style.display = isHistory ? 'none' : '';
+  document.getElementById('clearHistoryBtn').style.display = isHistory ? '' : 'none';
+  document.getElementById('tabHistory').style.background = isHistory ? 'rgba(255,215,120,0.2)' : 'none';
+  document.getElementById('tabHistory').style.color = isHistory ? '#ffd76a' : 'rgba(255,255,255,0.45)';
+  document.getElementById('tabRanking').style.background = isHistory ? 'none' : 'rgba(255,215,120,0.2)';
+  document.getElementById('tabRanking').style.color = isHistory ? 'rgba(255,255,255,0.45)' : '#ffd76a';
+  if (!isHistory) renderRankingTab();
+}
+
+function renderRankingTab() {
+  const rp = supaProfile ? (supaProfile.rank_points || 0) : parseInt(localStorage.getItem(RANK_KEY) || '0');
+  const myTier = getTierInfo(rp);
+  document.getElementById('myRankChar').textContent = supaProfile?.char || myChar || '🐱';
+  document.getElementById('myRankTierLabel').innerHTML = `<span style="color:${myTier.color}">${myTier.emoji} ${myTier.name}</span>`;
+  document.getElementById('myRankRP').textContent = rp;
+
+  document.getElementById('tierTable').innerHTML = TIERS.map(t => {
+    const isCurrent = myTier.name === t.name;
+    const maxStr = t.max === Infinity ? '∞' : t.max;
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;margin-bottom:6px;
+      background:${isCurrent ? 'rgba(255,215,120,0.1)' : 'rgba(255,255,255,0.04)'};
+      border:1px solid ${isCurrent ? 'rgba(255,215,120,0.35)' : 'rgba(255,255,255,0.07)'}">
+      <span style="font-size:22px">${t.emoji}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:${t.color}">${t.name}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35)">${t.min} ~ ${maxStr} RP</div>
+      </div>
+      ${isCurrent ? `<div style="font-size:11px;color:#ffd76a;font-weight:600">▶ 현재 (${rp} RP)</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 function showHistory() {
