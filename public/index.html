@@ -301,6 +301,12 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 .auth-tab.active { background: rgba(255,215,120,0.18); color: #ffd76a; }
 .auth-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 13px; }
 .auth-field label { font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 600; letter-spacing: 0.4px; }
+.auth-pw-wrap { position: relative; }
+.auth-pw-wrap input { width: 100%; padding-right: 38px; }
+.auth-pw-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; font-size: 16px; color: rgba(255,255,255,0.4);
+  padding: 0; line-height: 1; transition: color 0.2s; }
+.auth-pw-toggle:hover { color: rgba(255,255,255,0.8); }
 .auth-field input {
   padding: 11px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.18);
   background: rgba(255,255,255,0.07); color: white; font-size: 15px; outline: none;
@@ -1534,8 +1540,11 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       </div>
       <div class="auth-field">
         <label>비밀번호</label>
-        <input type="password" id="authLoginPw" placeholder="비밀번호 입력"
-          onkeydown="if(event.key==='Enter')doLogin()">
+        <div class="auth-pw-wrap">
+          <input type="password" id="authLoginPw" placeholder="비밀번호 입력"
+            onkeydown="if(event.key==='Enter')doLogin()">
+          <button type="button" class="auth-pw-toggle" onclick="togglePw('authLoginPw',this)">👁️</button>
+        </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:8px">
@@ -1589,14 +1598,18 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       </div>
       <div class="auth-field">
         <label>비밀번호 <span style="color:rgba(255,255,255,0.35);font-weight:400">(6자 이상)</span></label>
-        <input type="password" id="authSignupPw" placeholder="비밀번호 입력" oninput="validatePwMatch()">
+        <div class="auth-pw-wrap">
+          <input type="password" id="authSignupPw" placeholder="비밀번호 입력" oninput="validatePwMatch()">
+          <button type="button" class="auth-pw-toggle" onclick="togglePw('authSignupPw',this)">👁️</button>
+        </div>
       </div>
       <div class="auth-field">
         <label>비밀번호 확인</label>
-        <div style="position:relative">
+        <div class="auth-pw-wrap">
           <input type="password" id="authSignupPw2" placeholder="비밀번호 재입력"
             oninput="validatePwMatch()" onkeydown="if(event.key==='Enter')doSignup()"
-            style="width:100%;padding-right:36px">
+            style="padding-right:64px">
+          <button type="button" class="auth-pw-toggle" style="right:36px" onclick="togglePw('authSignupPw2',this)">👁️</button>
           <span id="authPwMatchIcon" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:16px"></span>
         </div>
         <div id="authPwMatchMsg" style="font-size:11px;margin-top:3px;min-height:14px"></div>
@@ -2692,6 +2705,12 @@ function validateSignupId() {
   el.style.color = '#69f0ae'; el.textContent = '✓ 사용 가능한 형식입니다.';
 }
 
+function togglePw(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁️';
+}
 function validatePwMatch() {
   const pw = document.getElementById('authSignupPw').value;
   const pw2 = document.getElementById('authSignupPw2').value;
