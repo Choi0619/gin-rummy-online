@@ -95,11 +95,12 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
 .btn-settings:hover { background: rgba(255,255,255,0.2); transform: rotate(45deg); }
 
 /* ===== Settings: theme swatches ===== */
-.theme-grid { display: flex; gap: 8px; flex-wrap: nowrap; justify-content: space-between; }
+.theme-grid { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .theme-swatch {
-  width: 40px; height: 40px; border-radius: 50%; cursor: pointer; flex-shrink: 0;
+  width: 38px; height: 38px; border-radius: 50%; cursor: pointer; flex-shrink: 0;
   border: 3px solid rgba(255,255,255,0.15); transition: all 0.15s;
-  font-size: 16px; line-height: 34px; text-align: center;
+  font-size: 15px; line-height: 32px; text-align: center;
+  position: relative;
 }
 .theme-swatch:hover { transform: scale(1.1); }
 .theme-swatch.selected { border-color: #ffd76a; box-shadow: 0 0 0 2px rgba(255,215,120,0.4); }
@@ -229,13 +230,185 @@ body.theme-rainbow .middle-zone { animation: rainbowGlow 4s linear infinite; }
 body.theme-rainbow .logo-title,
 body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 
-/* Rainbow swatch locked state */
-.theme-swatch[data-theme="rainbow"].locked { position: relative; }
-.theme-swatch[data-theme="rainbow"].locked::after {
+/* Locked swatch state (rainbow / aurora) */
+.theme-swatch.locked { position: relative; }
+.theme-swatch.locked::after {
   content: '🔒'; position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px; background: rgba(0,0,0,0.55); border-radius: 50%;
   line-height: 34px; text-align: center;
+}
+
+/* ===== Theme swatch tooltip ===== */
+.swatch-wrap { position: relative; }
+.swatch-tip {
+  position: absolute; bottom: calc(100% + 9px); left: 50%; transform: translateX(-50%);
+  background: rgba(10,10,18,0.95); color: #e8e8f0; white-space: nowrap;
+  padding: 6px 11px; border-radius: 9px; font-size: 11px; line-height: 1.5;
+  pointer-events: none; opacity: 0; transition: opacity 0.18s;
+  z-index: 700; border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.swatch-tip strong { display: block; font-size: 12px; color: #ffd76a; margin-bottom: 1px; }
+.swatch-wrap:hover .swatch-tip { opacity: 1; }
+
+/* ===== Aurora Nebula theme (25-win unlock) ===== */
+body.theme-aurora {
+  --bg-grad: radial-gradient(ellipse at center, #081828 0%, #030b14 100%);
+  --lobby-grad: radial-gradient(circle at 50% 38%, #0e2a3a 0%, #08172a 50%, #030c1a 100%);
+}
+
+/* Aurora animated background layers */
+.aurora-layer {
+  display: none;
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  overflow: hidden;
+}
+body.theme-aurora .aurora-layer { display: block; }
+
+.aurora-band {
+  position: absolute;
+  width: 200%; height: 280px;
+  border-radius: 60%;
+  filter: blur(50px);
+  mix-blend-mode: screen;
+}
+.aurora-band-1 {
+  background: linear-gradient(90deg, transparent 5%, rgba(0,230,160,0.5) 35%, rgba(0,200,120,0.6) 50%, rgba(0,230,160,0.5) 65%, transparent 95%);
+  top: 8%; left: -50%;
+  animation: auroraDrift1 14s ease-in-out infinite;
+}
+.aurora-band-2 {
+  background: linear-gradient(90deg, transparent 5%, rgba(130,60,255,0.4) 35%, rgba(80,0,200,0.5) 50%, rgba(130,60,255,0.4) 65%, transparent 95%);
+  top: 20%; left: -40%;
+  animation: auroraDrift2 18s ease-in-out infinite;
+}
+.aurora-band-3 {
+  background: linear-gradient(90deg, transparent 5%, rgba(0,160,255,0.35) 35%, rgba(0,100,220,0.45) 50%, rgba(0,160,255,0.35) 65%, transparent 95%);
+  top: 0%; left: -35%;
+  animation: auroraDrift3 22s ease-in-out infinite;
+}
+@keyframes auroraDrift1 {
+  0%,100% { transform: translateX(-5%) scaleY(0.85) rotate(-2deg); opacity: 0.8; }
+  50%      { transform: translateX(35%) scaleY(1.3) rotate(2deg); opacity: 1; }
+}
+@keyframes auroraDrift2 {
+  0%,100% { transform: translateX(10%) scaleY(1.1) rotate(1.5deg); opacity: 0.7; }
+  50%      { transform: translateX(-25%) scaleY(0.7) rotate(-1.5deg); opacity: 0.95; }
+}
+@keyframes auroraDrift3 {
+  0%,100% { transform: translateX(-20%) scaleY(0.9) rotate(-1deg); opacity: 0.6; }
+  50%      { transform: translateX(20%) scaleY(1.4) rotate(1deg); opacity: 0.85; }
+}
+
+/* Aurora cards */
+body.theme-aurora .card {
+  background: linear-gradient(145deg, #0c1e30, #06111e);
+  border-color: rgba(0,210,160,0.35);
+  color: #d0eeff;
+  animation: auroraBorder 6s linear infinite;
+}
+body.theme-aurora .card .red { color: #ff80b0 !important; }
+body.theme-aurora .card.meld {
+  background: linear-gradient(145deg, #112a3e, #0b1c2e) !important;
+  border-color: rgba(0,255,180,0.7) !important;
+  box-shadow: 0 2px 14px rgba(0,255,180,0.25) !important;
+}
+body.theme-aurora .card.selected {
+  border-color: #00ffcc !important;
+  box-shadow: 0 16px 32px rgba(0,255,180,0.55), 0 0 0 8px rgba(0,255,180,0.12) !important;
+  animation: auroraBorder 1.5s linear infinite !important;
+}
+body.theme-aurora .middle-zone { animation: auroraGlow 5s linear infinite; }
+body.theme-aurora .logo-title { animation: auroraText 6s linear infinite; }
+@keyframes auroraBorder {
+  0%   { border-color: rgba(0,220,160,0.4); }
+  25%  { border-color: rgba(120,80,255,0.4); }
+  50%  { border-color: rgba(0,180,255,0.4); }
+  75%  { border-color: rgba(160,0,255,0.35); }
+  100% { border-color: rgba(0,220,160,0.4); }
+}
+@keyframes auroraGlow {
+  0%   { box-shadow: 0 0 14px rgba(0,220,160,0.35); }
+  33%  { box-shadow: 0 0 14px rgba(80,100,255,0.35); }
+  66%  { box-shadow: 0 0 14px rgba(0,180,255,0.35); }
+  100% { box-shadow: 0 0 14px rgba(0,220,160,0.35); }
+}
+@keyframes auroraText {
+  0%   { color: #60ffcc; }
+  33%  { color: #80a0ff; }
+  66%  { color: #40cfff; }
+  100% { color: #60ffcc; }
+}
+
+/* Twinkling stars (JS-created) */
+.aurora-star {
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+  background: white; animation: starTwinkle ease-in-out infinite;
+}
+@keyframes starTwinkle {
+  0%,100% { opacity: 0.1; transform: scale(0.7); }
+  50%      { opacity: 1; transform: scale(1.3); }
+}
+
+/* Aurora meteor shower (win celebration) */
+.aurora-meteor {
+  position: fixed; pointer-events: none; z-index: 600;
+  width: 3px; height: 80px;
+  background: linear-gradient(to bottom, rgba(0,255,200,0.9), transparent);
+  border-radius: 2px;
+  animation: meteorFall linear forwards;
+}
+@keyframes meteorFall {
+  0%   { opacity: 0; transform: translateY(-100px) rotate(35deg); }
+  10%  { opacity: 1; }
+  90%  { opacity: 0.6; }
+  100% { transform: translateY(110vh) rotate(35deg); opacity: 0; }
+}
+
+/* ===== Turn timer badge ===== */
+.turn-timer-bar {
+  position: relative; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;
+  margin: 0 16px 0; overflow: hidden; display: none;
+}
+.turn-timer-bar.active { display: block; }
+.turn-timer-fill {
+  height: 100%; border-radius: 2px; transition: width 0.9s linear, background-color 0.5s;
+  background: #69f0ae;
+}
+.turn-timer-fill.warn { background: #ffb300; }
+.turn-timer-fill.urgent { background: #ef5350; }
+.turn-timer-badge {
+  position: absolute; right: 16px; bottom: 4px;
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6);
+  display: none;
+}
+.turn-timer-badge.active { display: block; }
+
+/* ===== Room settings modal ===== */
+.room-opts-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+.room-opt-btn {
+  padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08); color: white; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.room-opt-btn:hover { background: rgba(255,255,255,0.15); }
+.room-opt-btn.active { background: rgba(255,215,120,0.25); border-color: #ffd76a; color: #ffd76a; }
+.room-score-grid {
+  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px;
+}
+.room-timer-row {
+  display: flex; align-items: center; gap: 10px; justify-content: center; margin-top: 8px;
+}
+.room-stepper {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25);
+  color: white; font-size: 20px; font-weight: bold; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.room-stepper:hover { background: rgba(255,255,255,0.2); }
+.room-timer-val {
+  min-width: 80px; text-align: center; font-size: 18px; font-weight: 700; color: #ffd76a;
 }
 
 .lobby-card {
@@ -1147,6 +1320,47 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 </head>
 <body>
 
+<!-- Aurora background layer (shown only with theme-aurora) -->
+<div class="aurora-layer" id="auroraLayer">
+  <div class="aurora-band aurora-band-1"></div>
+  <div class="aurora-band aurora-band-2"></div>
+  <div class="aurora-band aurora-band-3"></div>
+</div>
+
+<!-- ===== ROOM SETTINGS MODAL ===== -->
+<div class="overlay" id="roomSettingsOverlay">
+  <div class="howto-box" style="max-width:420px">
+    <button class="howto-close" onclick="closeRoomSettings()">✕</button>
+    <div class="howto-title" id="roomSettingsTitle">✨ 방 설정</div>
+    <div class="howto-scroll" style="max-height:65vh">
+      <div class="howto-section" id="aiDiffSection" style="display:none">
+        <h3>🤖 AI 난이도</h3>
+        <div class="room-opts-row">
+          <button class="room-opt-btn" data-diff="easy" onclick="setRoomDiff('easy')">😊 쉬움</button>
+          <button class="room-opt-btn active" data-diff="normal" onclick="setRoomDiff('normal')">🤖 보통</button>
+          <button class="room-opt-btn" data-diff="hard" onclick="setRoomDiff('hard')">💀 어려움</button>
+        </div>
+        <div id="diffDesc" style="text-align:center;font-size:12px;color:rgba(255,255,255,0.5);margin-top:8px">보통 수준의 AI — 기본 전략으로 플레이합니다</div>
+      </div>
+      <div class="howto-section">
+        <h3>🎯 목표 점수</h3>
+        <div class="room-score-grid" id="roomScoreGrid"></div>
+      </div>
+      <div class="howto-section">
+        <h3>⏱️ 턴 제한시간</h3>
+        <div class="room-timer-row">
+          <button class="room-stepper" onclick="adjustRoomTimer(-5)">−</button>
+          <div id="roomTimerDisplay" class="room-timer-val">20초</div>
+          <button class="room-stepper" onclick="adjustRoomTimer(5)">+</button>
+          <button class="room-opt-btn" id="roomTimerUnlimitedBtn" onclick="setRoomTimerUnlimited()">♾️ 무제한</button>
+        </div>
+        <div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px">시간 초과 시 자동으로 한 수 진행됩니다</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="roomConfirmBtn" onclick="confirmRoomSettings()" style="margin-top:6px">✨ 방 만들기</button>
+  </div>
+</div>
+
 <!-- ===== LOBBY ===== -->
 <div id="lobbyScreen" class="screen active">
   <div class="lobby-watermark">♠</div>
@@ -1170,8 +1384,8 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <input id="myName" type="text" data-i18n-placeholder="namePlaceholder" placeholder="닉네임 입력" maxlength="12">
     <div class="char-picker-label" data-i18n="charSelectLabel">캐릭터 선택</div>
     <div class="char-grid" id="lobbyCharGrid"></div>
-    <div class="char-picker-label" data-i18n="targetScoreLabel">🎯 목표 점수 (방장만 설정)</div>
-    <select id="targetScoreSelect" class="target-score-select">
+    <div class="char-picker-label" style="font-size:12px;color:rgba(255,255,255,0.4)">목표 점수 · 턴 타이머는 방 만들기 시 설정합니다</div>
+    <select id="targetScoreSelect" class="target-score-select" style="display:none">
       <option value="100" data-i18n="ts100" selected>100점 (기본)</option>
       <option value="150" data-i18n="ts150">150점</option>
       <option value="200" data-i18n="ts200">200점</option>
@@ -1184,12 +1398,12 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       <option value="unlimited" data-i18n="tsUnlimited">♾️ 무제한</option>
     </select>
     <div class="divider" data-i18n="createRoomDivider">방 만들기</div>
-    <button class="btn btn-primary" onclick="createRoom()" data-i18n="createRoomBtn">✨ 새 방 만들기</button>
+    <button class="btn btn-primary" onclick="openRoomSettings('pvp')" data-i18n="createRoomBtn">✨ 새 방 만들기</button>
     <div class="divider" data-i18n="joinRoomDivider">방 참가</div>
     <input id="joinCode" type="text" data-i18n-placeholder="joinCodePlaceholder" placeholder="방 코드 입력 (예: AB3KZ)" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
     <button class="btn btn-blue" onclick="joinRoom()" data-i18n="joinRoomBtn">🚀 입장하기</button>
     <div class="divider" data-i18n="soloDivider">솔로 플레이</div>
-    <button class="btn btn-gold" onclick="startAIGame()" data-i18n="aiBtn">🤖 AI와 대결하기</button>
+    <button class="btn btn-gold" onclick="openRoomSettings('ai')" data-i18n="aiBtn">🤖 AI와 대결하기</button>
     <div class="error-msg" id="lobbyError"></div>
   </div>
 </div>
@@ -1244,6 +1458,9 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       </div>
     </div>
   </div>
+  <!-- Turn timer bar (shown when room has a time limit) -->
+  <div class="turn-timer-bar" id="turnTimerBar"><div class="turn-timer-fill" id="turnTimerFill"></div></div>
+  <div class="turn-timer-badge" id="turnTimerBadge"></div>
 
   <div class="player-bar">
     <div class="avatar-card" id="oppAvatarCard">
@@ -1426,13 +1643,14 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       <div class="howto-section">
         <h3 data-i18n="settingsTheme">🎨 배경 테마</h3>
         <div class="theme-grid" id="themeGrid">
-          <button class="theme-swatch" data-theme="green" onclick="setTheme('green')" style="background:linear-gradient(135deg,#1f7a3d,#0a3015)" title="초록"></button>
-          <button class="theme-swatch" data-theme="blue" onclick="setTheme('blue')" style="background:linear-gradient(135deg,#1e6f9e,#0a2a3f)" title="파랑"></button>
-          <button class="theme-swatch" data-theme="purple" onclick="setTheme('purple')" style="background:linear-gradient(135deg,#7c3fb0,#2d1245)" title="보라"></button>
-          <button class="theme-swatch" data-theme="red" onclick="setTheme('red')" style="background:linear-gradient(135deg,#a8233f,#3f0a16)" title="빨강"></button>
-          <button class="theme-swatch" data-theme="dark" onclick="setTheme('dark')" style="background:linear-gradient(135deg,#3e4a52,#0e1316)" title="다크"></button>
-          <button class="theme-swatch" data-theme="pink" onclick="setTheme('pink')" style="background:linear-gradient(135deg,#c0397a,#4a0d2e)" title="핑크"></button>
-          <button class="theme-swatch" data-theme="rainbow" onclick="setTheme('rainbow')" style="background:conic-gradient(#ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff,#ff4e4e)" title="무지개">🌈</button>
+          <div class="swatch-wrap"><button class="theme-swatch" data-theme="green" onclick="setTheme('green')" style="background:linear-gradient(135deg,#1f7a3d,#0a3015)"></button><div class="swatch-tip"><strong>초록</strong>클래식 카지노 펠트</div></div>
+          <div class="swatch-wrap"><button class="theme-swatch" data-theme="blue" onclick="setTheme('blue')" style="background:linear-gradient(135deg,#1e6f9e,#0a2a3f)"></button><div class="swatch-tip"><strong>파랑</strong>심해의 조용한 게임</div></div>
+          <div class="swatch-wrap"><button class="theme-swatch" data-theme="purple" onclick="setTheme('purple')" style="background:linear-gradient(135deg,#7c3fb0,#2d1245)"></button><div class="swatch-tip"><strong>보라</strong>신비로운 마법의 밤</div></div>
+          <div class="swatch-wrap"><button class="theme-swatch" data-theme="red" onclick="setTheme('red')" style="background:linear-gradient(135deg,#a8233f,#3f0a16)"></button><div class="swatch-tip"><strong>빨강</strong>열정적인 붉은 승부</div></div>
+          <div class="swatch-wrap"><button class="theme-swatch" data-theme="dark" onclick="setTheme('dark')" style="background:linear-gradient(135deg,#3e4a52,#0e1316)"></button><div class="swatch-tip"><strong>다크</strong>집중력을 높이는 어둠</div></div>
+          <div class="swatch-wrap"><button class="theme-swatch" data-theme="pink" onclick="setTheme('pink')" style="background:linear-gradient(135deg,#c0397a,#4a0d2e)"></button><div class="swatch-tip"><strong>핑크</strong>화려하고 샤랄라한 분위기</div></div>
+          <div class="swatch-wrap"><button class="theme-swatch" data-theme="rainbow" onclick="setTheme('rainbow')" style="background:conic-gradient(#ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff,#ff4e4e)">🌈</button><div class="swatch-tip"><strong>🌈 무지개</strong>누적 10승 달성 시 해금</div></div>
+          <div class="swatch-wrap"><button class="theme-swatch" data-theme="aurora" onclick="setTheme('aurora')" style="background:linear-gradient(135deg,#0e2a3a,#030c1a);border-color:rgba(0,220,160,0.5)">🌌</button><div class="swatch-tip"><strong>🌌 오로라 성운</strong>25연승 달성 시 해금</div></div>
         </div>
       </div>
       <div class="howto-section" id="grassSection" style="display:none">
@@ -1860,31 +2078,45 @@ function spawnStreakCelebration(streak) {
 
 // ===== Themes =====
 const RAINBOW_UNLOCK_WINS = 10;
+const AURORA_UNLOCK_STREAK = 25;
 
 function getTotalWins() {
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-  return history.filter(h => h.result === 'win').length;
+  return history.filter(h => h.result === 'win' && h.mode !== 'vsAI').length;
 }
 
-function isRainbowUnlocked() {
-  return getTotalWins() >= RAINBOW_UNLOCK_WINS;
+function getBestStreak() {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  const pvp = history.filter(h => h.mode !== 'vsAI').reverse(); // chronological
+  let best = 0, cur = 0;
+  for (const h of pvp) {
+    if (h.result === 'win') { cur++; if (cur > best) best = cur; }
+    else cur = 0;
+  }
+  return best;
 }
 
-function updateRainbowSwatch() {
-  const swatch = document.querySelector('.theme-swatch[data-theme="rainbow"]');
-  if (!swatch) return;
-  const unlocked = isRainbowUnlocked();
-  swatch.classList.toggle('locked', !unlocked);
-  const wins = getTotalWins();
-  swatch.title = unlocked
-    ? '🌈 무지개 테마 (잠금 해제됨!)'
-    : `🔒 무지개 테마 (${wins}/${RAINBOW_UNLOCK_WINS}승 달성 시 해금)`;
+function isRainbowUnlocked() { return getTotalWins() >= RAINBOW_UNLOCK_WINS; }
+function isAuroraUnlocked() { return getBestStreak() >= AURORA_UNLOCK_STREAK; }
+
+function updateLockedSwatches() {
+  const rainbow = document.querySelector('.theme-swatch[data-theme="rainbow"]');
+  const aurora = document.querySelector('.theme-swatch[data-theme="aurora"]');
+  if (rainbow) rainbow.classList.toggle('locked', !isRainbowUnlocked());
+  if (aurora) aurora.classList.toggle('locked', !isAuroraUnlocked());
 }
+// Keep old name for backwards compat calls
+function updateRainbowSwatch() { updateLockedSwatches(); }
 
 function setTheme(theme) {
   if (theme === 'rainbow' && !isRainbowUnlocked()) {
     const wins = getTotalWins();
-    alert(`🔒 무지개 테마는 누적 ${RAINBOW_UNLOCK_WINS}승 달성 시 해금됩니다!\n현재: ${wins}/${RAINBOW_UNLOCK_WINS}승`);
+    showConfirmModal({ emoji:'🔒', title:'무지개 테마 잠금', sub:`누적 ${RAINBOW_UNLOCK_WINS}승 달성 시 해금됩니다.\n현재: ${wins}/${RAINBOW_UNLOCK_WINS}승 (PVP)`, acceptLabel:'확인', onAccept:()=>{} });
+    return;
+  }
+  if (theme === 'aurora' && !isAuroraUnlocked()) {
+    const best = getBestStreak();
+    showConfirmModal({ emoji:'🌌', title:'오로라 성운 테마 잠금', sub:`PVP 25연승 달성 시 해금됩니다.\n현재 최고 연승: ${best}연승`, acceptLabel:'확인', onAccept:()=>{} });
     return;
   }
   document.body.className = document.body.className.replace(/theme-\S+/g, '').trim();
@@ -1893,8 +2125,133 @@ function setTheme(theme) {
   document.querySelectorAll('.theme-swatch').forEach(el => el.classList.toggle('selected', el.dataset.theme === theme));
   if (theme === 'pink') startPetals(); else stopPetals();
   if (theme === 'rainbow') startGrass(); else stopGrass();
+  if (theme === 'aurora') startAuroraStars(); else stopAuroraStars();
   updatePetalSection();
   updateGrassSection();
+}
+
+// ===== Aurora Nebula =====
+let auroraStarEls = [];
+function startAuroraStars() {
+  stopAuroraStars();
+  const count = 60;
+  for (let i = 0; i < count; i++) {
+    const star = document.createElement('div');
+    star.className = 'aurora-star';
+    const size = 1 + Math.random() * 2.5;
+    star.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}vw; top:${Math.random()*100}vh;
+      animation-duration:${2 + Math.random()*4}s;
+      animation-delay:${-Math.random()*4}s;
+    `;
+    document.body.appendChild(star);
+    auroraStarEls.push(star);
+  }
+}
+function stopAuroraStars() {
+  auroraStarEls.forEach(s => s.remove());
+  auroraStarEls = [];
+}
+function spawnAuroraCelebration() {
+  // Meteor shower
+  for (let i = 0; i < 18; i++) {
+    setTimeout(() => {
+      const m = document.createElement('div');
+      m.className = 'aurora-meteor';
+      m.style.cssText = `left:${Math.random()*110-10}vw; top:${-100+Math.random()*20}px; animation-duration:${0.8+Math.random()*0.7}s; animation-delay:0s; opacity:${0.6+Math.random()*0.4}`;
+      document.body.appendChild(m);
+      setTimeout(() => m.remove(), 2000);
+    }, i * 120 + Math.random()*200);
+  }
+  // Aurora flash: briefly brighten bands
+  const layer = document.getElementById('auroraLayer');
+  if (layer) { layer.style.filter = 'brightness(2)'; setTimeout(() => layer.style.filter = '', 800); }
+}
+
+// ===== Room settings modal =====
+let _roomMode = 'pvp';
+let _roomDiff = 'normal';
+let _roomScore = 100;
+let _roomTimer = 20; // null = unlimited
+
+const ROOM_SCORE_OPTIONS = [100, 150, 200, 250, 300, 350, 400, 450, 500, null];
+const DIFF_DESCS = {
+  easy: '😊 쉬움 — 느리고 실수가 잦은 AI입니다',
+  normal: '🤖 보통 — 기본 전략으로 플레이합니다',
+  hard: '💀 어려움 — 빠르고 최적화된 강한 AI입니다',
+};
+
+function openRoomSettings(mode) {
+  _roomMode = mode;
+  _roomDiff = 'normal';
+  _roomScore = 100;
+  _roomTimer = 20;
+  document.getElementById('roomSettingsTitle').textContent = mode === 'ai' ? '🤖 AI 대결 설정' : '✨ 방 설정';
+  document.getElementById('aiDiffSection').style.display = mode === 'ai' ? '' : 'none';
+  document.getElementById('roomConfirmBtn').textContent = mode === 'ai' ? '🤖 시작하기' : '✨ 방 만들기';
+  _renderRoomScore();
+  _renderRoomTimer();
+  _renderRoomDiff();
+  document.getElementById('roomSettingsOverlay').classList.add('show');
+}
+
+function closeRoomSettings() {
+  document.getElementById('roomSettingsOverlay').classList.remove('show');
+}
+
+function setRoomDiff(d) {
+  _roomDiff = d;
+  _renderRoomDiff();
+}
+
+function _renderRoomDiff() {
+  document.querySelectorAll('[data-diff]').forEach(b => b.classList.toggle('active', b.dataset.diff === _roomDiff));
+  const desc = document.getElementById('diffDesc');
+  if (desc) desc.textContent = DIFF_DESCS[_roomDiff] || '';
+}
+
+function _renderRoomScore() {
+  const grid = document.getElementById('roomScoreGrid');
+  grid.innerHTML = ROOM_SCORE_OPTIONS.map(v => {
+    const label = v === null ? '♾️ 무제한' : v + '점';
+    const act = v === _roomScore ? ' active' : '';
+    return `<button class="room-opt-btn${act}" onclick="_setRoomScore(${v})">${label}</button>`;
+  }).join('');
+}
+
+function _setRoomScore(v) {
+  _roomScore = v;
+  _renderRoomScore();
+}
+
+function adjustRoomTimer(delta) {
+  if (_roomTimer === null) _roomTimer = delta > 0 ? 10 : 60;
+  else _roomTimer = Math.max(10, Math.min(60, _roomTimer + delta));
+  _renderRoomTimer();
+}
+
+function setRoomTimerUnlimited() {
+  _roomTimer = null;
+  _renderRoomTimer();
+}
+
+function _renderRoomTimer() {
+  document.getElementById('roomTimerDisplay').textContent = _roomTimer === null ? '♾️ 무제한' : _roomTimer + '초';
+  document.getElementById('roomTimerUnlimitedBtn').classList.toggle('active', _roomTimer === null);
+}
+
+function confirmRoomSettings() {
+  closeRoomSettings();
+  myName = document.getElementById('myName').value.trim() || t('defaultPlayer1');
+  if (!socket) initSocket();
+  document.getElementById('lobbyError').textContent = '';
+  if (_roomMode === 'ai') {
+    myIdx = 0;
+    socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff });
+  } else {
+    socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer });
+  }
 }
 
 // ===== Rainbow celebration =====
@@ -1977,10 +2334,12 @@ function showHistory() {
     statsEl.innerHTML = '';
     listEl.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:32px 0">아직 기록이 없어요<br><span style="font-size:28px">📭</span></div>';
   } else {
-    const wins = history.filter(h => h.result === 'win').length;
-    const loses = history.filter(h => h.result === 'lose').length;
-    const ties = history.filter(h => h.result === 'tie').length;
-    const total = history.length;
+    // PVP-only stats (vsAI excluded from win/loss counts)
+    const pvp = history.filter(h => h.mode !== 'vsAI');
+    const wins = pvp.filter(h => h.result === 'win').length;
+    const loses = pvp.filter(h => h.result === 'lose').length;
+    const ties = pvp.filter(h => h.result === 'tie').length;
+    const total = pvp.length;
     const winRate = total > 0 ? Math.round((wins / (total - ties || 1)) * 100) : 0;
 
     // Opponent stats
@@ -2056,7 +2415,7 @@ function escapeHtml(s) {
 
 setTheme(localStorage.getItem('grTheme') || 'green');
 applyLanguage();
-updateRainbowSwatch();
+updateLockedSwatches();
 updatePetalSection();
 updateGrassSection();
 
@@ -2068,7 +2427,7 @@ const RANK_ORD = {A:1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,J:
 const SUITS_ORDER = ['S','H','D','C'];
 
 // ===== Client state =====
-const CHAR_LIST = ['🐱','🐶','🐰','🦊','🐻','🐼','🐨','🐯'];
+const CHAR_LIST = ['🐱','🐶','🐰','🦊','🐻','🐼','🐨','🐯','🐢','🦁','🐸','🦝'];
 let myChar = CHAR_LIST[0];
 let socket = null;
 let myIdx = -1;
@@ -2410,12 +2769,50 @@ function initSocket() {
   });
 
   socket.on('turn-timeout-warning', () => {
-    showToast('⏰ <strong>5초 후</strong> 자동으로 AI가 대신 플레이합니다! 지금 카드를 클릭하면 취소돼요.', 'alert');
+    if (currentTurn === myIdx) showToast('⏰ 시간이 거의 다 됐어요! 빨리 카드를 선택하세요!', 'alert');
   });
 
-  socket.on('turn-timer-reset', () => {
-    hideToast();
+  socket.on('turn-timer-reset', () => { hideToast(); clearTimerUI(); });
+
+  // Turn timer bar handling
+  let _timerInterval = null;
+  let _timerTotal = 0;
+  let _timerLeft = 0;
+
+  function clearTimerUI() {
+    clearInterval(_timerInterval); _timerInterval = null;
+    document.getElementById('turnTimerBar').classList.remove('active');
+    document.getElementById('turnTimerBadge').classList.remove('active');
+  }
+
+  function startTimerUI(seconds, isMe) {
+    clearTimerUI();
+    _timerTotal = seconds; _timerLeft = seconds;
+    const bar = document.getElementById('turnTimerBar');
+    const fill = document.getElementById('turnTimerFill');
+    const badge = document.getElementById('turnTimerBadge');
+    bar.classList.add('active');
+    badge.classList.add('active');
+    const updateUI = () => {
+      const pct = Math.max(0, (_timerLeft / _timerTotal) * 100);
+      fill.style.width = pct + '%';
+      fill.className = 'turn-timer-fill' + (_timerLeft <= 5 ? ' urgent' : _timerLeft <= _timerTotal * 0.4 ? ' warn' : '');
+      badge.textContent = (isMe ? '⏱️ 내 턴 ' : '⏱️ 상대 턴 ') + _timerLeft + 's';
+      badge.style.color = _timerLeft <= 5 ? '#ef5350' : _timerLeft <= _timerTotal * 0.4 ? '#ffb300' : 'rgba(255,255,255,0.6)';
+    };
+    updateUI();
+    _timerInterval = setInterval(() => {
+      _timerLeft = Math.max(0, _timerLeft - 1);
+      updateUI();
+      if (_timerLeft === 0) clearTimerUI();
+    }, 1000);
+  }
+
+  socket.on('turn-timer-start', ({ seconds, playerIdx }) => {
+    startTimerUI(seconds, playerIdx === myIdx);
   });
+
+  socket.on('turn-timer-expired', () => { clearTimerUI(); hideToast(); });
 
   socket.on('sync-state', data => {
     myHand = data.hand;
@@ -2511,10 +2908,12 @@ function initSocket() {
       result: matchResult,
       mode: vsAI ? 'vsAI' : 'pvp',
     });
-    updateRainbowSwatch();
-    // Notify on unlock milestone
+    updateLockedSwatches();
     if (matchResult === 'win' && getTotalWins() === RAINBOW_UNLOCK_WINS) {
-      setTimeout(() => alert('🌈 무지개 테마가 해금됐어요! 누적 10승 달성!'), 2000);
+      setTimeout(() => showConfirmModal({ emoji:'🌈', title:'무지개 테마 해금!', sub:'PVP 누적 10승 달성! 설정에서 테마를 변경해보세요.', acceptLabel:'🎉 확인', onAccept:()=>{} }), 2000);
+    }
+    if (matchResult === 'win' && getBestStreak() === AURORA_UNLOCK_STREAK) {
+      setTimeout(() => showConfirmModal({ emoji:'🌌', title:'오로라 성운 해금!', sub:'PVP 25연승 달성! 전설의 테마가 열렸습니다!', acceptLabel:'🌌 확인', onAccept:()=>{} }), 2500);
     }
     const iWon = winnerIdx === myIdx;
     const tie = winnerIdx === -1;
@@ -2542,7 +2941,8 @@ function initSocket() {
     box.className = 'result-box ' + (tie ? 'pop-neutral' : (iWon ? (wasRevenge && revengeSuccess ? 'pop-biggin' : 'pop-win') : 'pop-lose'));
     document.getElementById('matchEndEmoji').classList.toggle('big-bounce', iWon);
     if (iWon) {
-      if (document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
+      if (document.body.classList.contains('theme-aurora')) spawnAuroraCelebration();
+      else if (document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
       else if (wasRevenge && revengeSuccess) spawnFireworks();
       else spawnConfetti();
     }
@@ -2710,24 +3110,13 @@ function initSocket() {
 
 // ===== Lobby actions =====
 function getSelectedTargetScore() {
-  const v = document.getElementById('targetScoreSelect').value;
-  return v === 'unlimited' ? null : parseInt(v, 10);
+  const v = document.getElementById('targetScoreSelect');
+  if (!v) return 100;
+  return v.value === 'unlimited' ? null : parseInt(v.value, 10);
 }
 
-function createRoom() {
-  myName = document.getElementById('myName').value.trim() || t('defaultPlayer1');
-  if (!socket) initSocket();
-  document.getElementById('lobbyError').textContent = '';
-  socket.emit('create-room', { name: myName, char: myChar, targetScore: getSelectedTargetScore() });
-}
-
-function startAIGame() {
-  myName = document.getElementById('myName').value.trim() || t('defaultPlayer1');
-  if (!socket) initSocket();
-  document.getElementById('lobbyError').textContent = '';
-  myIdx = 0;
-  socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: getSelectedTargetScore() });
-}
+function createRoom() { openRoomSettings('pvp'); }
+function startAIGame() { openRoomSettings('ai'); }
 
 function joinRoom() {
   const code = document.getElementById('joinCode').value.trim().toUpperCase();
@@ -3156,7 +3545,8 @@ function showResult(data) {
   box.className = 'result-box ' + (isTie ? 'pop-neutral' : (iWon ? (isBigGin ? 'pop-biggin' : 'pop-win') : 'pop-lose'));
   document.getElementById('resEmoji').classList.toggle('big-bounce', iWon && !isTie);
   const myStreak = streaks[myIdx] || 0;
-  if (iWon && document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
+  if (iWon && document.body.classList.contains('theme-aurora')) spawnAuroraCelebration();
+  else if (iWon && document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
   else if (iWon && isBigGin) spawnFireworks();
   else if (iWon && !isTie) {
     if (myStreak >= 4) spawnStreakCelebration(myStreak);

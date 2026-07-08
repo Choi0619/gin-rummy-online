@@ -127,6 +127,14 @@ function normalizeTargetScore(v) {
   return n;
 }
 
+// Turn time: 10–60s in 5s steps, or null for unlimited. Default 20.
+function normalizeTurnTime(v) {
+  if (v === null || v === 'unlimited') return null;
+  const n = parseInt(v, 10);
+  if (!Number.isFinite(n)) return 20;
+  return Math.max(10, Math.min(60, Math.round(n / 5) * 5));
+}
+
 function emitToPlayer(room, idx, event, data) {
   if (room.players[idx]) io.to(room.players[idx]).emit(event, data);
 }
@@ -135,7 +143,7 @@ function emitToPlayer(room, idx, event, data) {
 io.on('connection', socket => {
   console.log('connect', socket.id);
 
-  socket.on('create-room', ({ name, char, targetScore }) => {
+  socket.on('create-room', ({ name, char, targetScore, turnTimeSecs }) => {
     const code = makeCode();
     rooms.set(code, {
       code,
@@ -149,6 +157,7 @@ io.on('connection', socket => {
       scores: [0, 0],
       endRequest: null,
       targetScore: normalizeTargetScore(targetScore),
+      turnTimeSecs: normalizeTurnTime(turnTimeSecs !== undefined ? turnTimeSecs : 20),
     });
     socket.join(code);
     socket.data.room = code;
@@ -156,7 +165,7 @@ io.on('connection', socket => {
     socket.emit('room-created', { code, playerIndex: 0, targetScore: rooms.get(code).targetScore });
   });
 
-  socket.on('create-ai-room', ({ name, char, targetScore }) => {
+  socket.on('create-ai-room', ({ name, char, targetScore, turnTimeSecs, aiDifficulty }) => {
     const code = makeCode();
     const room = {
       code,
@@ -170,6 +179,8 @@ io.on('connection', socket => {
       endRequest: null,
       vsAI: true,
       targetScore: normalizeTargetScore(targetScore),
+      turnTimeSecs: normalizeTurnTime(turnTimeSecs !== undefined ? turnTimeSecs : 20),
+      aiDifficulty: ['easy','normal','hard'].includes(aiDifficulty) ? aiDifficulty : 'normal',
     };
     rooms.set(code, room);
     socket.join(code);
@@ -601,24 +612,27 @@ function aiTakeTurn(room, idx) {
   const isAI = (room.vsAI && idx === 1) || (room.aiControlled && room.aiControlled[idx]);
   if (!isAI) return;
 
+  const difficulty = room.aiDifficulty || 'normal';
+  const baseDelay = difficulty === 'easy' ? 1400 : difficulty === 'hard' ? 500 : 800;
+  const randDelay = difficulty === 'easy' ? 1000 : difficulty === 'hard' ? 400 : 600;
+
   if (g.phase === 'upcard-offer') {
     room.aiMoveTimer = setTimeout(() => {
       if (!room.game || room.game.over || room.game.phase !== 'upcard-offer' || room.game.turn !== idx) return;
       const upcard = room.game.discardPile[room.game.discardPile.length - 1];
       const curDW = bestMelds(room.game.hands[idx]).dw;
       const testDW = bestMelds([...room.game.hands[idx], upcard]).dw;
-      handleUpcardDecision(room, idx, testDW < curDW ? 'take-upcard' : 'pass-upcard', null);
-    }, 800 + Math.random() * 600);
+      const minImprovement = difficulty === 'easy' ? 4 : 1;
+      handleUpcardDecision(room, idx, testDW <= curDW - minImprovement ? 'take-upcard' : 'pass-upcard', null);
+    }, baseDelay + Math.random() * randDelay);
   } else {
-    room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, idx), 800 + Math.random() * 600);
+    room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, idx), baseDelay + Math.random() * randDelay);
   }
 }
 
-// ===== Inactivity auto-AI-takeover =====
-// If the active player does nothing for 45s, the AI takes over their turn.
-// A warning is sent at 40s (5 seconds before the switch).
-const TURN_WARN_MS = 40000;
-const TURN_AI_MS = 45000;
+// ===== Turn timer =====
+// Counts down per-turn (room.turnTimeSecs, null = unlimited).
+// On expiry: auto-plays one move (does NOT permanently hand off to AI).
 
 function clearTurnTimers(room) {
   if (room.turnWarnTimeout) { clearTimeout(room.turnWarnTimeout); room.turnWarnTimeout = null; }
@@ -627,22 +641,79 @@ function clearTurnTimers(room) {
 
 function startTurnTimer(room) {
   clearTurnTimers(room);
-  if (!room.game || room.game.over || room.vsAI) return;
+  if (!room.game || room.game.over) return;
+  const secs = room.turnTimeSecs;
+  if (!secs) return; // unlimited
   const idx = room.game.turn;
-  if (!room.players[idx]) return;
-  if (room.aiControlled && room.aiControlled[idx]) return; // AI already plays for them
+  // Don't time AI turns — they play their own moves
+  const isAITurn = (room.vsAI && idx === 1) || (room.aiControlled && room.aiControlled[idx]);
+  if (isAITurn) return;
+  if (!room.players[idx]) return; // player is disconnected
 
+  const ms = secs * 1000;
+  io.to(room.code).emit('turn-timer-start', { seconds: secs, playerIdx: idx });
+
+  const warnMs = Math.max(ms - 5000, Math.round(ms * 0.75));
   room.turnWarnTimeout = setTimeout(() => {
+    if (!room.game || room.game.over || room.game.turn !== idx) return;
     emitToPlayer(room, idx, 'turn-timeout-warning', {});
-  }, TURN_WARN_MS);
+  }, warnMs);
 
   room.turnAiTimeout = setTimeout(() => {
     if (!room.game || room.game.over || room.game.turn !== idx) return;
-    if (!room.aiControlled) room.aiControlled = [false, false];
-    room.aiControlled[idx] = true;
-    io.to(room.code).emit('ai-takeover-update', { idx, enabled: true, auto: true });
-    aiTakeTurn(room, idx);
-  }, TURN_AI_MS);
+    io.to(room.code).emit('turn-timer-expired', { playerIdx: idx });
+    autoPlayOnTimeout(room);
+  }, ms);
+}
+
+// Auto-plays one move when turn timer expires (not a permanent AI takeover).
+function autoPlayOnTimeout(room) {
+  const g = room.game;
+  if (!g || g.over) return;
+  const idx = g.turn;
+  const oppIdx = 1 - idx;
+
+  if (g.phase === 'upcard-offer') {
+    handleUpcardDecision(room, idx, 'pass-upcard', null);
+    return;
+  }
+
+  if (g.phase === 'draw') {
+    if (g.deck.length === 0) { handleDeckEmpty(room); return; }
+    const card = g.deck.pop();
+    g.hands[idx].push(card);
+    g.phase = 'discard';
+    const sid = room.players[idx];
+    if (sid) io.to(sid).emit('you-drew', { card, deckCount: g.deck.length });
+    emitToPlayer(room, oppIdx, 'opp-drew', { from: 'deck', deckCount: g.deck.length });
+  }
+
+  if (g.phase === 'discard') {
+    const hand = g.hands[idx];
+    const { melds } = bestMelds(hand);
+    const meldIds = new Set(melds.flat().map(c => c.id));
+    const deadwood = hand.filter(c => !meldIds.has(c.id));
+    const toDiscard = deadwood.length > 0
+      ? deadwood.reduce((a, b) => b.val > a.val ? b : a)
+      : hand.reduce((a, b) => b.val > a.val ? b : a);
+
+    g.hands[idx] = hand.filter(c => c.id !== toDiscard.id);
+    g.discardPile.push(toDiscard);
+    g.phase = 'draw';
+    g.turn = oppIdx;
+
+    io.to(room.code).emit('card-discarded', {
+      card: toDiscard, byIdx: idx, nextTurn: oppIdx, deckCount: g.deck.length,
+    });
+
+    if (room.vsAI && oppIdx === 1) {
+      room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, 1), 900 + Math.random() * 700);
+    } else if (room.aiControlled && room.aiControlled[oppIdx]) {
+      room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, oppIdx), 900 + Math.random() * 700);
+    } else {
+      startTurnTimer(room);
+    }
+  }
 }
 
 function handleAction(room, idx, type, cardId, socket) {
@@ -794,21 +865,24 @@ function resolveRound(room, knockerIdx, isGin) {
   setTimeout(() => checkMatchEnd(room), 1500);
 }
 
-// ===== AI plays a turn on behalf of player `idx` (dedicated AI opponent or a "away" takeover) =====
+// ===== AI plays a turn on behalf of player `idx` =====
 function aiPlayTurnFor(room, idx) {
   const g = room.game;
   if (!g || g.over || g.turn !== idx) return;
   const oppIdx = 1 - idx;
-  const notifySid = room.players[oppIdx]; // the other (real) player watches the moves live
+  const notifySid = room.players[oppIdx];
+  const difficulty = room.aiDifficulty || 'normal';
 
-  // --- Draw decision (only if still in draw phase; skip if already holding 11 cards e.g. after forced upcard draw) ---
+  // Draw decision (only in draw phase)
   if (g.phase === 'draw') {
     const topDiscard = g.discardPile[g.discardPile.length - 1];
     let takeDiscard = false;
     if (topDiscard) {
       const curDW = bestMelds(g.hands[idx]).dw;
       const testDW = bestMelds([...g.hands[idx], topDiscard]).dw;
-      takeDiscard = testDW < curDW;
+      // Easy: only take discard if DW drops by 4+; Normal/Hard: any improvement
+      const minImprovement = difficulty === 'easy' ? 4 : 1;
+      takeDiscard = testDW <= curDW - minImprovement;
     }
 
     let drawnCard, drewFrom;
@@ -826,38 +900,48 @@ function aiPlayTurnFor(room, idx) {
     const newTop = g.discardPile[g.discardPile.length - 1] || null;
     if (notifySid) {
       io.to(notifySid).emit('opp-drew', {
-        from: drewFrom,
-        deckCount: g.deck.length,
+        from: drewFrom, deckCount: g.deck.length,
         newDiscardTop: drewFrom === 'discard' ? newTop : undefined,
       });
     }
   }
 
-  // --- Big Gin check: if all 11 cards already melded, declare immediately, no discard needed ---
+  // Big Gin check
   if (bestMelds(g.hands[idx]).dw === 0) {
     setTimeout(() => resolveBigGin(room, idx), 500);
     return;
   }
 
-  // --- Discard decision: full search — try removing each card, keep the hand with lowest deadwood ---
+  // Knock threshold by difficulty
+  const knockThreshold = difficulty === 'easy' ? 15 : difficulty === 'hard' ? 7 : 10;
+
+  // Discard decision
   const hand = g.hands[idx];
   let bestPick = null;
-  for (const card of hand) {
-    const rest = hand.filter(c => c.id !== card.id);
-    const { dw } = bestMelds(rest);
-    if (!bestPick || dw < bestPick.dw || (dw === bestPick.dw && card.val > bestPick.card.val)) {
-      bestPick = { card, dw };
+  if (difficulty === 'easy' && Math.random() < 0.25) {
+    // Easy: 25% chance of a random (imperfect) discard
+    const pick = hand[Math.floor(Math.random() * hand.length)];
+    const { dw } = bestMelds(hand.filter(c => c.id !== pick.id));
+    bestPick = { card: pick, dw };
+  } else {
+    for (const card of hand) {
+      const rest = hand.filter(c => c.id !== card.id);
+      const { dw } = bestMelds(rest);
+      if (!bestPick || dw < bestPick.dw || (dw === bestPick.dw && card.val > bestPick.card.val)) {
+        bestPick = { card, dw };
+      }
     }
   }
+
   const discardCard = bestPick.card;
   g.hands[idx] = hand.filter(c => c.id !== discardCard.id);
   g.discardPile.push(discardCard);
-
   const { dw: afterDW } = bestMelds(g.hands[idx]);
 
+  const resolveDelay = difficulty === 'easy' ? 1200 : difficulty === 'hard' ? 400 : 500;
   room.aiMoveTimer = setTimeout(() => {
     if (afterDW === 0) { resolveRound(room, idx, true); return; }
-    if (afterDW <= 10) { resolveRound(room, idx, false); return; }
+    if (afterDW <= knockThreshold) { resolveRound(room, idx, false); return; }
     g.phase = 'draw';
     g.turn = oppIdx;
     if (notifySid) {
@@ -870,7 +954,7 @@ function aiPlayTurnFor(room, idx) {
     } else {
       startTurnTimer(room);
     }
-  }, 500);
+  }, resolveDelay);
 }
 
 function handleDeckEmpty(room) {
