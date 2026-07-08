@@ -3043,15 +3043,6 @@ async function loadProfile() {
   document.getElementById('lobbyUserBadge').style.display = 'flex';
 }
 
-const TIERS = [
-  { name: '브론즈',    emoji: '🥉', min: 0,    max: 499,  color: '#cd7f32' },
-  { name: '실버',     emoji: '🥈', min: 500,  max: 999,  color: '#c0c0c0' },
-  { name: '골드',     emoji: '🥇', min: 1000, max: 1999, color: '#ffd700' },
-  { name: '플래티넘',  emoji: '💎', min: 2000, max: 3499, color: '#4fc3f7' },
-  { name: '다이아',   emoji: '💠', min: 3500, max: 5999, color: '#ce93d8' },
-  { name: '챌린저',   emoji: '🏆', min: 6000, max: Infinity, color: '#ff8c00' },
-];
-function getTierInfo(rp) { return TIERS.slice().reverse().find(t => rp >= t.min) || TIERS[0]; }
 
 function showProfileModal() {
   if (!supaProfile) return;
@@ -3200,12 +3191,12 @@ async function doLogout() {
 const RANK_KEY = 'grRankPoints';
 
 const TIERS = [
-  { min: 6000, name: '챌린저', emoji: '🏆', cls: 'tier-challenger' },
-  { min: 3500, name: '다이아',  emoji: '💠', cls: 'tier-diamond' },
-  { min: 2000, name: '플래티넘',emoji: '💎', cls: 'tier-plat' },
-  { min: 1000, name: '골드',    emoji: '🥇', cls: 'tier-gold' },
-  { min: 500,  name: '실버',    emoji: '🥈', cls: 'tier-silver' },
-  { min: 0,    name: '브론즈',  emoji: '🥉', cls: 'tier-bronze' },
+  { min: 6000, max: Infinity, name: '챌린저', emoji: '🏆', cls: 'tier-challenger', color: '#ff8c00' },
+  { min: 3500, max: 5999,    name: '다이아',  emoji: '💠', cls: 'tier-diamond',    color: '#ce93d8' },
+  { min: 2000, max: 3499,    name: '플래티넘', emoji: '💎', cls: 'tier-plat',      color: '#4fc3f7' },
+  { min: 1000, max: 1999,    name: '골드',    emoji: '🥇', cls: 'tier-gold',       color: '#ffd700' },
+  { min: 500,  max: 999,     name: '실버',    emoji: '🥈', cls: 'tier-silver',     color: '#c0c0c0' },
+  { min: 0,    max: 499,     name: '브론즈',  emoji: '🥉', cls: 'tier-bronze',     color: '#cd7f32' },
 ];
 
 function getTierInfo(pts) {
