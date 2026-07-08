@@ -82,13 +82,26 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
   width: 300px; max-width: 82vw; position: relative; z-index: 1;
   filter: drop-shadow(0 6px 18px rgba(0,0,0,0.6));
   animation: logoFloat 3.5s ease-in-out infinite;
+  margin-bottom: -14px;
 }
 @keyframes logoFloat {
   0%,100% { transform: translateY(0); }
   50%      { transform: translateY(-6px); }
 }
 .logo-title { font-size: 32px; font-weight: bold; letter-spacing: 2px; position: relative; z-index: 1; text-shadow: 0 3px 12px rgba(0,0,0,0.5); display:none; }
-.logo-sub { font-size: 14px; color: rgba(255,255,255,0.55); position: relative; z-index: 1; }
+.logo-sub {
+  position: relative; z-index: 1;
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
+  color: #ffe9b8;
+  background: linear-gradient(135deg, rgba(255,215,120,0.16), rgba(255,215,120,0.05));
+  border: 1px solid rgba(255,215,120,0.35);
+  border-radius: 20px;
+  padding: 6px 16px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+.logo-sub::before { content: '♠'; opacity: 0.7; }
+.logo-sub::after { content: '♥'; opacity: 0.7; color: #ff8ba7; }
 .btn-howto {
   position: relative; z-index: 1;
   background: rgba(255,215,120,0.12); border: 1px solid rgba(255,215,120,0.4); color: #ffd76a;
@@ -596,15 +609,29 @@ body.theme-aurora .logo-title { animation: auroraText 6s linear infinite; }
   background: rgba(0,0,0,0.4);
   border: 1px solid rgba(255,215,120,0.18);
   box-shadow: 0 20px 50px rgba(0,0,0,0.45);
-  border-radius: 20px;
-  padding: 32px;
+  border-radius: 22px;
+  padding: 26px 26px 22px;
   width: 100%;
   max-width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 .lobby-card h2 { font-size: 18px; margin-bottom: 4px; }
+.lobby-section {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 16px 16px 18px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+}
+.lobby-section-title {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 11.5px; font-weight: 800; letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.4); text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.lobby-section-title .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.6; }
 
 input[type="text"] {
   background: rgba(255,255,255,0.1);
@@ -715,14 +742,15 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   transition: all 0.15s;
   width: 100%;
 }
-.btn:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+.btn:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-2px); }
+.btn:active:not(:disabled) { transform: translateY(0); }
 .btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.btn-primary { background: #4caf50; color: white; }
+.btn-primary { background: linear-gradient(135deg, #5fce6a, #3d9945); color: white; box-shadow: 0 6px 16px rgba(76,175,80,0.28); }
 .btn-secondary { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); }
-.btn-blue { background: #2196f3; color: white; }
+.btn-blue { background: linear-gradient(135deg, #42a5f5, #1565c0); color: white; box-shadow: 0 6px 16px rgba(33,150,243,0.26); }
 .btn-orange { background: linear-gradient(135deg, #ff6b35, #f5501a); color: white; }
 .btn-red { background: #ef5350; color: white; }
-.btn-gold { background: #f9a825; color: #111; }
+.btn-gold { background: linear-gradient(135deg, #ffc94d, #e69111); color: #23180a; box-shadow: 0 6px 16px rgba(249,168,37,0.26); }
 
 /* ===== Revenge mode styles ===== */
 .revenge-lbl {
@@ -1810,7 +1838,8 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   <div class="lobby-top-row">
     <button class="btn-howto" onclick="showHowTo()" data-i18n="howToBtn">📖 게임 방법 보기</button>
     <button class="btn-howto" onclick="showHistory()" style="background:rgba(255,215,120,0.12);border-color:rgba(255,215,120,0.3)">📊 전적</button>
-    <button class="btn-howto" onclick="showFriendsModal()" style="background:rgba(105,240,174,0.1);border-color:rgba(105,240,174,0.35);color:#69f0ae">👥 친구<span id="friendReqBadge" style="display:none;background:#ef5350;color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;margin-left:5px;vertical-align:top"></span></button>
+    <button class="btn-howto" onclick="showFriendsModal()" style="background:rgba(105,240,174,0.14);border-color:rgba(105,240,174,0.5);color:#69f0ae;box-shadow:0 0 14px rgba(105,240,174,0.15)">👥 친구<span id="friendReqBadge" style="display:none;background:#ef5350;color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;margin-left:5px;vertical-align:top"></span></button>
+    <button class="btn-howto" onclick="showCollectionModal()" style="background:rgba(180,122,255,0.12);border-color:rgba(180,122,255,0.4);color:#c9a8ff">🎨 컬렉션</button>
     <button class="btn-settings" onclick="showSettings()" title="Settings">⚙️</button>
   </div>
   <div id="lobbyUserBadge" class="auth-user-badge" style="display:none;max-width:420px;margin:0 auto 4px" onclick="showProfileModal()">
@@ -1929,14 +1958,22 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   </div>
 
   <div class="lobby-card">
-    <div class="divider" data-i18n="createRoomDivider">방 만들기</div>
-    <button class="btn btn-primary" onclick="openRoomSettings('pvp')" data-i18n="createRoomBtn">✨ 새 방 만들기</button>
-    <div class="divider" data-i18n="joinRoomDivider">방 참가</div>
-    <button class="btn btn-blue" onclick="showRoomBrowser()" style="background:linear-gradient(135deg,#1e88e5,#0d47a1)">🌐 공개방 찾기</button>
-    <input id="joinCode" type="text" data-i18n-placeholder="joinCodePlaceholder" placeholder="방 코드 입력 (예: AB3KZ)" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
-    <button class="btn btn-blue" onclick="joinRoom()" data-i18n="joinRoomBtn">🚀 코드로 입장</button>
-    <div class="divider" data-i18n="soloDivider">솔로 플레이</div>
-    <button class="btn btn-gold" onclick="openRoomSettings('ai')" data-i18n="aiBtn">🤖 AI와 대결하기</button>
+    <div class="lobby-section">
+      <div class="lobby-section-title"><span class="dot"></span>방 만들기</div>
+      <button class="btn btn-primary" onclick="openRoomSettings('pvp')" data-i18n="createRoomBtn">✨ 새 방 만들기</button>
+    </div>
+
+    <div class="lobby-section">
+      <div class="lobby-section-title"><span class="dot"></span>방 참가</div>
+      <button class="btn btn-blue" onclick="showRoomBrowser()">🌐 공개방 찾기</button>
+      <input id="joinCode" type="text" data-i18n-placeholder="joinCodePlaceholder" placeholder="방 코드 입력 (예: AB3KZ)" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
+      <button class="btn btn-secondary" onclick="joinRoom()" data-i18n="joinRoomBtn">🚀 코드로 입장</button>
+    </div>
+
+    <div class="lobby-section">
+      <div class="lobby-section-title"><span class="dot"></span>솔로 플레이</div>
+      <button class="btn btn-gold" onclick="openRoomSettings('ai')" data-i18n="aiBtn">🤖 AI와 대결하기</button>
+    </div>
     <div class="error-msg" id="lobbyError"></div>
   </div>
 
@@ -2211,7 +2248,29 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div class="howto-title" data-i18n="settingsTitle">⚙️ 설정</div>
     <div class="howto-scroll">
       <div class="howto-section">
-        <h3 data-i18n="settingsTheme">🎨 배경 테마</h3>
+        <h3 data-i18n="settingsLanguage">🌐 언어 / Language</h3>
+        <div class="lang-toggle">
+          <button class="lang-btn" id="langBtnKo" onclick="setLanguage('ko')">한국어</button>
+          <button class="lang-btn" id="langBtnEn" onclick="setLanguage('en')">English</button>
+        </div>
+      </div>
+      <div class="howto-section" style="margin-bottom:0">
+        <h3>🎨 테마 & 이펙트</h3>
+        <p style="font-size:12.5px;color:rgba(255,255,255,0.5);margin:2px 0 0">배경 테마와 특수 이펙트는 상단의 <span style="color:#c9a8ff;font-weight:700">🎨 컬렉션</span> 메뉴에서 관리할 수 있어요.</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:14px" onclick="hideSettings()" data-i18n="gotItBtn">확인했어요!</button>
+  </div>
+</div>
+
+<!-- ===== COLLECTION (테마 · 이펙트) ===== -->
+<div class="overlay" id="collectionOverlay">
+  <div class="howto-box" style="max-width:440px">
+    <button class="howto-close" onclick="hideCollectionModal()">✕</button>
+    <div class="howto-title">🎨 컬렉션</div>
+    <div class="howto-scroll">
+      <div class="howto-section">
+        <h3>🖼️ 배경 테마</h3>
         <div class="theme-grid" id="themeGrid">
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="green" onclick="setTheme('green')" style="background:linear-gradient(135deg,#1f7a3d,#0a3015)"></button><div class="swatch-tip"><strong>초록</strong>클래식 카지노 펠트</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="blue" onclick="setTheme('blue')" style="background:linear-gradient(135deg,#1e6f9e,#0a2a3f)"></button><div class="swatch-tip"><strong>파랑</strong>심해의 조용한 게임</div></div>
@@ -2236,15 +2295,12 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
           🌸 꽃잎 흩날리기: <span id="petalToggleState">OFF</span>
         </button>
       </div>
-      <div class="howto-section">
-        <h3 data-i18n="settingsLanguage">🌐 언어 / Language</h3>
-        <div class="lang-toggle">
-          <button class="lang-btn" id="langBtnKo" onclick="setLanguage('ko')">한국어</button>
-          <button class="lang-btn" id="langBtnEn" onclick="setLanguage('en')">English</button>
-        </div>
+      <div class="howto-section" style="margin-bottom:0">
+        <h3>🖼️ 카드 테두리</h3>
+        <p style="font-size:12.5px;color:rgba(255,255,255,0.45);margin:2px 0 0">카드 테두리 커스터마이징은 곧 추가될 예정이에요! ✨</p>
       </div>
     </div>
-    <button class="btn btn-primary" style="margin-top:14px" onclick="hideSettings()" data-i18n="gotItBtn">확인했어요!</button>
+    <button class="btn btn-primary" style="margin-top:14px" onclick="hideCollectionModal()">확인했어요!</button>
   </div>
 </div>
 
@@ -2934,9 +2990,17 @@ function spawnRainbowCelebration() {
 }
 
 function showSettings() {
+  document.getElementById('settingsOverlay').classList.add('show');
+}
+function hideSettings() { document.getElementById('settingsOverlay').classList.remove('show'); }
+
+let _collectionSwatchesWired = false;
+function showCollectionModal() {
   updatePetalSection();
   updateGrassSection();
-  document.getElementById('settingsOverlay').classList.add('show');
+  document.getElementById('collectionOverlay').classList.add('show');
+  if (_collectionSwatchesWired) return;
+  _collectionSwatchesWired = true;
   // Wire swatch hover → themeDesc
   document.querySelectorAll('.swatch-wrap').forEach(wrap => {
     const tip = wrap.querySelector('.swatch-tip');
@@ -2952,7 +3016,7 @@ function showSettings() {
     });
   });
 }
-function hideSettings() { document.getElementById('settingsOverlay').classList.remove('show'); }
+function hideCollectionModal() { document.getElementById('collectionOverlay').classList.remove('show'); }
 
 // ===== Supabase Auth & Profile =====
 const SUPA_URL = 'https://bqlpcfrphnjkzgeydgls.supabase.co';
