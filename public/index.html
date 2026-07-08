@@ -1220,6 +1220,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   animation: flashFade 0.65s ease-out forwards;
 }
 @keyframes flashFade { 0% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes unicornFlash { 0% { opacity:0; } 20% { opacity:1; } 100% { opacity:0; } }
 
 /* ===== Toast banner (request / waiting status) ===== */
 .toast-banner {
@@ -1280,6 +1281,22 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .status-pill {
   display: none; font-size: 10px; background: rgba(255,152,0,0.25); color: #ffb74d;
   padding: 1px 7px; border-radius: 8px; margin-top: 2px; width: fit-content; white-space: nowrap;
+}
+.reaction-btn {
+  font-size: 22px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 50%; width: 40px; height: 40px; cursor: pointer; transition: transform 0.15s, background 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.reaction-btn:hover { background: rgba(255,255,255,0.18); transform: scale(1.2); }
+.reaction-btn:active { transform: scale(0.9); }
+.reaction-float {
+  position: absolute; font-size: 28px; pointer-events: none; z-index: 200;
+  animation: reactionRise 4s ease-out forwards;
+}
+@keyframes reactionRise {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  60%  { opacity: 1; transform: translateY(-60px) scale(1.3); }
+  100% { opacity: 0; transform: translateY(-100px) scale(0.8); }
 }
 .status-pill.show { display: block; }
 .status-pill.ai-mode {
@@ -1567,6 +1584,14 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
         </div>
         <div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px">시간 초과 시 자동으로 한 수 진행됩니다</div>
       </div>
+      <div class="howto-section" id="roomVisibilitySection">
+        <h3>🔐 방 공개 설정</h3>
+        <div class="room-timer-row" style="justify-content:center;gap:10px">
+          <button class="room-opt-btn" id="roomPublicBtn" onclick="setRoomVisibility('public')" style="flex:1">🌐 공개</button>
+          <button class="room-opt-btn" id="roomPrivateBtn" onclick="setRoomVisibility('private')" style="flex:1">🔒 비공개</button>
+        </div>
+        <div id="roomVisibilityDesc" style="text-align:center;font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px">공개방은 방 목록에 표시됩니다</div>
+      </div>
     </div>
     <button class="btn btn-primary" id="roomConfirmBtn" onclick="confirmRoomSettings()" style="margin-top:6px">✨ 방 만들기</button>
   </div>
@@ -1825,6 +1850,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       <div class="room-code-display" id="roomCodeDisplay" onclick="copyCode()">-----</div>
       <div class="copy-hint" id="copyHint" data-i18n="shareCodeHint">친구에게 이 코드를 알려주세요</div>
       <div class="target-score-lbl" id="waitingTargetScoreLbl" style="display:inline-block;margin-top:10px"></div>
+      <div id="waitingRoomBadge" style="margin-top:8px;font-size:13px;color:rgba(255,255,255,0.5)"></div>
     </div>
 
     <div class="players-status">
@@ -1888,6 +1914,13 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
         <div class="status-pill" id="myStatusPill" data-i18n="away">⏸ 자리비움</div>
       </div>
     </div>
+  </div>
+  <div id="reactionBar" style="display:none;justify-content:center;gap:8px;padding:4px 0">
+    <button class="reaction-btn" onclick="sendReaction('👏')">👏</button>
+    <button class="reaction-btn" onclick="sendReaction('😂')">😂</button>
+    <button class="reaction-btn" onclick="sendReaction('😭')">😭</button>
+    <button class="reaction-btn" onclick="sendReaction('🔥')">🔥</button>
+    <button class="reaction-btn" onclick="sendReaction('👍')">👍</button>
   </div>
   <div id="revengeProgressLbl" style="display:none;text-align:center;font-size:12px;font-weight:700;padding:4px 0 2px;color:#ff9040;animation:revengeLblPulse 1.4s ease-in-out infinite;"></div>
 
@@ -2079,7 +2112,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="dark" onclick="setTheme('dark')" style="background:linear-gradient(135deg,#3e4a52,#0e1316)"></button><div class="swatch-tip"><strong>다크</strong>집중력을 높이는 어둠</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="pink" onclick="setTheme('pink')" style="background:linear-gradient(135deg,#c0397a,#4a0d2e)"></button><div class="swatch-tip"><strong>핑크</strong>화려하고 샤랄라한 분위기</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="rainbow" onclick="setTheme('rainbow')" style="background:conic-gradient(#ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff,#ff4e4e)">🌈</button><div class="swatch-tip"><strong>🌈 무지개</strong>누적 10승 달성 시 해금</div></div>
-          <div class="swatch-wrap"><button class="theme-swatch" data-theme="aurora" onclick="setTheme('aurora')" style="background:linear-gradient(135deg,#0e2a3a,#030c1a);border-color:rgba(0,220,160,0.5)">🌌</button><div class="swatch-tip"><strong>🌌 오로라 성운</strong>25연승 달성 시 해금</div></div>
+          <div class="swatch-wrap"><button class="theme-swatch" data-theme="aurora" onclick="setTheme('aurora')" style="background:linear-gradient(135deg,#0e2a3a,#030c1a);border-color:rgba(0,220,160,0.5)">🌌</button><div class="swatch-tip"><strong>🌌 오로라 성운</strong>25승 달성 시 해금</div></div>
         </div>
       </div>
       <div class="howto-section" id="grassSection" style="display:none">
@@ -2507,7 +2540,7 @@ function spawnStreakCelebration(streak) {
 
 // ===== Themes =====
 const RAINBOW_UNLOCK_WINS = 10;
-const AURORA_UNLOCK_STREAK = 25;
+const AURORA_UNLOCK_WINS = 25;
 
 function getTotalWins() {
   // Supabase profile is source of truth when logged in (includes imported wins)
@@ -2528,7 +2561,7 @@ function getBestStreak() {
 }
 
 function isRainbowUnlocked() { return getTotalWins() >= RAINBOW_UNLOCK_WINS; }
-function isAuroraUnlocked() { return getBestStreak() >= AURORA_UNLOCK_STREAK; }
+function isAuroraUnlocked() { return getTotalWins() >= AURORA_UNLOCK_WINS; }
 
 function updateLockedSwatches() {
   const rainbow = document.querySelector('.theme-swatch[data-theme="rainbow"]');
@@ -2546,8 +2579,8 @@ function setTheme(theme) {
     return;
   }
   if (theme === 'aurora' && !isAuroraUnlocked()) {
-    const best = getBestStreak();
-    showConfirmModal({ emoji:'🌌', title:'오로라 성운 테마 잠금', sub:`PVP 25연승 달성 시 해금됩니다.\n현재 최고 연승: ${best}연승`, acceptLabel:'확인', onAccept:()=>{} });
+    const wins = getTotalWins();
+    showConfirmModal({ emoji:'🌌', title:'오로라 성운 테마 잠금', sub:'PVP 25승 달성 시 해금됩니다.\n현재 총 승리: ' + wins + '승', acceptLabel:'확인', onAccept:()=>{} });
     return;
   }
   document.body.className = document.body.className.replace(/theme-\S+/g, '').trim();
@@ -2607,6 +2640,7 @@ let _roomScore = 100;
 let _roomTimer = 20; // null = unlimited
 let _gameMode = 'classic';
 let _handSize = 10;
+let _roomPublic = true;
 
 // ROOM_SCORE_OPTIONS removed — now uses stepper
 const DIFF_DESCS = {
@@ -2635,6 +2669,9 @@ function openRoomSettings(mode) {
   _renderRoomDiff();
   _renderGameMode();
   _renderHandSize();
+  _roomPublic = true;
+  _renderRoomVisibility();
+  document.getElementById('roomVisibilitySection').style.display = mode === 'ai' ? 'none' : '';
   document.getElementById('roomSettingsOverlay').classList.add('show');
 }
 
@@ -2712,6 +2749,18 @@ function _renderRoomTimer() {
   document.getElementById('roomTimerUnlimitedBtn').classList.toggle('active', _roomTimer === null);
 }
 
+function setRoomVisibility(v) {
+  _roomPublic = v === 'public';
+  _renderRoomVisibility();
+}
+function _renderRoomVisibility() {
+  document.getElementById('roomPublicBtn').classList.toggle('active', _roomPublic);
+  document.getElementById('roomPrivateBtn').classList.toggle('active', !_roomPublic);
+  document.getElementById('roomVisibilityDesc').textContent = _roomPublic
+    ? '공개방은 방 목록에 표시됩니다'
+    : '비공개방은 코드를 아는 사람만 참가할 수 있습니다';
+}
+
 function confirmRoomSettings() {
   closeRoomSettings();
   myName = document.getElementById('myName').value.trim() || t('defaultPlayer1');
@@ -2721,7 +2770,7 @@ function confirmRoomSettings() {
     myIdx = 0;
     socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff, gameMode: _gameMode, handSize: _handSize });
   } else {
-    socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize });
+    socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic });
   }
 }
 
@@ -3066,7 +3115,7 @@ function hideProfileModal() {
 
 function renderProfileCharGrid() {
   const wins = getTotalWins();
-  const chars = ['🐱','🐶','🐰','🦊','🐻','🐼','🐨','🐯','🐢','🦁','🐸','🦝'];
+  const chars = ['🐱','🐶','🐰','🦊','🐻','🐼','🐨','🐯','🐢','🦁','🐸','🦄'];
   const grid = document.getElementById('profileCharGrid');
   grid.innerHTML = chars.map(function(ch) {
     const req = CHAR_UNLOCK_REQ[ch];
@@ -3192,8 +3241,8 @@ const RANK_KEY = 'grRankPoints';
 
 const TIERS = [
   { min: 6000, max: Infinity, name: '챌린저', emoji: '🏆', cls: 'tier-challenger', color: '#ff8c00' },
-  { min: 3500, max: 5999,    name: '다이아',  emoji: '💠', cls: 'tier-diamond',    color: '#ce93d8' },
-  { min: 2000, max: 3499,    name: '플래티넘', emoji: '💎', cls: 'tier-plat',      color: '#4fc3f7' },
+  { min: 3500, max: 5999,    name: '다이아',  emoji: '💎', cls: 'tier-diamond',    color: '#7dd3fc' },
+  { min: 2000, max: 3499,    name: '플래티넘', emoji: '💠', cls: 'tier-plat',      color: '#c4b5fd' },
   { min: 1000, max: 1999,    name: '골드',    emoji: '🥇', cls: 'tier-gold',       color: '#ffd700' },
   { min: 500,  max: 999,     name: '실버',    emoji: '🥈', cls: 'tier-silver',     color: '#c0c0c0' },
   { min: 0,    max: 499,     name: '브론즈',  emoji: '🥉', cls: 'tier-bronze',     color: '#cd7f32' },
@@ -3414,9 +3463,9 @@ const RANK_ORD = {A:1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,J:
 const SUITS_ORDER = ['S','H','D','C'];
 
 // ===== Client state =====
-const CHAR_LIST = ['🐱','🐶','🐰','🦊','🐻','🐼','🐨','🐯','🐢','🦁','🐸','🦝'];
+const CHAR_LIST = ['🐱','🐶','🐰','🦊','🐻','🐼','🐨','🐯','🐢','🦁','🐸','🦄'];
 // First 8 always available; last 4 unlock at PVP win thresholds
-const CHAR_UNLOCK_REQ = { '🐢': 3, '🦁': 7, '🐸': 15, '🦝': 30 };
+const CHAR_UNLOCK_REQ = { '🐢': 3, '🦁': 7, '🐸': 15, '🦄': 30 };
 
 function isCharUnlocked(ch) {
   if (!CHAR_UNLOCK_REQ[ch]) return true; // base chars
@@ -3593,6 +3642,25 @@ function hideToast() {
   document.getElementById('toastBanner').className = 'toast-banner';
 }
 
+// ===== Reaction emojis =====
+let _reactionCooldown = false;
+function sendReaction(emoji) {
+  if (_reactionCooldown || vsAI) return;
+  socket.emit('reaction', { emoji });
+  _reactionCooldown = true;
+  setTimeout(() => { _reactionCooldown = false; }, 2000);
+}
+function showReactionFloat(emoji, avatarId) {
+  const anchor = document.getElementById(avatarId);
+  if (!anchor) return;
+  const span = document.createElement('span');
+  span.className = 'reaction-float';
+  span.textContent = emoji;
+  anchor.style.position = 'relative';
+  anchor.appendChild(span);
+  setTimeout(() => span.remove(), 4000);
+}
+
 // ===== Confetti burst (regular win) =====
 function spawnConfetti(count = 40) {
   const layer = document.getElementById('confettiLayer');
@@ -3674,6 +3742,35 @@ function spawnCharUnlockCelebration() {
   setTimeout(() => flash.remove(), 600);
 }
 
+function spawnUnicornCelebration() {
+  const layer = document.getElementById('confettiLayer');
+  const rainbowColors = ['#ff4e4e','#ff9c00','#ffe000','#4cff72','#00cfff','#b47aff'];
+  const emojis = ['🌈','⭐','✨','💫','🌟','🦄','🌠','💎'];
+  // Star shower from top
+  for (let i = 0; i < 80; i++) {
+    setTimeout(() => {
+      const span = document.createElement('span');
+      span.className = 'confetti-piece';
+      span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      span.style.left = (Math.random() * 100) + 'vw';
+      span.style.top = '-20px';
+      span.style.fontSize = (12 + Math.random() * 22) + 'px';
+      span.style.color = rainbowColors[Math.floor(Math.random() * rainbowColors.length)];
+      const dur = 1.5 + Math.random() * 1.5;
+      span.style.animationDuration = dur + 's';
+      span.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
+      layer.appendChild(span);
+      setTimeout(() => span.remove(), dur * 1000 + 200);
+    }, i * 35);
+  }
+  // Rainbow flash overlay
+  const flash = document.createElement('div');
+  flash.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:0;animation:unicornFlash 1.2s ease-out forwards';
+  flash.style.background = 'linear-gradient(135deg,rgba(255,78,78,.18),rgba(255,156,0,.18),rgba(255,224,0,.18),rgba(76,255,114,.18),rgba(0,207,255,.18),rgba(180,122,255,.18))';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 1400);
+}
+
 function renderCharGrid() {
   const grid = document.getElementById('lobbyCharGrid');
   grid.innerHTML = '';
@@ -3748,12 +3845,12 @@ function initSocket() {
 
   socket.on('chat-message', appendChatMessage);
 
-  socket.on('room-created', ({ code, playerIndex, targetScore: ts }) => {
+  socket.on('room-created', ({ code, playerIndex, targetScore: ts, isPublic: pub }) => {
     myIdx = playerIndex;
     roomCode = code;
     chars[myIdx] = myChar;
     targetScore = (ts === undefined) ? 100 : ts;
-    showWaiting(code);
+    showWaiting(code, pub !== false);
   });
 
   socket.on('room-joined', ({ code, playerIndex, opponentName, opponentChar, targetScore: ts }) => {
@@ -3902,6 +3999,27 @@ function initSocket() {
     }
   });
 
+  socket.on('host-transferred', () => {
+    myIdx = 0;
+    const readyBtn = document.getElementById('readyBtn');
+    readyBtn.textContent = '🚀 게임 시작';
+    readyBtn.disabled = true;
+    // Reset slot display: I'm now slot 0
+    document.getElementById('slotName0').textContent = myName + ' (' + t('me') + ')';
+    document.getElementById('slotIcon0').textContent = myChar;
+    document.getElementById('slot0').className = 'player-slot connected';
+    document.getElementById('slotName1').textContent = t('waitingForOpponent');
+    document.getElementById('slotIcon1').innerHTML = '<span class="spinner">⏳</span>';
+    document.getElementById('slot1').className = 'player-slot';
+    showToast('👑 방장이 되었습니다!', 'info');
+    setTimeout(() => hideToast(), 3000);
+  });
+
+  socket.on('reaction', ({ emoji, fromIdx }) => {
+    const avatarId = fromIdx === myIdx ? 'myAvatarEmoji' : 'oppAvatarEmoji';
+    showReactionFloat(emoji, avatarId);
+  });
+
   socket.on('end-request-received', ({ fromName }) => {
     showConfirmModal({
       emoji: '🛑',
@@ -4002,8 +4120,11 @@ function initSocket() {
     if (matchResult === 'win' && getTotalWins() === RAINBOW_UNLOCK_WINS) {
       setTimeout(() => showConfirmModal({ emoji:'🌈', title:'무지개 테마 해금!', sub:'PVP 누적 10승 달성! 설정에서 테마를 변경해보세요.', acceptLabel:'🎉 확인', onAccept:()=>{} }), 2000);
     }
-    if (matchResult === 'win' && getBestStreak() === AURORA_UNLOCK_STREAK) {
-      setTimeout(() => showConfirmModal({ emoji:'🌌', title:'오로라 성운 해금!', sub:'PVP 25연승 달성! 전설의 테마가 열렸습니다!', acceptLabel:'🌌 확인', onAccept:()=>{} }), 2500);
+    if (matchResult === 'win' && getTotalWins() === AURORA_UNLOCK_WINS) {
+      setTimeout(() => showConfirmModal({ emoji:'🌌', title:'오로라 성운 해금!', sub:'PVP 25승 달성! 전설의 테마가 열렸습니다!', acceptLabel:'🌌 확인', onAccept:()=>{} }), 2500);
+    }
+    if (!vsAI && matchResult === 'win' && myChar === '🦄') {
+      setTimeout(() => spawnUnicornCelebration(), 600);
     }
     const iWon = winnerIdx === myIdx;
     const tie = winnerIdx === -1;
@@ -4114,6 +4235,7 @@ function initSocket() {
     if (isRevenge) rlbl.textContent = revengerIdx === myIdx ? '🔥 리벤지 전!' : '🛡️ 리벤지 방어 중';
     updateRevengeProgress();
     document.querySelectorAll('.vs-ai-hide').forEach(el => el.style.display = vsAI ? 'none' : '');
+    document.getElementById('reactionBar').style.display = vsAI ? 'none' : 'flex';
     showGame();
     renderGame();
     if (currentPhase === 'upcard-offer') {
@@ -4164,7 +4286,12 @@ function initSocket() {
   });
 
   socket.on('card-discarded', ({ card, byIdx, nextTurn, deckCount: dc }) => {
-    if (byIdx !== myIdx) oppCardCount--;
+    if (byIdx !== myIdx) {
+      oppCardCount--;
+    } else {
+      // Remove auto-discarded card from myHand (manual discard already removed it optimistically)
+      myHand = myHand.filter(c => c.id !== card.id);
+    }
     discardTop = card;
     deckCount = dc;
     currentTurn = nextTurn;
@@ -4227,20 +4354,28 @@ function joinRoom() {
 document.getElementById('joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
 
 // ===== Waiting room =====
-function showWaiting(code) {
+function showWaiting(code, isPublic) {
   showScreen('waitingScreen');
   showChatWidget();
   document.getElementById('roomCodeDisplay').textContent = code;
   document.getElementById('waitingTargetScoreLbl').textContent = formatTargetScore();
+  const badge = document.getElementById('waitingRoomBadge');
+  if (badge) badge.textContent = isPublic === false ? '🔒 비공개방' : '🌐 공개방';
   document.getElementById('slotName0').textContent = myIdx === 0 ? `${myName} (${t('me')})` : names[0];
   document.getElementById('slotName1').textContent = myIdx === 1 ? `${myName} (${t('me')})` : t('waitingForOpponent');
   document.getElementById('slotIcon0').textContent = myIdx === 0 ? myChar : (chars[0] || CHAR_LIST[0]);
   document.getElementById('slot0').className = 'player-slot connected';
   document.getElementById('slot1').className = 'player-slot';
-  // Enable ready button if opponent present (for joiner)
-  if (myIdx === 1) {
+  const readyBtn = document.getElementById('readyBtn');
+  if (myIdx === 0) {
+    // Host: show Start button, disabled until opponent joins
+    readyBtn.textContent = '🚀 게임 시작';
+    readyBtn.disabled = true;
+  } else {
+    // Joiner: show Ready button, enable immediately
     document.getElementById('slotIcon1').textContent = myChar;
-    document.getElementById('readyBtn').disabled = false;
+    readyBtn.textContent = '✅ 준비 완료';
+    readyBtn.disabled = false;
   }
 }
 
@@ -4252,7 +4387,8 @@ function onOpponentJoined(name, char) {
   document.getElementById('slotIcon' + oppSlotIdx).textContent = char || '🐶';
   document.getElementById('slotStatus' + oppSlotIdx).textContent = t('connectedLbl');
   document.getElementById('slot' + oppSlotIdx).className = 'player-slot connected';
-  document.getElementById('readyBtn').disabled = false;
+  // Enable host's Start button once opponent arrives
+  if (myIdx === 0) document.getElementById('readyBtn').disabled = false;
 }
 
 function updateReadyUI(ready) {
@@ -4268,12 +4404,12 @@ function updateReadyUI(ready) {
       slotEl.classList.remove('ready-state');
     }
   });
-  if (ready[myIdx]) document.getElementById('readyBtn').disabled = true;
+  if (ready[myIdx] && myIdx !== 0) document.getElementById('readyBtn').disabled = true;
 }
 
 function setReady() {
   socket.emit('set-ready');
-  document.getElementById('readyBtn').disabled = true;
+  if (myIdx !== 0) document.getElementById('readyBtn').disabled = true;
   document.getElementById('slotStatus' + myIdx).textContent = t('readyDoneLbl');
 }
 

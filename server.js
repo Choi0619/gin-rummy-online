@@ -163,7 +163,7 @@ function emitToPlayer(room, idx, event, data) {
 io.on('connection', socket => {
   console.log('connect', socket.id);
 
-  socket.on('create-room', ({ name, char, targetScore, turnTimeSecs, gameMode, handSize }) => {
+  socket.on('create-room', ({ name, char, targetScore, turnTimeSecs, gameMode, handSize, isPublic }) => {
     const code = makeCode();
     rooms.set(code, {
       code,
@@ -180,11 +180,13 @@ io.on('connection', socket => {
       turnTimeSecs: normalizeTurnTime(turnTimeSecs !== undefined ? turnTimeSecs : 20),
       gameMode: normalizeGameMode(gameMode),
       handSize: normalizeHandSize(handSize),
+      isPublic: isPublic !== false,
     });
     socket.join(code);
     socket.data.room = code;
     socket.data.idx = 0;
-    socket.emit('room-created', { code, playerIndex: 0, targetScore: rooms.get(code).targetScore });
+    const r = rooms.get(code);
+    socket.emit('room-created', { code, playerIndex: 0, targetScore: r.targetScore, isPublic: r.isPublic });
   });
 
   socket.on('create-ai-room', ({ name, char, targetScore, turnTimeSecs, aiDifficulty, gameMode, handSize }) => {
@@ -465,6 +467,14 @@ io.on('connection', socket => {
     }
   });
 
+  socket.on('reaction', ({ emoji }) => {
+    const room = rooms.get(socket.data.room);
+    if (!room) return;
+    const allowed = ['👏','😂','😭','🔥','👍'];
+    if (!allowed.includes(emoji)) return;
+    io.to(room.code).emit('reaction', { emoji, fromIdx: socket.data.idx });
+  });
+
   socket.on('play-again', () => {
     const room = rooms.get(socket.data.room);
     if (!room) return;
@@ -508,9 +518,23 @@ io.on('connection', socket => {
       emitToPlayer(room, 1 - idx, 'player-left', { name: room.names[idx], disconnected: true });
       rooms.delete(room.code);
     } else {
-      // Waiting room (before game starts): just notify
+      // Waiting room (before game starts): notify and transfer host if needed
       if (room.ready) room.ready = [false, false];
       emitToPlayer(room, 1 - idx, 'opponent-disconnected-info', { name: room.names[idx] });
+      // If host (idx 0) left, promote remaining player to host
+      if (idx === 0 && room.players[1]) {
+        room.players[0] = room.players[1];
+        room.players[1] = null;
+        room.names[0] = room.names[1];
+        room.chars[0] = room.chars[1];
+        room.names[1] = '';
+        room.chars[1] = '';
+        const newHostSocket = io.sockets.sockets.get(room.players[0]);
+        if (newHostSocket) {
+          newHostSocket.data.idx = 0;
+          emitToPlayer(room, 0, 'host-transferred', {});
+        }
+      }
     }
   });
 });
