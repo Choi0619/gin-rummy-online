@@ -39,7 +39,7 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
   min-height: 100dvh;
   justify-content: center;
   padding: 40px 20px;
-  gap: 28px;
+  gap: 18px;
   overflow-x: hidden;
   background: var(--lobby-grad);
   transition: background 0.4s ease;
@@ -82,7 +82,7 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
   width: 300px; max-width: 82vw; position: relative; z-index: 1;
   filter: drop-shadow(0 6px 18px rgba(0,0,0,0.6));
   animation: logoFloat 3.5s ease-in-out infinite;
-  margin-bottom: -14px;
+  margin: -20px 0 -18px;
 }
 @keyframes logoFloat {
   0%,100% { transform: translateY(0); }
@@ -666,10 +666,11 @@ body.theme-aurora .logo-title { animation: auroraText 6s linear infinite; }
 .lobby-section-title {
   display: flex; align-items: center; gap: 7px;
   font-size: 11.5px; font-weight: 800; letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.4); text-transform: uppercase;
+  color: #ffe4b0; text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
   margin-bottom: 2px;
 }
-.lobby-section-title .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+.lobby-section-title .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.75; }
 
 input[type="text"] {
   background: rgba(255,255,255,0.1);
@@ -2042,7 +2043,6 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
   <img class="logo-img" src="/logo.png" alt="진 러미 온라인" onerror="this.style.display='none';document.querySelector('.logo-fallback').style.display=''">
   <div class="logo-fallback" style="display:none;font-size:48px;position:relative;z-index:1">🃏</div>
-  <div class="logo-sub" data-i18n="logoSub">친구와 함께 플레이</div>
 
   <!-- 이름 입력: 게스트 시 표시, 로그인 시 숨김 (JS가 value만 채움) -->
   <div id="guestNameRow" style="display:none;position:relative;z-index:1;width:100%;max-width:360px">
@@ -2052,6 +2052,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   </div>
 
   <div class="lobby-card">
+    <div class="logo-sub" data-i18n="logoSub" style="align-self:center;margin-bottom:2px">친구와 함께 플레이</div>
     <div class="lobby-section">
       <div class="lobby-section-title"><span class="dot"></span>방 만들기</div>
       <button class="btn btn-primary" onclick="openRoomSettings('pvp')" data-i18n="createRoomBtn">✨ 새 방 만들기</button>
