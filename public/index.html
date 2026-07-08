@@ -117,6 +117,22 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
 }
 .btn-settings:hover { background: rgba(255,255,255,0.2); transform: rotate(45deg); }
 
+/* ===== Collection: card border picker ===== */
+.border-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 6px; }
+.border-opt {
+  position: relative; width: 100%; aspect-ratio: 0.72; border-radius: 8px; cursor: pointer;
+  background: #f2f2f2; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; transition: transform 0.15s;
+}
+.border-opt:hover { transform: translateY(-2px); }
+.border-opt.selected { outline: 3px solid #fff; outline-offset: 2px; }
+.border-opt.locked { opacity: 0.4; filter: grayscale(0.6); cursor: not-allowed; }
+.border-opt.locked::after {
+  content: '🔒'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; background: rgba(0,0,0,0.45); border-radius: 8px;
+}
+.border-opt-label { position: absolute; bottom: -16px; left: 0; right: 0; text-align: center; font-size: 9px; color: rgba(255,255,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* ===== Settings: theme swatches ===== */
 .theme-grid { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
 .theme-swatch {
@@ -1024,6 +1040,38 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   50%       { box-shadow: 0 22px 44px rgba(255,215,0,0.85), 0 0 0 8px rgba(255,215,0,0.1); }
 }
 .card.in-meld { border-color: #00e676; border-width: 2.5px; }
+
+/* ===== Card border collection (applies to my own hand only) ===== */
+.card.cb-bronze     { border-color: #cd7f32; border-width: 2.5px; box-shadow: 0 0 0 1px rgba(205,127,50,0.35); }
+.card.cb-silver      { border-color: #c0c0c0; border-width: 2.5px; box-shadow: 0 0 0 1px rgba(192,192,192,0.4); }
+.card.cb-gold        { border-color: #ffd700; border-width: 2.5px; box-shadow: 0 0 8px rgba(255,215,0,0.5); }
+.card.cb-platinum    { border-color: #c4b5fd; border-width: 2.5px; box-shadow: 0 0 10px rgba(196,181,253,0.55); }
+.card.cb-diamond     { border-color: #7dd3fc; border-width: 2.5px; box-shadow: 0 0 12px rgba(125,211,252,0.6); }
+.card.cb-challenger  { border-color: #ff8c00; border-width: 3px; box-shadow: 0 0 14px rgba(255,140,0,0.7); animation: cbChallengerPulse 2s ease-in-out infinite; }
+@keyframes cbChallengerPulse {
+  0%,100% { box-shadow: 0 0 10px rgba(255,140,0,0.55); }
+  50%      { box-shadow: 0 0 20px rgba(255,140,0,0.9); }
+}
+.card.cb-w5          { border-color: #90a4ae; border-width: 2.5px; box-shadow: 0 0 8px rgba(144,164,174,0.5); }
+.card.cb-w20         { border-color: #2ee879; border-width: 2.5px; box-shadow: 0 0 10px rgba(46,232,121,0.55); }
+.card.cb-w50         { border-color: #ff3b5c; border-width: 2.5px; box-shadow: 0 0 12px rgba(255,59,92,0.6); }
+.card.cb-w100        {
+  border-width: 3px; border-color: #2a2a2a;
+  border-image: linear-gradient(135deg,#ffd700,#fff8dc,#ffd700,#b8860b) 1;
+  box-shadow: 0 0 16px rgba(255,215,0,0.7);
+  animation: cbLegendShine 2.4s linear infinite;
+}
+@keyframes cbLegendShine {
+  0%,100% { filter: brightness(1); }
+  50%      { filter: brightness(1.4); }
+}
+/* selected/in-meld states always win regardless of border theme */
+.card.cb-bronze.selected, .card.cb-silver.selected, .card.cb-gold.selected, .card.cb-platinum.selected,
+.card.cb-diamond.selected, .card.cb-challenger.selected, .card.cb-w5.selected, .card.cb-w20.selected,
+.card.cb-w50.selected, .card.cb-w100.selected { border-color: gold !important; border-image: none; }
+.card.cb-bronze.in-meld, .card.cb-silver.in-meld, .card.cb-gold.in-meld, .card.cb-platinum.in-meld,
+.card.cb-diamond.in-meld, .card.cb-challenger.in-meld, .card.cb-w5.in-meld, .card.cb-w20.in-meld,
+.card.cb-w50.in-meld, .card.cb-w100.in-meld { border-color: #00e676 !important; border-image: none; }
 .card.face-down {
   background: linear-gradient(135deg, #0d47a1, #1565c0);
   border-color: #42a5f5; cursor: default;
@@ -2344,7 +2392,8 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       </div>
       <div class="howto-section" style="margin-bottom:0">
         <h3>🖼️ 카드 테두리</h3>
-        <p style="font-size:12.5px;color:rgba(255,255,255,0.45);margin:2px 0 0">카드 테두리 커스터마이징은 곧 추가될 예정이에요! ✨</p>
+        <div class="border-grid" id="borderGrid"></div>
+        <div id="borderDesc" style="min-height:16px;text-align:center;font-size:12px;color:rgba(255,255,255,0.5);margin-top:8px"></div>
       </div>
     </div>
     <button class="btn btn-primary" style="margin-top:14px" onclick="hideCollectionModal()">확인했어요!</button>
@@ -2761,6 +2810,10 @@ function getTotalWins() {
   return history.filter(h => h.result === 'win' && h.mode !== 'vsAI').length;
 }
 
+function myRankPoints() {
+  return supaProfile ? (supaProfile.rank_points || 0) : parseInt(localStorage.getItem(RANK_KEY) || '0');
+}
+
 function getBestStreak() {
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
   const pvp = history.filter(h => h.mode !== 'vsAI').reverse(); // chronological
@@ -2982,7 +3035,7 @@ function confirmRoomSettings() {
     myIdx = 0;
     socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff, gameMode: _gameMode, handSize: _handSize });
   } else {
-    socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic });
+    socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic, gameId: (supaProfile && supaProfile.game_id) || null });
   }
 }
 
@@ -3042,9 +3095,54 @@ function showSettings() {
 function hideSettings() { document.getElementById('settingsOverlay').classList.remove('show'); }
 
 let _collectionSwatchesWired = false;
+// ===== Card border collection =====
+const CARD_BORDERS = [
+  { id: 'bronze',    name: '브론즈',   swatch: 'linear-gradient(135deg,#e0a86a,#8a5323)', border:'#cd7f32', desc: '항상 사용 가능', unlock: () => true },
+  { id: 'silver',    name: '실버',     swatch: 'linear-gradient(135deg,#e8e8e8,#9e9e9e)', border:'#c0c0c0', desc: '랭킹 500 RP 달성', unlock: () => myRankPoints() >= 500 },
+  { id: 'gold',      name: '골드',     swatch: 'linear-gradient(135deg,#ffe066,#c9960c)', border:'#ffd700', desc: '랭킹 1000 RP 달성', unlock: () => myRankPoints() >= 1000 },
+  { id: 'platinum',  name: '플래티넘', swatch: 'linear-gradient(135deg,#e6ddff,#a08aff)', border:'#c4b5fd', desc: '랭킹 2000 RP 달성', unlock: () => myRankPoints() >= 2000 },
+  { id: 'diamond',   name: '다이아',   swatch: 'linear-gradient(135deg,#d4f6ff,#3ec6f0)', border:'#7dd3fc', desc: '랭킹 3500 RP 달성', unlock: () => myRankPoints() >= 3500 },
+  { id: 'challenger',name: '챌린저',   swatch: 'linear-gradient(135deg,#ffcf7a,#e0700a)', border:'#ff8c00', desc: '랭킹 6000 RP 달성', unlock: () => myRankPoints() >= 6000 },
+  { id: 'w5',        name: '스틸',     swatch: 'linear-gradient(135deg,#cfd8dc,#78909c)', border:'#90a4ae', desc: 'PVP 5승 달성', unlock: () => getTotalWins() >= 5 },
+  { id: 'w20',       name: '에메랄드', swatch: 'linear-gradient(135deg,#7dffb0,#0ea94f)', border:'#2ee879', desc: 'PVP 20승 달성', unlock: () => getTotalWins() >= 20 },
+  { id: 'w50',       name: '루비',     swatch: 'linear-gradient(135deg,#ff8fa3,#c9002e)', border:'#ff3b5c', desc: 'PVP 50승 달성', unlock: () => getTotalWins() >= 50 },
+  { id: 'w100',      name: '레전드',   swatch: 'linear-gradient(135deg,#fff6d1,#b8860b)', border:'#2a2a2a', desc: 'PVP 100승 달성', unlock: () => getTotalWins() >= 100 },
+];
+let myCardBorder = localStorage.getItem('grCardBorder') || 'bronze';
+
+function renderBorderGrid() {
+  const grid = document.getElementById('borderGrid');
+  if (!grid) return;
+  grid.innerHTML = CARD_BORDERS.map(function(b) {
+    const unlocked = b.unlock();
+    const selected = myCardBorder === b.id;
+    const cls = 'border-opt' + (selected ? ' selected' : '') + (unlocked ? '' : ' locked');
+    const clickHandler = unlocked ? 'selectCardBorder(\'' + b.id + '\')' : 'showLockedBorderMsg(\'' + b.id + '\')';
+    return '<div class="' + cls + '" style="border:2.5px solid ' + b.border + ';background:' + b.swatch + '" onclick="' + clickHandler + '" title="' + b.name + '"></div>';
+  }).join('');
+}
+
+function selectCardBorder(id) {
+  const b = CARD_BORDERS.find(x => x.id === id);
+  if (!b || !b.unlock()) return;
+  myCardBorder = id;
+  localStorage.setItem('grCardBorder', id);
+  if (supaUser) supa.from('profiles').update({ card_border: id }).eq('id', supaUser.id).then(() => {});
+  renderBorderGrid();
+  const desc = document.getElementById('borderDesc');
+  if (desc) desc.textContent = '✅ ' + b.name + ' 테두리로 변경됐어요!';
+}
+
+function showLockedBorderMsg(id) {
+  const b = CARD_BORDERS.find(x => x.id === id);
+  const desc = document.getElementById('borderDesc');
+  if (desc && b) desc.textContent = '🔒 ' + b.name + ' — ' + b.desc;
+}
+
 function showCollectionModal() {
   updatePetalSection();
   updateGrassSection();
+  renderBorderGrid();
   document.getElementById('collectionOverlay').classList.add('show');
   if (_collectionSwatchesWired) return;
   _collectionSwatchesWired = true;
@@ -3318,6 +3416,7 @@ async function loadProfile() {
   document.getElementById('myName').value = savedNick;
   myName = savedNick;
   myChar = data.char || myChar;
+  myCardBorder = data.card_border || 'bronze';
   renderCharGrid();
   localStorage.setItem(RANK_KEY, String(data.rank_points));
   renderLobbyRank();
@@ -4185,6 +4284,7 @@ let roomCode = '';
 let myName = '';
 let names = ['', ''];
 let chars = [CHAR_LIST[0], CHAR_LIST[1]];
+let gameIds = ['', ''];
 let away = [false, false];
 let scores = [0, 0];
 let sortMode = 'meld';   // 'meld' | 'rank' | 'suit'
@@ -4573,12 +4673,13 @@ function initSocket() {
     showWaiting(code, pub !== false);
   });
 
-  socket.on('room-joined', ({ code, playerIndex, opponentName, opponentChar, targetScore: ts }) => {
+  socket.on('room-joined', ({ code, playerIndex, opponentName, opponentChar, opponentGameId, targetScore: ts }) => {
     myIdx = playerIndex;
     roomCode = code;
     chars[myIdx] = myChar;
     chars[1-myIdx] = opponentChar || CHAR_LIST[0];
     names[1-myIdx] = opponentName;
+    gameIds[1-myIdx] = opponentGameId || '';
     targetScore = (ts === undefined) ? 100 : ts;
     showWaiting(code);
     // Opponent already in room
@@ -4593,7 +4694,7 @@ function initSocket() {
     }
   });
 
-  socket.on('opponent-joined', ({ name, char }) => onOpponentJoined(name, char));
+  socket.on('opponent-joined', ({ name, char, gameId }) => { gameIds[1-myIdx] = gameId || ''; onOpponentJoined(name, char); });
 
   socket.on('char-update', ({ idx, char }) => {
     chars[idx] = char;
@@ -4794,7 +4895,7 @@ function initSocket() {
     const winsBeforeThisGame = getTotalWins(); // snapshot BEFORE saving
     if (supaUser && !vsAI) {
       saveMatchToDb({
-        opponentName: ns[1 - myIdx] || '상대방',
+        opponentName: gameIds[1 - myIdx] || ns[1 - myIdx] || '상대방',
         opponentChar: chars[1 - myIdx],
         myScore: sc[myIdx],
         oppScore: sc[1 - myIdx],
@@ -4958,6 +5059,7 @@ function initSocket() {
     selected = null;
     lastDrawnId = null;
     names = data.names;
+    gameIds = data.gameIds || gameIds;
     scores = data.scores;
     if (data.chars) chars = data.chars;
     if (data.targetScore !== undefined) targetScore = data.targetScore;
@@ -5102,7 +5204,7 @@ function joinRoom() {
   myName = document.getElementById('myName').value.trim() || t('defaultPlayer2');
   if (!socket) initSocket();
   document.getElementById('lobbyError').textContent = '';
-  socket.emit('join-room', { code, name: myName, char: myChar });
+  socket.emit('join-room', { code, name: myName, char: myChar, gameId: (supaProfile && supaProfile.game_id) || null });
 }
 
 document.getElementById('joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
@@ -5224,9 +5326,10 @@ function isMyTurn() { return currentTurn === myIdx; }
 function oppName() { return names[1-myIdx] || t('opponent'); }
 
 function makeCard(card, opts = {}) {
-  const { faceDown=false, selected=false, inMeld=false, clickable=false } = opts;
+  const { faceDown=false, selected=false, inMeld=false, clickable=false, mine=false } = opts;
   const el = document.createElement('div');
-  el.className = 'card' + (faceDown?' face-down':'') + (selected?' selected':'') + (inMeld?' in-meld':'') + (clickable?' clickable':'');
+  const borderCls = (mine && myCardBorder && myCardBorder !== 'none') ? ' cb-' + myCardBorder : '';
+  el.className = 'card' + borderCls + (faceDown?' face-down':'') + (selected?' selected':'') + (inMeld?' in-meld':'') + (clickable?' clickable':'');
   if (!faceDown) {
     const sym = SUITS_SYM[card.suit];
     const cls = IS_RED[card.suit] ? 'red-suit' : 'black-suit';
@@ -5331,7 +5434,7 @@ function renderGame() {
     const isSel = selected && selected.id === card.id;
     const inM = meldIds.has(card.id);
     const canClick = !aiControlled[myIdx] && isMyTurn() && currentPhase === 'discard';
-    const el = makeCard(card, { selected: isSel, inMeld: inM, clickable: canClick });
+    const el = makeCard(card, { selected: isSel, inMeld: inM, clickable: canClick, mine: true });
     if (card.id === lastDrawnId && !isSel) el.classList.add('just-drawn');
     if (canClick) el.onclick = () => toggleSelect(card);
     myEl.appendChild(el);

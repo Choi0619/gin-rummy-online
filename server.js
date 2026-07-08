@@ -163,13 +163,14 @@ function emitToPlayer(room, idx, event, data) {
 io.on('connection', socket => {
   console.log('connect', socket.id);
 
-  socket.on('create-room', ({ name, char, targetScore, turnTimeSecs, gameMode, handSize, isPublic }) => {
+  socket.on('create-room', ({ name, char, targetScore, turnTimeSecs, gameMode, handSize, isPublic, gameId }) => {
     const code = makeCode();
     rooms.set(code, {
       code,
       players: [socket.id],
       names: [name || '플레이어1', ''],
       chars: [char || '🐱', ''],
+      gameIds: [gameId || '', ''],
       away: [false, false],
       aiControlled: [false, false],
       ready: [false, false],
@@ -216,7 +217,7 @@ io.on('connection', socket => {
     startGame(room);
   });
 
-  socket.on('join-room', ({ code, name, char }) => {
+  socket.on('join-room', ({ code, name, char, gameId }) => {
     const room = rooms.get(code.toUpperCase().trim());
     if (!room) { socket.emit('err', '방을 찾을 수 없습니다.'); return; }
 
@@ -252,9 +253,11 @@ io.on('connection', socket => {
     }
 
     const oppIdx = 1 - slotIdx;
+    if (!room.gameIds) room.gameIds = ['', ''];
     room.players[slotIdx] = socket.id;
     room.names[slotIdx] = name || (slotIdx === 0 ? '플레이어1' : '플레이어2');
     room.chars[slotIdx] = char || (slotIdx === 0 ? '🐱' : '🐶');
+    room.gameIds[slotIdx] = gameId || '';
     socket.join(code);
     socket.data.room = code;
     socket.data.idx = slotIdx;
@@ -263,9 +266,10 @@ io.on('connection', socket => {
       code, playerIndex: slotIdx,
       opponentName: room.names[oppIdx] || '',
       opponentChar: room.chars[oppIdx] || '',
+      opponentGameId: room.gameIds[oppIdx] || '',
       targetScore: room.targetScore,
     });
-    emitToPlayer(room, oppIdx, 'opponent-joined', { name: room.names[slotIdx], char: room.chars[slotIdx] });
+    emitToPlayer(room, oppIdx, 'opponent-joined', { name: room.names[slotIdx], char: room.chars[slotIdx], gameId: room.gameIds[slotIdx] });
 
     // Sync game state if a round is in progress
     if (room.game && !room.game.over) {
@@ -634,6 +638,7 @@ function startGame(room) {
       scores: room.scores,
       names: room.names,
       chars: room.chars,
+      gameIds: room.gameIds || ['', ''],
       playerIndex: i,
       vsAI: !!room.vsAI,
       isRevenge: !!room.isRevenge,
