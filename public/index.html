@@ -2032,6 +2032,14 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     </div>
   </div>
 
+  <!-- 유저 프로필 뷰어 (상대/친구 프로필 보기) -->
+  <div class="overlay" id="userProfileOverlay">
+    <div class="howto-box" style="max-width:380px">
+      <button class="howto-close" onclick="hideUserProfile()">✕</button>
+      <div id="userProfileBody" style="text-align:center"></div>
+    </div>
+  </div>
+
   <img class="logo-img" src="/logo.png" alt="진 러미 온라인" onerror="this.style.display='none';document.querySelector('.logo-fallback').style.display=''">
   <div class="logo-fallback" style="display:none;font-size:48px;position:relative;z-index:1">🃏</div>
   <div class="logo-sub" data-i18n="logoSub">친구와 함께 플레이</div>
@@ -2127,7 +2135,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   <div class="turn-timer-badge" id="turnTimerBadge"></div>
 
   <div class="player-bar">
-    <div class="avatar-card" id="oppAvatarCard">
+    <div class="avatar-card" id="oppAvatarCard" onclick="showOpponentProfile()" style="cursor:pointer">
       <div class="avatar-emoji" id="oppAvatarEmoji">🐶<span class="face-overlay" id="oppFaceOverlay"></span></div>
       <div class="avatar-info">
         <div class="avatar-name" id="oppAvatarName" data-i18n="opponent">상대방</div>
@@ -3741,8 +3749,8 @@ function renderFriendsList() {
     const online = st !== 'offline';
     const inviteBtn = (online && roomCode && !vsAI) ? '<button class="f-btn accept" onclick="inviteFriend(\'' + f.id + '\')">🎮 초대</button>' : '';
     return '<div class="friend-row">' +
-      '<span class="f-char">' + f.char + '<span class="f-dot ' + st + '"></span></span>' +
-      '<div class="f-info">' +
+      '<span class="f-char" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' + f.char + '<span class="f-dot ' + st + '"></span></span>' +
+      '<div class="f-info" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' +
         '<div class="f-name">' + escapeHtml(f.name) + '</div>' +
         '<div class="f-sub">' + (STATUS_LABELS[st] || st) + (msg ? ' · ' + escapeHtml(msg) : '') + '</div>' +
       '</div>' +
@@ -3817,13 +3825,121 @@ async function inviteFriend(friendId) {
   setTimeout(() => hideToast(), 2500);
 }
 
+// ===== User profile viewer (opponent / friend) =====
+function showOpponentProfile() {
+  if (vsAI) return;
+  const oppGameId = gameIds[1 - myIdx];
+  if (!supaUser) {
+    showConfirmModal({ emoji: '🔒', title: '로그인이 필요해요', sub: '상대 프로필은 로그인 후 볼 수 있어요.', acceptLabel: '확인', onAccept: () => {} });
+    return;
+  }
+  if (!oppGameId) {
+    showConfirmModal({ emoji: '👤', title: '게스트 플레이어예요', sub: '로그인하지 않은 상대는 프로필이 없어요.', acceptLabel: '확인', onAccept: () => {} });
+    return;
+  }
+  showUserProfileByGameId(oppGameId);
+}
+
+async function showUserProfileByGameId(gameId) {
+  const body = document.getElementById('userProfileBody');
+  body.innerHTML = '<div style="padding:40px 0"><span class="spinner">⏳</span></div>';
+  document.getElementById('userProfileOverlay').classList.add('show');
+  const { data: prof } = await supa.from('profiles').select('*').eq('game_id', gameId).maybeSingle();
+  if (!prof) { body.innerHTML = '<div style="padding:30px 0;color:rgba(255,255,255,0.5)">프로필을 찾을 수 없어요.</div>'; return; }
+  await renderUserProfileBody(prof);
+}
+
+async function showUserProfileById(userId) {
+  const body = document.getElementById('userProfileBody');
+  body.innerHTML = '<div style="padding:40px 0"><span class="spinner">⏳</span></div>';
+  document.getElementById('userProfileOverlay').classList.add('show');
+  const { data: prof } = await supa.from('profiles').select('*').eq('id', userId).maybeSingle();
+  if (!prof) { body.innerHTML = '<div style="padding:30px 0;color:rgba(255,255,255,0.5)">프로필을 찾을 수 없어요.</div>'; return; }
+  await renderUserProfileBody(prof);
+}
+
+async function renderUserProfileBody(prof) {
+  const body = document.getElementById('userProfileBody');
+  const isMe = supaUser && prof.id === supaUser.id;
+  const wins = prof.pvp_wins || 0, losses = prof.pvp_losses || 0;
+  const winRate = (wins + losses) > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
+  const rp = prof.rank_points || 0;
+  const tier = getTierInfo(rp);
+
+  const { data: statusRow } = await supa.from('user_status').select('status,status_msg').eq('user_id', prof.id).maybeSingle();
+  const st = (statusRow && statusRow.status) || 'offline';
+  const statusMsg = (statusRow && statusRow.status_msg) || '';
+
+  let actionHtml = '';
+  if (!isMe && supaUser) {
+    const { data: rel } = await supa.from('friendships').select('*')
+      .or('and(requester_id.eq.' + supaUser.id + ',receiver_id.eq.' + prof.id + '),and(requester_id.eq.' + prof.id + ',receiver_id.eq.' + supaUser.id + ')')
+      .maybeSingle();
+    if (rel && rel.status === 'accepted') {
+      _profileDmTarget = { id: prof.id, name: prof.username || prof.game_id, char: prof.char || '🐱' };
+      actionHtml = '<button class="btn btn-primary" onclick="openDmFromProfile()">💬 메시지 보내기</button>';
+    } else if (rel && rel.status === 'pending' && rel.requester_id === supaUser.id) {
+      actionHtml = '<button class="btn btn-secondary" disabled>⏳ 친구 요청 대기 중</button>';
+    } else if (rel && rel.status === 'pending' && rel.receiver_id === supaUser.id) {
+      actionHtml = '<button class="btn btn-primary" onclick="acceptFriendReq(\'' + rel.id + '\');hideUserProfile()">✅ 친구 요청 수락하기</button>';
+    } else {
+      actionHtml = '<button class="btn btn-primary" onclick="quickAddFriend(\'' + prof.id + '\')">➕ 친구 추가</button>';
+    }
+  }
+
+  body.innerHTML =
+    '<span class="avatar-frame" style="width:76px;height:76px;font-size:38px;margin:0 auto 10px">' + (prof.char || '🐱') + '</span>' +
+    '<div style="font-size:18px;font-weight:800">' + escapeHtml(prof.username || prof.game_id || '???') + '</div>' +
+    '<div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px">' + escapeHtml(prof.game_id || '') + '</div>' +
+    '<div style="font-size:12px;color:' + (st !== 'offline' ? '#69f0ae' : 'rgba(255,255,255,0.4)') + ';margin-top:6px">' + (STATUS_LABELS[st] || st) + (statusMsg ? ' · ' + escapeHtml(statusMsg) : '') + '</div>' +
+    '<div style="display:flex;gap:8px;margin:18px 0 4px">' +
+      '<div style="flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 4px">' +
+        '<div style="font-size:19px;font-weight:700;color:#69f0ae">' + wins + '</div><div style="font-size:10px;color:rgba(255,255,255,0.5)">승리</div></div>' +
+      '<div style="flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 4px">' +
+        '<div style="font-size:19px;font-weight:700;color:#ef5350">' + losses + '</div><div style="font-size:10px;color:rgba(255,255,255,0.5)">패배</div></div>' +
+      '<div style="flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 4px">' +
+        '<div style="font-size:19px;font-weight:700;color:#ffd76a">' + winRate + '%</div><div style="font-size:10px;color:rgba(255,255,255,0.5)">승률</div></div>' +
+    '</div>' +
+    '<div style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,215,120,0.08);border:1px solid rgba(255,215,120,0.2);border-radius:12px;padding:10px;margin-bottom:14px">' +
+      '<span style="font-size:20px">' + tier.emoji + '</span>' +
+      '<span style="font-size:14px;font-weight:700;color:' + tier.color + '">' + tier.name + '</span>' +
+      '<span style="font-size:12px;color:rgba(255,255,255,0.4)">· ' + rp.toLocaleString() + ' RP</span>' +
+    '</div>' +
+    (actionHtml ? '<div style="margin-bottom:6px">' + actionHtml + '</div>' : '') +
+    '<button class="btn btn-secondary" onclick="hideUserProfile()">닫기</button>';
+}
+
+let _profileDmTarget = null;
+function openDmFromProfile() {
+  if (!_profileDmTarget) return;
+  hideUserProfile();
+  openDmDirect(_profileDmTarget);
+}
+
+async function quickAddFriend(targetId) {
+  const { error } = await supa.from('friendships').insert({ requester_id: supaUser.id, receiver_id: targetId });
+  if (!error) {
+    showToast('✅ 친구 요청을 보냈어요!', 'info');
+    setTimeout(() => hideToast(), 2000);
+    showUserProfileById(targetId);
+  }
+}
+
+function hideUserProfile() { document.getElementById('userProfileOverlay').classList.remove('show'); }
+
 // ===== DM chat =====
 async function openDm(friendId) {
   const f = _friends.find(x => x.id === friendId);
   if (!f) return;
-  _dmTarget = f;
-  document.getElementById('dmFriendChar').textContent = f.char;
-  document.getElementById('dmFriendName').textContent = f.name;
+  await openDmDirect(f);
+}
+
+async function openDmDirect(target) {
+  // target: { id, name, char }
+  const friendId = target.id;
+  _dmTarget = target;
+  document.getElementById('dmFriendChar').textContent = target.char || '🐱';
+  document.getElementById('dmFriendName').textContent = target.name;
   document.getElementById('dmMessages').innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.3);font-size:12px;padding:20px 0">불러오는 중...</div>';
   document.getElementById('dmOverlay').classList.add('show');
 
