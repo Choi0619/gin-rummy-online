@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>진 러미 온라인</title>
 <script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { overflow-x: hidden; }
@@ -251,6 +252,50 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 }
 .swatch-tip strong { display: block; font-size: 12px; color: #ffd76a; margin-bottom: 1px; }
 .swatch-wrap:hover .swatch-tip { opacity: 1; }
+
+/* ===== Auth modal ===== */
+.auth-overlay {
+  position: fixed; inset: 0; z-index: 1200;
+  background: rgba(0,0,0,0.82); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+}
+.auth-box {
+  background: linear-gradient(160deg,#173d24,#0a2414);
+  border: 1px solid rgba(255,215,120,0.3); border-radius: 22px;
+  padding: 32px 28px 28px; width: 92%; max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  animation: bigPopIn 0.4s cubic-bezier(.34,1.56,.64,1);
+  display: flex; flex-direction: column; gap: 0;
+}
+.auth-logo { text-align: center; font-size: 44px; margin-bottom: 4px; }
+.auth-title { text-align: center; font-size: 22px; font-weight: 800; color: #ffd76a; margin-bottom: 18px; }
+.auth-tabs { display: flex; border-radius: 12px; overflow: hidden; margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,0.12); }
+.auth-tab { flex: 1; padding: 10px; font-size: 14px; font-weight: 700; cursor: pointer;
+  background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.5); border: none; transition: all 0.15s; }
+.auth-tab.active { background: rgba(255,215,120,0.18); color: #ffd76a; }
+.auth-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 13px; }
+.auth-field label { font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 600; letter-spacing: 0.4px; }
+.auth-field input {
+  padding: 11px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.07); color: white; font-size: 15px; outline: none;
+  transition: border-color 0.15s;
+}
+.auth-field input:focus { border-color: rgba(255,215,120,0.5); }
+.auth-error { font-size: 12px; color: #ef5350; text-align: center; min-height: 18px; margin-bottom: 6px; }
+.auth-divider { text-align: center; font-size: 12px; color: rgba(255,255,255,0.3); margin: 8px 0; }
+.auth-import-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px;
+  background: rgba(255,215,120,0.08); border: 1px solid rgba(255,215,120,0.2); margin-bottom: 14px;
+}
+.auth-import-row label { font-size: 12px; color: rgba(255,255,255,0.7); cursor: pointer; flex: 1; }
+.auth-user-badge {
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+  background: rgba(255,255,255,0.06); border-radius: 8px; margin-bottom: 2px;
+}
+.auth-user-badge .badge-name { font-size: 13px; font-weight: 700; color: #ffd76a; }
+.auth-user-badge .badge-logout { font-size: 11px; color: rgba(255,255,255,0.4); cursor: pointer; margin-left: auto; }
+.auth-user-badge .badge-logout:hover { color: #ef5350; }
 
 /* ===== Rank / Tier system ===== */
 .rank-display {
@@ -1434,6 +1479,50 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   </div>
 </div>
 
+<!-- ===== AUTH MODAL ===== -->
+<div class="auth-overlay" id="authOverlay" style="display:none">
+  <div class="auth-box">
+    <div class="auth-logo">🃏</div>
+    <div class="auth-title">진 러미 온라인</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="authTabLogin" onclick="switchAuthTab('login')">로그인</button>
+      <button class="auth-tab" id="authTabSignup" onclick="switchAuthTab('signup')">회원가입</button>
+    </div>
+    <div id="authLoginForm">
+      <div class="auth-field">
+        <label>이메일</label>
+        <input type="email" id="authLoginEmail" placeholder="이메일 입력">
+      </div>
+      <div class="auth-field">
+        <label>비밀번호</label>
+        <input type="password" id="authLoginPw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="auth-error" id="authLoginError"></div>
+      <button class="btn btn-primary" onclick="doLogin()" id="authLoginBtn">🚀 로그인</button>
+    </div>
+    <div id="authSignupForm" style="display:none">
+      <div class="auth-field">
+        <label>닉네임</label>
+        <input type="text" id="authSignupName" placeholder="닉네임 입력" maxlength="12">
+      </div>
+      <div class="auth-field">
+        <label>이메일</label>
+        <input type="email" id="authSignupEmail" placeholder="이메일 입력">
+      </div>
+      <div class="auth-field">
+        <label>비밀번호 (6자 이상)</label>
+        <input type="password" id="authSignupPw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doSignup()">
+      </div>
+      <div id="authImportRow" class="auth-import-row" style="display:none">
+        <input type="checkbox" id="authImportCheck" checked>
+        <label for="authImportCheck">📦 기존 로컬 전적 승/패 수 가져오기 (<span id="authImportStats"></span>)</label>
+      </div>
+      <div class="auth-error" id="authSignupError"></div>
+      <button class="btn btn-primary" onclick="doSignup()" id="authSignupBtn">✨ 회원가입</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== LOBBY ===== -->
 <div id="lobbyScreen" class="screen active">
   <div class="lobby-watermark">♠</div>
@@ -1446,6 +1535,11 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <button class="btn-howto" onclick="showHowTo()" data-i18n="howToBtn">📖 게임 방법 보기</button>
     <button class="btn-howto" onclick="showHistory()" style="background:rgba(255,215,120,0.12);border-color:rgba(255,215,120,0.3)">📊 전적</button>
     <button class="btn-settings" onclick="showSettings()" title="Settings">⚙️</button>
+  </div>
+  <div id="lobbyUserBadge" class="auth-user-badge" style="display:none;max-width:420px;margin:0 auto 4px">
+    <span id="lobbyUserChar" style="font-size:18px"></span>
+    <span class="badge-name" id="lobbyUserName"></span>
+    <span class="badge-logout" onclick="doLogout()">로그아웃</span>
   </div>
 
   <div class="logo">🃏</div>
@@ -2160,6 +2254,8 @@ const RAINBOW_UNLOCK_WINS = 10;
 const AURORA_UNLOCK_STREAK = 25;
 
 function getTotalWins() {
+  // Supabase profile is source of truth when logged in (includes imported wins)
+  if (supaProfile) return supaProfile.pvp_wins;
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
   return history.filter(h => h.result === 'win' && h.mode !== 'vsAI').length;
 }
@@ -2425,6 +2521,162 @@ function spawnRainbowCelebration() {
 
 function showSettings() { updatePetalSection(); updateGrassSection(); document.getElementById('settingsOverlay').classList.add('show'); }
 function hideSettings() { document.getElementById('settingsOverlay').classList.remove('show'); }
+
+// ===== Supabase Auth & Profile =====
+const SUPA_URL = 'https://bqlpcfrphnjkzgeydgls.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxbHBjZnJwaG5qa3pnZXlkZ2xzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MTIyMTcsImV4cCI6MjA5OTA4ODIxN30.fygRKugO99xwKx2mzWKsQ1OLKb2aZBMHqtGyYv_OzEk';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let supaUser = null;   // current auth user
+let supaProfile = null; // current profile row
+
+async function initAuth() {
+  const { data: { session } } = await supa.auth.getSession();
+  if (session) {
+    supaUser = session.user;
+    await loadProfile();
+  } else {
+    showAuthOverlay();
+  }
+}
+
+function showAuthOverlay() {
+  switchAuthTab('login');
+  // Show local import stats if history exists
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  const pvp = history.filter(h => h.mode !== 'vsAI');
+  const wins = pvp.filter(h => h.result === 'win').length;
+  const losses = pvp.filter(h => h.result === 'lose').length;
+  const importRow = document.getElementById('authImportRow');
+  if (wins + losses > 0) {
+    document.getElementById('authImportStats').textContent = `${wins}승 ${losses}패`;
+    importRow.style.display = 'flex';
+  } else {
+    importRow.style.display = 'none';
+  }
+  document.getElementById('authOverlay').style.display = 'flex';
+}
+
+function hideAuthOverlay() {
+  document.getElementById('authOverlay').style.display = 'none';
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('authLoginForm').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('authSignupForm').style.display = tab === 'signup' ? '' : 'none';
+  document.getElementById('authTabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('authTabSignup').classList.toggle('active', tab === 'signup');
+  document.getElementById('authLoginError').textContent = '';
+  document.getElementById('authSignupError').textContent = '';
+}
+
+async function doLogin() {
+  const email = document.getElementById('authLoginEmail').value.trim();
+  const pw = document.getElementById('authLoginPw').value;
+  const errEl = document.getElementById('authLoginError');
+  const btn = document.getElementById('authLoginBtn');
+  if (!email || !pw) { errEl.textContent = '이메일과 비밀번호를 입력해주세요.'; return; }
+  btn.disabled = true; btn.textContent = '로그인 중...';
+  const { data, error } = await supa.auth.signInWithPassword({ email, password: pw });
+  if (error) {
+    errEl.textContent = error.message.includes('Invalid') ? '이메일 또는 비밀번호가 틀렸습니다.' : error.message;
+    btn.disabled = false; btn.textContent = '🚀 로그인'; return;
+  }
+  supaUser = data.user;
+  await loadProfile();
+  hideAuthOverlay();
+}
+
+async function doSignup() {
+  const name = document.getElementById('authSignupName').value.trim();
+  const email = document.getElementById('authSignupEmail').value.trim();
+  const pw = document.getElementById('authSignupPw').value;
+  const errEl = document.getElementById('authSignupError');
+  const btn = document.getElementById('authSignupBtn');
+  if (!name) { errEl.textContent = '닉네임을 입력해주세요.'; return; }
+  if (!email || !pw) { errEl.textContent = '이메일과 비밀번호를 입력해주세요.'; return; }
+  if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 합니다.'; return; }
+  btn.disabled = true; btn.textContent = '가입 중...';
+
+  const { data, error } = await supa.auth.signUp({ email, password: pw });
+  if (error) {
+    errEl.textContent = error.message; btn.disabled = false; btn.textContent = '✨ 회원가입'; return;
+  }
+  supaUser = data.user;
+
+  // Import local win/loss counts if checked
+  const doImport = document.getElementById('authImportCheck').checked &&
+                   document.getElementById('authImportRow').style.display !== 'none';
+  let importWins = 0, importLosses = 0;
+  if (doImport) {
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    const pvp = history.filter(h => h.mode !== 'vsAI');
+    importWins = pvp.filter(h => h.result === 'win').length;
+    importLosses = pvp.filter(h => h.result === 'lose').length;
+  }
+
+  // Create profile row
+  const { error: profErr } = await supa.from('profiles').insert({
+    id: supaUser.id,
+    username: name,
+    char: myChar,
+    rank_points: 0,
+    pvp_wins: importWins,
+    pvp_losses: importLosses,
+  });
+  if (profErr && !profErr.message.includes('duplicate')) {
+    errEl.textContent = profErr.message; btn.disabled = false; btn.textContent = '✨ 회원가입'; return;
+  }
+  await loadProfile();
+  hideAuthOverlay();
+  if (doImport && importWins + importLosses > 0) {
+    setTimeout(() => showConfirmModal({
+      emoji: '📦', title: '전적 가져오기 완료!',
+      sub: `기존 ${importWins}승 ${importLosses}패 기록을 계승했습니다.<br>테마·캐릭터 해금 조건에 반영됩니다!`,
+      acceptLabel: '🎉 확인', onAccept: () => {},
+    }), 800);
+  }
+}
+
+async function loadProfile() {
+  if (!supaUser) return;
+  const { data } = await supa.from('profiles').select('*').eq('id', supaUser.id).single();
+  if (!data) return;
+  supaProfile = data;
+  // Sync profile → local state
+  document.getElementById('myName').value = data.username;
+  myName = data.username;
+  myChar = data.char || myChar;
+  renderCharGrid();
+  // Sync rank points from DB (DB is source of truth when logged in)
+  localStorage.setItem(RANK_KEY, String(data.rank_points));
+  renderLobbyRank();
+  // Show user badge
+  document.getElementById('lobbyUserChar').textContent = data.char || myChar;
+  document.getElementById('lobbyUserName').textContent = data.username;
+  document.getElementById('lobbyUserBadge').style.display = 'flex';
+}
+
+async function saveProfileAfterMatch(iWon, deltaRP) {
+  if (!supaUser || !supaProfile) return;
+  const newRP = Math.max(0, supaProfile.rank_points + deltaRP);
+  const newWins = supaProfile.pvp_wins + (iWon ? 1 : 0);
+  const newLosses = supaProfile.pvp_losses + (iWon ? 0 : 1);
+  const { data } = await supa.from('profiles').update({
+    rank_points: newRP,
+    pvp_wins: newWins,
+    pvp_losses: newLosses,
+    char: myChar,
+  }).eq('id', supaUser.id).select().single();
+  if (data) supaProfile = data;
+}
+
+async function doLogout() {
+  await supa.auth.signOut();
+  supaUser = null; supaProfile = null;
+  document.getElementById('lobbyUserBadge').style.display = 'none';
+  showAuthOverlay();
+}
 
 // ===== Rank / Tier System =====
 const RANK_KEY = 'grRankPoints';
@@ -3195,6 +3447,9 @@ function initSocket() {
           }), 1500);
         }
       }
+      // Persist to Supabase
+      saveProfileAfterMatch(iWon, delta);
+      renderLobbyRank();
     } else {
       if (rankDeltaEl) rankDeltaEl.innerHTML = '';
     }
@@ -3997,8 +4252,8 @@ function showGame() {
   }
 })();
 
-// Initialise lobby rank badge on page load
-renderLobbyRank();
+// Initialise auth + lobby on page load
+initAuth();
 </script>
 </body>
 </html>
