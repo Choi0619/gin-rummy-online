@@ -135,6 +135,26 @@ function normalizeTurnTime(v) {
   return Math.max(10, Math.min(60, Math.round(n / 5) * 5));
 }
 
+// Game mode: classic / straight / oklahoma
+function normalizeGameMode(v) {
+  return ['classic','straight','oklahoma'].includes(v) ? v : 'classic';
+}
+
+// Hand size: 5–15 cards, default 10
+function normalizeHandSize(v) {
+  const n = parseInt(v, 10);
+  if (!Number.isFinite(n)) return 10;
+  return Math.max(5, Math.min(15, n));
+}
+
+// Max deadwood allowed to knock. Returns -1 for Straight Gin (no knocking).
+function getKnockCap(room, g) {
+  const mode = room.gameMode || 'classic';
+  if (mode === 'straight') return -1;
+  if (mode === 'oklahoma') return (g && g.oklahomaCap != null) ? g.oklahomaCap : 10;
+  return 10; // classic
+}
+
 function emitToPlayer(room, idx, event, data) {
   if (room.players[idx]) io.to(room.players[idx]).emit(event, data);
 }
@@ -143,7 +163,7 @@ function emitToPlayer(room, idx, event, data) {
 io.on('connection', socket => {
   console.log('connect', socket.id);
 
-  socket.on('create-room', ({ name, char, targetScore, turnTimeSecs }) => {
+  socket.on('create-room', ({ name, char, targetScore, turnTimeSecs, gameMode, handSize }) => {
     const code = makeCode();
     rooms.set(code, {
       code,
@@ -158,6 +178,8 @@ io.on('connection', socket => {
       endRequest: null,
       targetScore: normalizeTargetScore(targetScore),
       turnTimeSecs: normalizeTurnTime(turnTimeSecs !== undefined ? turnTimeSecs : 20),
+      gameMode: normalizeGameMode(gameMode),
+      handSize: normalizeHandSize(handSize),
     });
     socket.join(code);
     socket.data.room = code;
@@ -165,7 +187,7 @@ io.on('connection', socket => {
     socket.emit('room-created', { code, playerIndex: 0, targetScore: rooms.get(code).targetScore });
   });
 
-  socket.on('create-ai-room', ({ name, char, targetScore, turnTimeSecs, aiDifficulty }) => {
+  socket.on('create-ai-room', ({ name, char, targetScore, turnTimeSecs, aiDifficulty, gameMode, handSize }) => {
     const code = makeCode();
     const room = {
       code,
@@ -181,6 +203,8 @@ io.on('connection', socket => {
       targetScore: normalizeTargetScore(targetScore),
       turnTimeSecs: normalizeTurnTime(turnTimeSecs !== undefined ? turnTimeSecs : 20),
       aiDifficulty: ['easy','normal','hard'].includes(aiDifficulty) ? aiDifficulty : 'normal',
+      gameMode: normalizeGameMode(gameMode),
+      handSize: normalizeHandSize(handSize),
     };
     rooms.set(code, room);
     socket.join(code);
@@ -227,6 +251,7 @@ io.on('connection', socket => {
         phase: g.phase,
         oppCardCount: g.hands[oppIdx].length,
         scores: room.scores,
+        gameMode: g.gameMode, oklahomaCap: g.oklahomaCap, handSize: g.handSize,
       });
     }
   });
@@ -274,6 +299,7 @@ io.on('connection', socket => {
           phase: g.phase,
           oppCardCount: g.hands[1 - idx].length,
           scores: room.scores,
+          gameMode: g.gameMode, oklahomaCap: g.oklahomaCap, handSize: g.handSize,
         });
       }
     }
@@ -355,6 +381,7 @@ io.on('connection', socket => {
       phase: g.phase,
       oppCardCount: g.hands[1 - idx].length,
       scores: room.scores,
+      gameMode: g.gameMode, oklahomaCap: g.oklahomaCap, handSize: g.handSize,
     });
   });
 
@@ -491,29 +518,37 @@ io.on('connection', socket => {
 // ===== Game =====
 function startGame(room) {
   const deck = createDeck();
+  const handSize = room.handSize || 10;
 
   // The lead ("선") alternates every round.
   room.firstIdx = (room.firstIdx === undefined) ? 0 : 1 - room.firstIdx;
   const firstIdx = room.firstIdx;
   const secondIdx = 1 - firstIdx;
 
+  const hands = [deck.splice(0, handSize), deck.splice(0, handSize)];
+  const upcard = deck.pop();
+  const oklahomaCap = (room.gameMode === 'oklahoma') ? upcard.val : null;
+
   room.game = {
     deck,
-    hands: [deck.splice(0,10), deck.splice(0,10)],
-    discardPile: [deck.pop()],
+    hands,
+    discardPile: [upcard],
     turn: firstIdx,
     phase: 'upcard-offer',
     upcardStage: 1,
     upcardFirstIdx: firstIdx,
     upcardSecondIdx: secondIdx,
     over: false,
+    gameMode: room.gameMode || 'classic',
+    oklahomaCap,
+    handSize,
   };
   room.away = [false, false];
   room.aiControlled = [false, false];
   room.players.forEach((sid, i) => {
     io.to(sid).emit('game-started', {
       hand: room.game.hands[i],
-      discardTop: room.game.discardPile[room.game.discardPile.length-1],
+      discardTop: upcard,
       deckCount: room.game.deck.length,
       turn: firstIdx,
       phase: 'upcard-offer',
@@ -525,6 +560,9 @@ function startGame(room) {
       isRevenge: !!room.isRevenge,
       revengerIdx: room.revengerIdx ?? null,
       targetScore: room.targetScore,
+      gameMode: room.game.gameMode,
+      oklahomaCap,
+      handSize,
     });
   });
   startTurnTimer(room);
@@ -774,8 +812,18 @@ function handleAction(room, idx, type, cardId, socket) {
     } else {
       const isGin = (type === 'gin');
       const { dw } = bestMelds(g.hands[idx]);
+      const knockCap = getKnockCap(room, g);
       if (isGin && dw > 0) { g.hands[idx].push(discarded); g.discardPile.pop(); socket.emit('err','진 조건 불충족'); return; }
-      if (!isGin && dw > 10) { g.hands[idx].push(discarded); g.discardPile.pop(); socket.emit('err','녹 조건 불충족'); return; }
+      if (type === 'knock' && knockCap < 0) {
+        g.hands[idx].push(discarded); g.discardPile.pop();
+        socket.emit('err', 'Straight Gin: 녹 불가 — 진만 가능합니다.'); return;
+      }
+      if (!isGin && dw > knockCap) {
+        g.hands[idx].push(discarded); g.discardPile.pop();
+        socket.emit('err', g.gameMode === 'oklahoma'
+          ? `Oklahoma Gin: 데드우드 ${dw} > 캡 ${knockCap}`
+          : '녹 조건 불충족'); return;
+      }
       resolveRound(room, idx, isGin);
     }
   }
@@ -912,8 +960,11 @@ function aiPlayTurnFor(room, idx) {
     return;
   }
 
-  // Knock threshold by difficulty
-  const knockThreshold = difficulty === 'easy' ? 15 : difficulty === 'hard' ? 7 : 10;
+  // Knock threshold — game mode overrides difficulty
+  const knockCap = getKnockCap(room, g);
+  const knockThreshold = knockCap < 0 ? -1        // Straight Gin: never knock
+    : knockCap < 10 ? knockCap                     // Oklahoma Gin: fixed by upcard
+    : (difficulty === 'easy' ? 15 : difficulty === 'hard' ? 7 : 10); // Classic
 
   // Discard decision
   const hand = g.hands[idx];
@@ -941,7 +992,7 @@ function aiPlayTurnFor(room, idx) {
   const resolveDelay = difficulty === 'easy' ? 1200 : difficulty === 'hard' ? 400 : 500;
   room.aiMoveTimer = setTimeout(() => {
     if (afterDW === 0) { resolveRound(room, idx, true); return; }
-    if (afterDW <= knockThreshold) { resolveRound(room, idx, false); return; }
+    if (knockThreshold >= 0 && afterDW <= knockThreshold) { resolveRound(room, idx, false); return; }
     g.phase = 'draw';
     g.turn = oppIdx;
     if (notifySid) {
