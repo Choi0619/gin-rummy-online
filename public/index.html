@@ -252,6 +252,41 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 .swatch-tip strong { display: block; font-size: 12px; color: #ffd76a; margin-bottom: 1px; }
 .swatch-wrap:hover .swatch-tip { opacity: 1; }
 
+/* ===== Rank / Tier system ===== */
+.rank-display {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin: 8px 0 4px; padding: 8px 16px; border-radius: 12px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+}
+.rank-tier-badge {
+  font-size: 18px; font-weight: 800; letter-spacing: 0.5px;
+}
+.rank-pts-label {
+  font-size: 13px; color: rgba(255,255,255,0.5);
+}
+.rank-pts-val {
+  font-size: 14px; font-weight: 700; color: #ffd76a;
+}
+.rank-delta {
+  display: inline-block; font-size: 13px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px; margin-top: 4px;
+  animation: rankDeltaPop 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+.rank-delta.gain { background: rgba(105,240,174,0.15); color: #69f0ae; }
+.rank-delta.loss { background: rgba(239,83,80,0.15); color: #ef5350; }
+@keyframes rankDeltaPop {
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+/* Tier-specific badge colours */
+.tier-bronze  { color: #cd7f32; }
+.tier-silver  { color: #c0c0c0; }
+.tier-gold    { color: #ffd700; }
+.tier-plat    { color: #4fc3f7; }
+.tier-diamond { color: #ce93d8; }
+.tier-challenger { background: linear-gradient(90deg,#ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
 /* ===== Aurora Nebula theme (25-win unlock) ===== */
 body.theme-aurora {
   --bg-grad: radial-gradient(ellipse at center, #081828 0%, #030b14 100%);
@@ -1411,6 +1446,11 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <input id="myName" type="text" data-i18n-placeholder="namePlaceholder" placeholder="닉네임 입력" maxlength="12">
     <div class="char-picker-label" data-i18n="charSelectLabel">캐릭터 선택</div>
     <div class="char-grid" id="lobbyCharGrid"></div>
+    <div id="lobbyRankDisplay" class="rank-display" style="display:none">
+      <span id="lobbyTierBadge" class="rank-tier-badge"></span>
+      <span class="rank-pts-label">랭킹 포인트</span>
+      <span id="lobbyRankPts" class="rank-pts-val"></span>
+    </div>
     <div class="char-picker-label" style="font-size:12px;color:rgba(255,255,255,0.4)">목표 점수 · 턴 타이머는 방 만들기 시 설정합니다</div>
     <select id="targetScoreSelect" class="target-score-select" style="display:none">
       <option value="100" data-i18n="ts100" selected>100점 (기본)</option>
@@ -1613,6 +1653,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div class="result-emoji" id="matchEndEmoji">🏆</div>
     <div class="result-title" id="matchEndTitle"></div>
     <div class="result-pts" id="matchEndDetail"></div>
+    <div id="matchEndRankDelta" style="text-align:center;margin-top:2px"></div>
     <div class="rematch-row" style="margin-top:12px">
       <button class="btn btn-orange" id="revengeBtn" onclick="requestRevenge(true)" style="max-width:180px;display:none">🔥 리벤지</button>
       <button class="btn btn-primary" id="rematchBtn2" onclick="requestRevenge(false)" style="max-width:180px;display:none">🔄 리매치</button>
@@ -2374,6 +2415,71 @@ function spawnRainbowCelebration() {
 function showSettings() { updatePetalSection(); updateGrassSection(); document.getElementById('settingsOverlay').classList.add('show'); }
 function hideSettings() { document.getElementById('settingsOverlay').classList.remove('show'); }
 
+// ===== Rank / Tier System =====
+const RANK_KEY = 'grRankPoints';
+
+const TIERS = [
+  { min: 6000, name: '챌린저', emoji: '🏆', cls: 'tier-challenger' },
+  { min: 3500, name: '다이아',  emoji: '💠', cls: 'tier-diamond' },
+  { min: 2000, name: '플래티넘',emoji: '💎', cls: 'tier-plat' },
+  { min: 1000, name: '골드',    emoji: '🥇', cls: 'tier-gold' },
+  { min: 500,  name: '실버',    emoji: '🥈', cls: 'tier-silver' },
+  { min: 0,    name: '브론즈',  emoji: '🥉', cls: 'tier-bronze' },
+];
+
+function getTierInfo(pts) {
+  return TIERS.find(t => pts >= t.min) || TIERS[TIERS.length - 1];
+}
+
+function getRankPoints() {
+  return parseInt(localStorage.getItem(RANK_KEY) || '0', 10);
+}
+
+function getCurrentStreak() {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  const pvp = history.filter(h => h.mode !== 'vsAI'); // newest first
+  let streak = 0;
+  for (const h of pvp) {
+    if (h.result === 'win') streak++;
+    else break;
+  }
+  return streak;
+}
+
+function calcRankDelta(iWon, lastType, turns) {
+  if (!iWon) return -15;
+  let delta = 20;
+  // Turn bonus: more turns = more points (longer fight = harder win), cap +15
+  delta += Math.min(Math.floor(turns / 4), 15);
+  // Result type bonus
+  if (lastType === 'gin' || lastType === 'big-gin') delta += 10;
+  else if (lastType === 'undercut') delta += 5;
+  // Streak bonus: +5 per consecutive PVP win, cap +25
+  const streak = getCurrentStreak(); // already includes this win since saveMatchResult ran first
+  delta += Math.min(streak * 5, 25);
+  return delta;
+}
+
+function applyRankDelta(delta) {
+  const prev = getRankPoints();
+  const next = Math.max(0, prev + delta);
+  localStorage.setItem(RANK_KEY, String(next));
+  return { prev, next, delta: next - prev };
+}
+
+function renderLobbyRank() {
+  const pts = getRankPoints();
+  const tier = getTierInfo(pts);
+  const el = document.getElementById('lobbyRankDisplay');
+  const badge = document.getElementById('lobbyTierBadge');
+  const ptsEl = document.getElementById('lobbyRankPts');
+  if (!el) return;
+  badge.textContent = `${tier.emoji} ${tier.name}`;
+  badge.className = 'rank-tier-badge ' + tier.cls;
+  ptsEl.textContent = pts.toLocaleString() + ' RP';
+  el.style.display = 'flex';
+}
+
 // ===== Match History =====
 const HISTORY_KEY = 'grMatchHistory';
 const MAX_HISTORY = 50;
@@ -2523,6 +2629,8 @@ let targetScore = 100; // null = unlimited
 let gameMode = 'classic'; // 'classic' | 'straight' | 'oklahoma'
 let oklahomaCap = null;   // number when Oklahoma Gin, else null
 let handSize = 10;
+let matchTurns = 0;       // discard count this match (for RP calculation)
+let lastRoundType = '';   // resultType of the most recent round
 
 // ===== Chat =====
 let chatOpen = false;
@@ -2981,6 +3089,33 @@ function initSocket() {
       mode: vsAI ? 'vsAI' : 'pvp',
     });
     updateLockedSwatches();
+
+    // Rank points (PVP only)
+    const rankDeltaEl = document.getElementById('matchEndRankDelta');
+    if (!vsAI) {
+      const iWon = matchResult === 'win';
+      const delta = calcRankDelta(iWon, lastRoundType, matchTurns);
+      const { prev, next, delta: actual } = applyRankDelta(delta);
+      const tierPrev = getTierInfo(prev);
+      const tierNext = getTierInfo(next);
+      const sign = actual >= 0 ? '+' : '';
+      if (rankDeltaEl) {
+        rankDeltaEl.innerHTML = `<span class="rank-delta ${actual >= 0 ? 'gain' : 'loss'}">${sign}${actual} RP</span>
+          <span style="font-size:12px;color:rgba(255,255,255,0.45);margin-left:6px">${tierNext.emoji} ${tierNext.name} · ${next.toLocaleString()} RP</span>`;
+        if (tierNext.name !== tierPrev.name) {
+          const up = next > prev;
+          setTimeout(() => showConfirmModal({
+            emoji: up ? '🎉' : '😢',
+            title: up ? `${tierNext.emoji} ${tierNext.name} 승급!` : `${tierNext.emoji} ${tierNext.name} 강등...`,
+            sub: `랭킹 포인트: ${next.toLocaleString()} RP`,
+            acceptLabel: '확인', onAccept: () => {},
+          }), 1500);
+        }
+      }
+    } else {
+      if (rankDeltaEl) rankDeltaEl.innerHTML = '';
+    }
+
     if (matchResult === 'win' && getTotalWins() === RAINBOW_UNLOCK_WINS) {
       setTimeout(() => showConfirmModal({ emoji:'🌈', title:'무지개 테마 해금!', sub:'PVP 누적 10승 달성! 설정에서 테마를 변경해보세요.', acceptLabel:'🎉 확인', onAccept:()=>{} }), 2000);
     }
@@ -3064,6 +3199,8 @@ function initSocket() {
   });
 
   socket.on('game-started', data => {
+    matchTurns = 0;
+    lastRoundType = '';
     myIdx = data.playerIndex;
     vsAI = !!data.vsAI;
     myHand = data.hand;
@@ -3150,12 +3287,13 @@ function initSocket() {
     currentTurn = nextTurn;
     currentPhase = 'draw';
     selected = null;
+    matchTurns++;
     renderGame();
     if (isMyTurn()) setStatus(`${oppName()} 이(가) ${card.rank}${SUITS_SYM[card.suit]} 버렸습니다. 내 턴!`);
     else setStatus(`내가 ${card.rank}${SUITS_SYM[card.suit]} 버렸습니다. ${oppName()} 턴...`);
   });
 
-  socket.on('round-end', data => showResult(data));
+  socket.on('round-end', data => { lastRoundType = data.resultType || ''; showResult(data); });
   socket.on('deck-empty', () => {
     document.getElementById('resultOverlay').classList.add('show');
     document.getElementById('resEmoji').textContent = '🤝';
@@ -3775,6 +3913,9 @@ function showGame() {
     document.getElementById('joinCode').value = code.toUpperCase();
   }
 })();
+
+// Initialise lobby rank badge on page load
+renderLobbyRank();
 </script>
 </body>
 </html>
