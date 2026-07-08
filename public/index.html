@@ -79,7 +79,7 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
 
 .logo { font-size: 48px; margin-bottom: 4px; position: relative; z-index: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5)); display:none; }
 .logo-img {
-  width: 200px; max-width: 72vw; position: relative; z-index: 1;
+  width: 300px; max-width: 82vw; position: relative; z-index: 1;
   filter: drop-shadow(0 6px 18px rgba(0,0,0,0.6));
   animation: logoFloat 3.5s ease-in-out infinite;
 }
@@ -1203,6 +1203,48 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 @keyframes emojiBounce { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.15); } }
 
 #confettiLayer { position: fixed; inset: 0; pointer-events: none; z-index: 350; overflow: hidden; }
+.friends-tab {
+  flex: 1; padding: 8px; border: none; border-radius: 9px; font-size: 13px; font-weight: 600;
+  cursor: pointer; background: none; color: rgba(255,255,255,0.45); transition: all 0.2s;
+}
+.friends-tab.active { background: rgba(105,240,174,0.18); color: #69f0ae; }
+.friend-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: rgba(255,255,255,0.04); border-radius: 12px; margin-bottom: 6px;
+}
+.friend-row .f-char { font-size: 26px; position: relative; }
+.friend-row .f-dot {
+  position: absolute; bottom: -1px; right: -3px; width: 10px; height: 10px; border-radius: 50%;
+  border: 2px solid #12301c;
+}
+.f-dot.online  { background: #69f0ae; }
+.f-dot.gaming  { background: #ffb74d; }
+.f-dot.away    { background: #9e9e9e; }
+.f-dot.offline { background: #555; }
+.friend-row .f-info { flex: 1; min-width: 0; }
+.friend-row .f-name { font-size: 14px; font-weight: 700; }
+.friend-row .f-sub { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.f-btn {
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff;
+  border-radius: 9px; padding: 6px 10px; font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.f-btn:hover { background: rgba(255,255,255,0.18); }
+.f-btn.accept { background: rgba(105,240,174,0.15); border-color: rgba(105,240,174,0.4); color: #69f0ae; }
+.f-btn.danger { background: rgba(239,83,80,0.12); border-color: rgba(239,83,80,0.35); color: #ef9a9a; }
+.room-browser-row {
+  display: flex; align-items: center; gap: 10px; padding: 12px;
+  background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; margin-bottom: 8px; transition: all 0.15s;
+}
+.room-browser-row:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,215,120,0.3); }
+.dm-bubble {
+  max-width: 78%; padding: 8px 12px; border-radius: 14px; font-size: 13px; line-height: 1.45;
+  word-break: break-word;
+}
+.dm-bubble.mine { align-self: flex-end; background: rgba(105,240,174,0.16); border: 1px solid rgba(105,240,174,0.2); }
+.dm-bubble.theirs { align-self: flex-start; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); }
+.dm-time { font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+
 .deal-card-anim {
   position: fixed; z-index: 500; pointer-events: none;
   font-size: 36px; will-change: transform, opacity;
@@ -1764,6 +1806,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   <div class="lobby-top-row">
     <button class="btn-howto" onclick="showHowTo()" data-i18n="howToBtn">📖 게임 방법 보기</button>
     <button class="btn-howto" onclick="showHistory()" style="background:rgba(255,215,120,0.12);border-color:rgba(255,215,120,0.3)">📊 전적</button>
+    <button class="btn-howto" onclick="showFriendsModal()" style="background:rgba(105,240,174,0.1);border-color:rgba(105,240,174,0.35);color:#69f0ae">👥 친구<span id="friendReqBadge" style="display:none;background:#ef5350;color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;margin-left:5px;vertical-align:top"></span></button>
     <button class="btn-settings" onclick="showSettings()" title="Settings">⚙️</button>
   </div>
   <div id="lobbyUserBadge" class="auth-user-badge" style="display:none;max-width:420px;margin:0 auto 4px" onclick="showProfileModal()">
@@ -1785,6 +1828,10 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       <div class="profile-name-row">
         <input class="profile-name-input" id="profileNicknameInput" maxlength="12" placeholder="닉네임">
         <button class="profile-save-btn" onclick="saveProfileNickname()">저장</button>
+      </div>
+      <div class="profile-name-row" style="margin-top:6px">
+        <input class="profile-name-input" id="profileStatusMsgInput" maxlength="30" placeholder="상태메시지 (친구에게 보여요)" style="font-size:12px">
+        <button class="profile-save-btn" onclick="saveProfileStatusMsg()">저장</button>
       </div>
       <div class="profile-id-box">
         <div>
@@ -1818,6 +1865,54 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     </div>
   </div>
 
+  <!-- 공개방 브라우저 -->
+  <div class="overlay" id="roomBrowserOverlay">
+    <div class="howto-box" style="max-width:440px">
+      <button class="howto-close" onclick="hideRoomBrowser()">✕</button>
+      <div class="howto-title">🌐 공개방 찾기</div>
+      <div class="howto-scroll" id="roomBrowserList" style="max-height:52vh;min-height:120px"></div>
+      <button class="btn btn-secondary" onclick="refreshRoomBrowser()" style="margin-top:12px">🔄 새로고침</button>
+    </div>
+  </div>
+
+  <!-- 친구 모달 -->
+  <div class="overlay" id="friendsOverlay">
+    <div class="howto-box" style="max-width:440px">
+      <button class="howto-close" onclick="hideFriendsModal()">✕</button>
+      <div class="howto-title">👥 친구</div>
+      <div style="display:flex;gap:6px;background:rgba(0,0,0,0.25);border-radius:12px;padding:4px;margin-bottom:14px">
+        <button class="friends-tab active" id="fTabList" onclick="switchFriendsTab('list')">친구 목록</button>
+        <button class="friends-tab" id="fTabReq" onclick="switchFriendsTab('req')">요청<span id="fReqCount" style="display:none;background:#ef5350;color:#fff;border-radius:8px;font-size:10px;padding:0 5px;margin-left:4px"></span></button>
+        <button class="friends-tab" id="fTabAdd" onclick="switchFriendsTab('add')">친구 추가</button>
+      </div>
+      <div class="howto-scroll" style="max-height:48vh;min-height:160px">
+        <div id="fPanelList"></div>
+        <div id="fPanelReq" style="display:none"></div>
+        <div id="fPanelAdd" style="display:none">
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px">친구의 게임 아이디(Game ID)를 입력하세요</div>
+          <div style="display:flex;gap:8px">
+            <input id="friendAddInput" type="text" placeholder="game_id 입력" maxlength="20" style="flex:1;padding:10px 14px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);border-radius:12px;color:#fff;font-size:14px;outline:none">
+            <button class="btn btn-primary" style="width:auto;padding:10px 18px;margin:0" onclick="sendFriendRequest()">추가</button>
+          </div>
+          <div id="friendAddMsg" style="font-size:12px;text-align:center;margin-top:10px;min-height:16px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 친구 DM 채팅 -->
+  <div class="overlay" id="dmOverlay">
+    <div class="howto-box" style="max-width:400px;height:70vh;display:flex;flex-direction:column">
+      <button class="howto-close" onclick="hideDmModal()">✕</button>
+      <div class="howto-title" style="margin-bottom:8px"><span id="dmFriendChar">🐱</span> <span id="dmFriendName"></span></div>
+      <div id="dmMessages" style="flex:1;overflow-y:auto;padding:8px 4px;display:flex;flex-direction:column;gap:6px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input id="dmInput" type="text" placeholder="메시지 입력..." maxlength="300" style="flex:1;padding:10px 14px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);border-radius:12px;color:#fff;font-size:14px;outline:none" onkeydown="if(event.key==='Enter')sendDm()">
+        <button class="btn btn-primary" style="width:auto;padding:10px 16px;margin:0" onclick="sendDm()">전송</button>
+      </div>
+    </div>
+  </div>
+
   <img class="logo-img" src="/logo.png" alt="진 러미 온라인" onerror="this.style.display='none';document.querySelector('.logo-fallback').style.display=''">
   <div class="logo-fallback" style="display:none;font-size:48px;position:relative;z-index:1">🃏</div>
   <div class="logo-sub" data-i18n="logoSub">친구와 함께 플레이</div>
@@ -1833,8 +1928,9 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div class="divider" data-i18n="createRoomDivider">방 만들기</div>
     <button class="btn btn-primary" onclick="openRoomSettings('pvp')" data-i18n="createRoomBtn">✨ 새 방 만들기</button>
     <div class="divider" data-i18n="joinRoomDivider">방 참가</div>
+    <button class="btn btn-blue" onclick="showRoomBrowser()" style="background:linear-gradient(135deg,#1e88e5,#0d47a1)">🌐 공개방 찾기</button>
     <input id="joinCode" type="text" data-i18n-placeholder="joinCodePlaceholder" placeholder="방 코드 입력 (예: AB3KZ)" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
-    <button class="btn btn-blue" onclick="joinRoom()" data-i18n="joinRoomBtn">🚀 입장하기</button>
+    <button class="btn btn-blue" onclick="joinRoom()" data-i18n="joinRoomBtn">🚀 코드로 입장</button>
     <div class="divider" data-i18n="soloDivider">솔로 플레이</div>
     <button class="btn btn-gold" onclick="openRoomSettings('ai')" data-i18n="aiBtn">🤖 AI와 대결하기</button>
     <div class="error-msg" id="lobbyError"></div>
@@ -3122,6 +3218,7 @@ async function loadProfile() {
   // Set myName input value from profile so confirmRoomSettings() can use it
   const nameInput = document.getElementById('myName');
   if (nameInput) nameInput.value = savedNick;
+  initFriendSystem();
 }
 
 
@@ -3137,6 +3234,7 @@ function showProfileModal() {
   document.getElementById('profileRP').textContent = rp;
   document.getElementById('profileTier').textContent = `${tier.emoji} ${tier.name}`;
   document.getElementById('profileSaveMsg').textContent = '';
+  loadMyStatusMsg();
   renderProfileCharGrid();
   document.getElementById('profileOverlay').style.display = 'flex';
 }
@@ -3262,11 +3360,291 @@ async function doForgotPassword() {
 }
 
 async function doLogout() {
+  await setMyStatus('offline');
   await supa.auth.signOut();
   supaUser = null; supaProfile = null;
   document.getElementById('lobbyUserBadge').style.display = 'none';
   document.getElementById('guestNameRow').style.display = '';
   showAuthOverlay();
+}
+
+// ===== Friends System =====
+let _friends = [];        // accepted friendships (resolved profiles)
+let _friendReqs = [];     // incoming pending requests
+let _statusMap = {};      // user_id -> { status, status_msg }
+let _dmTarget = null;     // { id, name, char } currently open DM
+let _dmChannel = null;
+let _statusChannel = null;
+
+async function saveProfileStatusMsg() {
+  if (!supaUser) return;
+  const msg = document.getElementById('profileStatusMsgInput').value.trim();
+  const el = document.getElementById('profileSaveMsg');
+  const { error } = await supa.from('user_status').upsert({ user_id: supaUser.id, status_msg: msg, status: 'online', last_seen: new Date().toISOString() });
+  el.style.color = error ? '#ef9a9a' : '#69f0ae';
+  el.textContent = error ? '저장 실패: ' + error.message : '✅ 상태메시지가 저장됐어요!';
+}
+
+async function loadMyStatusMsg() {
+  if (!supaUser) return;
+  const { data } = await supa.from('user_status').select('status_msg').eq('user_id', supaUser.id).maybeSingle();
+  const input = document.getElementById('profileStatusMsgInput');
+  if (input && data) input.value = data.status_msg || '';
+}
+
+async function setMyStatus(status) {
+  if (!supaUser) return;
+  try {
+    await supa.from('user_status').upsert({ user_id: supaUser.id, status, last_seen: new Date().toISOString() });
+  } catch (e) { /* ignore */ }
+}
+
+async function initFriendSystem() {
+  if (!supaUser) return;
+  await setMyStatus('online');
+  await loadFriends();
+  updateFriendBadge();
+
+  // Realtime: friend status changes
+  if (_statusChannel) supa.removeChannel(_statusChannel);
+  _statusChannel = supa.channel('status-watch')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'user_status' }, payload => {
+      const row = payload.new;
+      if (row && row.user_id) {
+        _statusMap[row.user_id] = { status: row.status, status_msg: row.status_msg || '' };
+        if (document.getElementById('friendsOverlay').classList.contains('show')) renderFriendsList();
+      }
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'friendships' }, payload => {
+      const row = payload.new;
+      if (row && row.receiver_id === supaUser.id) { loadFriends().then(updateFriendBadge); }
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'direct_messages' }, payload => {
+      const m = payload.new;
+      if (!m || m.receiver_id !== supaUser.id) return;
+      if (_dmTarget && m.sender_id === _dmTarget.id && document.getElementById('dmOverlay').classList.contains('show')) {
+        appendDmBubble(m, false);
+        supa.from('direct_messages').update({ read: true }).eq('id', m.id).then(() => {});
+      } else {
+        // Game invite shortcut: auto-show toast for invites
+        if (m.content.startsWith('🎮 게임 초대:')) {
+          const codeMatch = m.content.match(/[A-Z0-9]{5,6}/);
+          const senderName = (_friends.find(f => f.id === m.sender_id) || {}).name || '친구';
+          showConfirmModal({
+            emoji: '🎮', title: senderName + ' 님의 게임 초대!',
+            sub: m.content, acceptLabel: '🚀 바로 입장',
+            onAccept: () => { if (codeMatch) joinRoomByCode(codeMatch[0]); },
+          });
+        }
+        updateFriendBadge();
+      }
+    })
+    .subscribe();
+
+  window.addEventListener('beforeunload', () => {
+    // best-effort offline marker
+    if (supaUser) navigator.sendBeacon && setMyStatus('offline');
+  });
+}
+
+async function loadFriends() {
+  if (!supaUser) return;
+  const { data: rows } = await supa.from('friendships').select('*')
+    .or('requester_id.eq.' + supaUser.id + ',receiver_id.eq.' + supaUser.id);
+  if (!rows) return;
+  const accepted = rows.filter(r => r.status === 'accepted');
+  const incoming = rows.filter(r => r.status === 'pending' && r.receiver_id === supaUser.id);
+
+  const otherIds = [...new Set([
+    ...accepted.map(r => r.requester_id === supaUser.id ? r.receiver_id : r.requester_id),
+    ...incoming.map(r => r.requester_id),
+  ])];
+
+  let profMap = {};
+  if (otherIds.length) {
+    const { data: profs } = await supa.from('profiles').select('id,game_id,username,char').in('id', otherIds);
+    (profs || []).forEach(p => { profMap[p.id] = p; });
+    const { data: stats } = await supa.from('user_status').select('*').in('user_id', otherIds);
+    (stats || []).forEach(s => { _statusMap[s.user_id] = { status: s.status, status_msg: s.status_msg || '' }; });
+  }
+
+  _friends = accepted.map(r => {
+    const oid = r.requester_id === supaUser.id ? r.receiver_id : r.requester_id;
+    const p = profMap[oid] || {};
+    return { fid: r.id, id: oid, name: p.username || p.game_id || '???', gameId: p.game_id || '', char: p.char || '🐱' };
+  });
+  _friendReqs = incoming.map(r => {
+    const p = profMap[r.requester_id] || {};
+    return { fid: r.id, id: r.requester_id, name: p.username || p.game_id || '???', gameId: p.game_id || '', char: p.char || '🐱' };
+  });
+}
+
+function updateFriendBadge() {
+  const b = document.getElementById('friendReqBadge');
+  const c = document.getElementById('fReqCount');
+  const n = _friendReqs.length;
+  if (b) { b.style.display = n > 0 ? '' : 'none'; b.textContent = n; }
+  if (c) { c.style.display = n > 0 ? '' : 'none'; c.textContent = n; }
+}
+
+function showFriendsModal() {
+  if (!supaUser) {
+    showConfirmModal({ emoji: '🔒', title: '로그인이 필요해요', sub: '친구 기능은 로그인 후 사용할 수 있어요.', acceptLabel: '확인', onAccept: () => {} });
+    return;
+  }
+  document.getElementById('friendsOverlay').classList.add('show');
+  switchFriendsTab('list');
+  loadFriends().then(() => { renderFriendsList(); renderFriendReqs(); updateFriendBadge(); });
+}
+function hideFriendsModal() { document.getElementById('friendsOverlay').classList.remove('show'); }
+
+function switchFriendsTab(tab) {
+  ['list','req','add'].forEach(tKey => {
+    document.getElementById('fTab' + (tKey === 'list' ? 'List' : tKey === 'req' ? 'Req' : 'Add')).classList.toggle('active', tKey === tab);
+    document.getElementById('fPanel' + (tKey === 'list' ? 'List' : tKey === 'req' ? 'Req' : 'Add')).style.display = tKey === tab ? '' : 'none';
+  });
+  if (tab === 'list') renderFriendsList();
+  if (tab === 'req') renderFriendReqs();
+}
+
+const STATUS_LABELS = { online: '🟢 온라인', gaming: '🎮 게임 중', away: '🌙 자리비움', offline: '⚫ 오프라인' };
+
+function renderFriendsList() {
+  const el = document.getElementById('fPanelList');
+  if (!_friends.length) {
+    el.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:32px 0">아직 친구가 없어요<br><span style="font-size:28px">🫂</span><br><span style="font-size:12px">친구 추가 탭에서 친구를 찾아보세요!</span></div>';
+    return;
+  }
+  const order = { online: 0, gaming: 1, away: 2, offline: 3 };
+  const sorted = [..._friends].sort((a, b) => {
+    const sa = (_statusMap[a.id] || {}).status || 'offline';
+    const sb = (_statusMap[b.id] || {}).status || 'offline';
+    return (order[sa] ?? 3) - (order[sb] ?? 3);
+  });
+  el.innerHTML = sorted.map(function(f) {
+    const st = (_statusMap[f.id] || {}).status || 'offline';
+    const msg = (_statusMap[f.id] || {}).status_msg || '';
+    const online = st !== 'offline';
+    const inviteBtn = (online && roomCode && !vsAI) ? '<button class="f-btn accept" onclick="inviteFriend(\'' + f.id + '\')">🎮 초대</button>' : '';
+    return '<div class="friend-row">' +
+      '<span class="f-char">' + f.char + '<span class="f-dot ' + st + '"></span></span>' +
+      '<div class="f-info">' +
+        '<div class="f-name">' + escapeHtml(f.name) + '</div>' +
+        '<div class="f-sub">' + (STATUS_LABELS[st] || st) + (msg ? ' · ' + escapeHtml(msg) : '') + '</div>' +
+      '</div>' +
+      inviteBtn +
+      '<button class="f-btn" onclick="openDm(\'' + f.id + '\')">💬</button>' +
+      '<button class="f-btn danger" onclick="removeFriend(\'' + f.fid + '\')">✕</button>' +
+    '</div>';
+  }).join('');
+}
+
+function renderFriendReqs() {
+  const el = document.getElementById('fPanelReq');
+  if (!_friendReqs.length) {
+    el.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:32px 0">받은 친구 요청이 없어요<br><span style="font-size:28px">📭</span></div>';
+    return;
+  }
+  el.innerHTML = _friendReqs.map(function(r) {
+    return '<div class="friend-row">' +
+      '<span class="f-char">' + r.char + '</span>' +
+      '<div class="f-info"><div class="f-name">' + escapeHtml(r.name) + '</div><div class="f-sub">' + escapeHtml(r.gameId) + '</div></div>' +
+      '<button class="f-btn accept" onclick="acceptFriendReq(\'' + r.fid + '\')">✅ 수락</button>' +
+      '<button class="f-btn danger" onclick="declineFriendReq(\'' + r.fid + '\')">거절</button>' +
+    '</div>';
+  }).join('');
+}
+
+async function sendFriendRequest() {
+  const input = document.getElementById('friendAddInput');
+  const msgEl = document.getElementById('friendAddMsg');
+  const gid = input.value.trim();
+  if (!gid) return;
+  msgEl.style.color = 'rgba(255,255,255,0.5)';
+  msgEl.textContent = '검색 중...';
+  const { data: target } = await supa.from('profiles').select('id,game_id,username').eq('game_id', gid).maybeSingle();
+  if (!target) { msgEl.style.color = '#ef9a9a'; msgEl.textContent = '해당 아이디의 유저를 찾을 수 없어요.'; return; }
+  if (target.id === supaUser.id) { msgEl.style.color = '#ef9a9a'; msgEl.textContent = '자기 자신은 추가할 수 없어요 😅'; return; }
+  const { error } = await supa.from('friendships').insert({ requester_id: supaUser.id, receiver_id: target.id });
+  if (error) {
+    msgEl.style.color = '#ef9a9a';
+    msgEl.textContent = error.message.includes('duplicate') ? '이미 요청했거나 친구예요.' : '요청 실패: ' + error.message;
+    return;
+  }
+  msgEl.style.color = '#69f0ae';
+  msgEl.textContent = '✅ ' + (target.username || gid) + ' 님에게 친구 요청을 보냈어요!';
+  input.value = '';
+}
+
+async function acceptFriendReq(fid) {
+  await supa.from('friendships').update({ status: 'accepted' }).eq('id', fid);
+  await loadFriends();
+  renderFriendReqs(); renderFriendsList(); updateFriendBadge();
+}
+async function declineFriendReq(fid) {
+  await supa.from('friendships').delete().eq('id', fid);
+  await loadFriends();
+  renderFriendReqs(); updateFriendBadge();
+}
+async function removeFriend(fid) {
+  if (!confirm('이 친구를 삭제할까요?')) return;
+  await supa.from('friendships').delete().eq('id', fid);
+  await loadFriends();
+  renderFriendsList();
+}
+
+async function inviteFriend(friendId) {
+  if (!roomCode) return;
+  await supa.from('direct_messages').insert({
+    sender_id: supaUser.id, receiver_id: friendId,
+    content: '🎮 게임 초대: 방 코드 ' + roomCode + ' 로 들어오세요!',
+  });
+  showToast('📨 초대를 보냈어요!', 'info');
+  setTimeout(() => hideToast(), 2500);
+}
+
+// ===== DM chat =====
+async function openDm(friendId) {
+  const f = _friends.find(x => x.id === friendId);
+  if (!f) return;
+  _dmTarget = f;
+  document.getElementById('dmFriendChar').textContent = f.char;
+  document.getElementById('dmFriendName').textContent = f.name;
+  document.getElementById('dmMessages').innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.3);font-size:12px;padding:20px 0">불러오는 중...</div>';
+  document.getElementById('dmOverlay').classList.add('show');
+
+  const { data: msgs } = await supa.from('direct_messages').select('*')
+    .or('and(sender_id.eq.' + supaUser.id + ',receiver_id.eq.' + friendId + '),and(sender_id.eq.' + friendId + ',receiver_id.eq.' + supaUser.id + ')')
+    .order('created_at', { ascending: true }).limit(100);
+  const box = document.getElementById('dmMessages');
+  box.innerHTML = '';
+  (msgs || []).forEach(m => appendDmBubble(m, m.sender_id === supaUser.id));
+  box.scrollTop = box.scrollHeight;
+  // mark unread as read
+  await supa.from('direct_messages').update({ read: true }).eq('receiver_id', supaUser.id).eq('sender_id', friendId).eq('read', false);
+}
+function hideDmModal() { document.getElementById('dmOverlay').classList.remove('show'); _dmTarget = null; }
+
+function appendDmBubble(m, mine) {
+  const box = document.getElementById('dmMessages');
+  const d = new Date(m.created_at);
+  const time = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  const div = document.createElement('div');
+  div.className = 'dm-bubble ' + (mine ? 'mine' : 'theirs');
+  div.innerHTML = escapeHtml(m.content) + '<div class="dm-time">' + time + '</div>';
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+async function sendDm() {
+  const input = document.getElementById('dmInput');
+  const text = input.value.trim();
+  if (!text || !_dmTarget) return;
+  input.value = '';
+  const { data, error } = await supa.from('direct_messages')
+    .insert({ sender_id: supaUser.id, receiver_id: _dmTarget.id, content: text })
+    .select().single();
+  if (!error && data) appendDmBubble(data, true);
 }
 
 // ===== Rank / Tier System =====
@@ -4101,6 +4479,8 @@ function initSocket() {
     setTimeout(() => hideToast(), 3000);
   });
 
+  socket.on('rooms-list', ({ rooms }) => _renderRoomsList(rooms || []));
+
   socket.on('spectator-update', ({ count }) => {
     const waitEl = document.getElementById('spectatorCount');
     const waitNum = document.getElementById('spectatorNum');
@@ -4332,6 +4712,7 @@ function initSocket() {
     document.querySelectorAll('.vs-ai-hide').forEach(el => el.style.display = vsAI ? 'none' : '');
     document.getElementById('reactionBar').style.display = vsAI ? 'none' : 'flex';
     showGame();
+    if (supaUser && !vsAI) setMyStatus('gaming');
     playDealAnimation(data.hand ? data.hand.length : 10, null);
     renderGame();
     if (currentPhase === 'upcard-offer') {
@@ -4448,6 +4829,44 @@ function joinRoom() {
 }
 
 document.getElementById('joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+
+// ===== Public room browser =====
+function showRoomBrowser() {
+  document.getElementById('roomBrowserOverlay').classList.add('show');
+  refreshRoomBrowser();
+}
+function hideRoomBrowser() { document.getElementById('roomBrowserOverlay').classList.remove('show'); }
+function refreshRoomBrowser() {
+  if (!socket) initSocket();
+  document.getElementById('roomBrowserList').innerHTML =
+    '<div style="text-align:center;color:rgba(255,255,255,0.35);padding:36px 0"><span class="spinner">⏳</span> 방 목록 불러오는 중...</div>';
+  socket.emit('list-rooms');
+}
+function joinRoomByCode(code) {
+  hideRoomBrowser();
+  document.getElementById('joinCode').value = code;
+  joinRoom();
+}
+function _renderRoomsList(list) {
+  const el = document.getElementById('roomBrowserList');
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:36px 0">지금은 열려있는 공개방이 없어요<br><span style="font-size:30px">🌙</span><br><span style="font-size:12px">직접 방을 만들어보세요!</span></div>';
+    return;
+  }
+  el.innerHTML = list.map(function(r) {
+    const ts = r.targetScore === null ? '♾️' : r.targetScore + '점';
+    const tt = r.turnTimeSecs === null ? '♾️' : r.turnTimeSecs + '초';
+    const gm = r.gameMode === 'oklahoma' ? '오클라호마' : r.gameMode === 'speed' ? '스피드' : '클래식';
+    return '<div class="room-browser-row">' +
+      '<span style="font-size:28px">' + r.char + '</span>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:14px;font-weight:700">' + escapeHtml(r.host) + ' 님의 방</div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,0.45)">🎯 ' + ts + ' · ⏱️ ' + tt + ' · 🎮 ' + gm + '</div>' +
+      '</div>' +
+      '<button class="f-btn accept" onclick="joinRoomByCode(\'' + r.code + '\')">🚀 입장</button>' +
+    '</div>';
+  }).join('');
+}
 
 // ===== Waiting room =====
 function showWaiting(code, isPublic) {

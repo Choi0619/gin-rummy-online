@@ -492,6 +492,27 @@ io.on('connection', socket => {
     }
   });
 
+  socket.on('list-rooms', () => {
+    const list = [];
+    for (const room of rooms.values()) {
+      if (room.isPublic === false || room.vsAI) continue;
+      if (room.game && !room.game.over) continue; // mid-game rooms excluded
+      const count = room.players.filter(Boolean).length;
+      if (count === 0 || count >= 2) continue;
+      const hostIdx = room.players[0] ? 0 : 1;
+      list.push({
+        code: room.code,
+        host: room.names[hostIdx] || '플레이어',
+        char: room.chars[hostIdx] || '🐱',
+        targetScore: room.targetScore,
+        gameMode: room.gameMode || 'classic',
+        turnTimeSecs: room.turnTimeSecs,
+        handSize: room.handSize || 10,
+      });
+    }
+    socket.emit('rooms-list', { rooms: list.slice(0, 30) });
+  });
+
   socket.on('reaction', ({ emoji }) => {
     const room = rooms.get(socket.data.room);
     if (!room) return;
