@@ -118,20 +118,44 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
 .btn-settings:hover { background: rgba(255,255,255,0.2); transform: rotate(45deg); }
 
 /* ===== Collection: card border picker ===== */
-.border-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 6px; }
+.border-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px 8px; margin-top: 8px; }
 .border-opt {
-  position: relative; width: 100%; aspect-ratio: 0.72; border-radius: 8px; cursor: pointer;
-  background: #f2f2f2; display: flex; align-items: center; justify-content: center;
-  font-size: 15px; transition: transform 0.15s;
+  position: relative; width: 100%; aspect-ratio: 0.86; border-radius: 8px; cursor: pointer;
+  background: #17321f; display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s; overflow: visible;
 }
 .border-opt:hover { transform: translateY(-2px); }
 .border-opt.selected { outline: 3px solid #fff; outline-offset: 2px; }
 .border-opt.locked { opacity: 0.4; filter: grayscale(0.6); cursor: not-allowed; }
 .border-opt.locked::after {
   content: '🔒'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 16px; background: rgba(0,0,0,0.45); border-radius: 8px;
+  font-size: 14px; background: rgba(0,0,0,0.5); border-radius: 8px; z-index: 3;
 }
-.border-opt-label { position: absolute; bottom: -16px; left: 0; right: 0; text-align: center; font-size: 9px; color: rgba(255,255,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.border-opt-label {
+  position: absolute; bottom: -15px; left: -10%; right: -10%; text-align: center; font-size: 8.5px;
+  color: rgba(255,255,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Rarity 1 (common): plain inset border */
+.border-opt.rarity-1 .border-frame { position: absolute; inset: 5px; border-radius: 5px; border-style: solid; }
+/* Rarity 2 (uncommon): border + single top gem */
+.border-opt.rarity-2 .border-frame { position: absolute; inset: 5px; border-radius: 5px; border-style: solid; }
+.border-opt.rarity-2 .border-gem { position: absolute; top: -5px; left: 50%; transform: translateX(-50%); font-size: 10px; z-index: 2; }
+/* Rarity 3 (rare): thicker border + gem + corner studs */
+.border-opt.rarity-3 .border-frame { position: absolute; inset: 4px; border-radius: 6px; border-style: solid; }
+.border-opt.rarity-3 .border-gem { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); font-size: 12px; z-index: 2; }
+.border-opt.rarity-3 .corner-stud { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: currentColor; box-shadow: 0 0 4px currentColor; }
+.border-opt.rarity-3 .corner-stud.tl { top: 2px; left: 2px; } .border-opt.rarity-3 .corner-stud.tr { top: 2px; right: 2px; }
+.border-opt.rarity-3 .corner-stud.bl { bottom: 2px; left: 2px; } .border-opt.rarity-3 .corner-stud.br { bottom: 2px; right: 2px; }
+/* Rarity 4 (legendary): ornate multi-layer border + gem + flourishes + shimmer */
+.border-opt.rarity-4 .border-frame { position: absolute; inset: 3px; border-radius: 6px; border-style: double; }
+.border-opt.rarity-4 .border-gem { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); font-size: 13px; z-index: 2; filter: drop-shadow(0 0 3px currentColor); }
+.border-opt.rarity-4 .flourish { position: absolute; font-size: 9px; opacity: 0.85; z-index: 2; }
+.border-opt.rarity-4 .flourish.l { bottom: -6px; left: 8%; } .border-opt.rarity-4 .flourish.r { bottom: -6px; right: 8%; transform: scaleX(-1); }
+.border-opt.rarity-4 { animation: rarity4Shimmer 2.4s ease-in-out infinite; }
+@keyframes rarity4Shimmer {
+  0%,100% { box-shadow: 0 0 6px rgba(255,215,0,0.25); }
+  50%      { box-shadow: 0 0 14px rgba(255,215,0,0.55); }
+}
 
 /* ===== Settings: theme swatches ===== */
 .theme-grid { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
@@ -2369,10 +2393,10 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
 <!-- ===== COLLECTION (테마 · 이펙트) ===== -->
 <div class="overlay" id="collectionOverlay">
-  <div class="howto-box" style="max-width:440px">
+  <div class="howto-box" style="max-width:440px;max-height:90vh">
     <button class="howto-close" onclick="hideCollectionModal()">✕</button>
     <div class="howto-title">🎨 컬렉션</div>
-    <div class="howto-scroll">
+    <div class="howto-scroll" style="padding-bottom:6px">
       <div class="howto-section">
         <h3>🖼️ 배경 테마</h3>
         <div class="theme-grid" id="themeGrid">
@@ -3106,16 +3130,16 @@ function hideSettings() { document.getElementById('settingsOverlay').classList.r
 let _collectionSwatchesWired = false;
 // ===== Card border collection =====
 const CARD_BORDERS = [
-  { id: 'bronze',    name: '브론즈',   swatch: 'linear-gradient(135deg,#e0a86a,#8a5323)', border:'#cd7f32', desc: '항상 사용 가능', unlock: () => true },
-  { id: 'silver',    name: '실버',     swatch: 'linear-gradient(135deg,#e8e8e8,#9e9e9e)', border:'#c0c0c0', desc: '랭킹 500 RP 달성', unlock: () => myRankPoints() >= 500 },
-  { id: 'gold',      name: '골드',     swatch: 'linear-gradient(135deg,#ffe066,#c9960c)', border:'#ffd700', desc: '랭킹 1000 RP 달성', unlock: () => myRankPoints() >= 1000 },
-  { id: 'platinum',  name: '플래티넘', swatch: 'linear-gradient(135deg,#e6ddff,#a08aff)', border:'#c4b5fd', desc: '랭킹 2000 RP 달성', unlock: () => myRankPoints() >= 2000 },
-  { id: 'diamond',   name: '다이아',   swatch: 'linear-gradient(135deg,#d4f6ff,#3ec6f0)', border:'#7dd3fc', desc: '랭킹 3500 RP 달성', unlock: () => myRankPoints() >= 3500 },
-  { id: 'challenger',name: '챌린저',   swatch: 'linear-gradient(135deg,#ffcf7a,#e0700a)', border:'#ff8c00', desc: '랭킹 6000 RP 달성', unlock: () => myRankPoints() >= 6000 },
-  { id: 'w5',        name: '스틸',     swatch: 'linear-gradient(135deg,#cfd8dc,#78909c)', border:'#90a4ae', desc: 'PVP 5승 달성', unlock: () => getTotalWins() >= 5 },
-  { id: 'w20',       name: '에메랄드', swatch: 'linear-gradient(135deg,#7dffb0,#0ea94f)', border:'#2ee879', desc: 'PVP 20승 달성', unlock: () => getTotalWins() >= 20 },
-  { id: 'w50',       name: '루비',     swatch: 'linear-gradient(135deg,#ff8fa3,#c9002e)', border:'#ff3b5c', desc: 'PVP 50승 달성', unlock: () => getTotalWins() >= 50 },
-  { id: 'w100',      name: '레전드',   swatch: 'linear-gradient(135deg,#fff6d1,#b8860b)', border:'#2a2a2a', desc: 'PVP 100승 달성', unlock: () => getTotalWins() >= 100 },
+  { id: 'bronze',    name: '브론즈',   swatch: 'linear-gradient(135deg,#e0a86a,#8a5323)', border:'#cd7f32', rarity:1, gem:'', desc: '항상 사용 가능', unlock: () => true },
+  { id: 'silver',    name: '실버',     swatch: 'linear-gradient(135deg,#e8e8e8,#9e9e9e)', border:'#c0c0c0', rarity:1, gem:'', desc: '랭킹 500 RP 달성', unlock: () => myRankPoints() >= 500 },
+  { id: 'w5',        name: '스틸',     swatch: 'linear-gradient(135deg,#cfd8dc,#78909c)', border:'#90a4ae', rarity:1, gem:'', desc: 'PVP 5승 달성', unlock: () => getTotalWins() >= 5 },
+  { id: 'gold',      name: '골드',     swatch: 'linear-gradient(135deg,#ffe066,#c9960c)', border:'#ffd700', rarity:2, gem:'⭐', desc: '랭킹 1000 RP 달성', unlock: () => myRankPoints() >= 1000 },
+  { id: 'w20',       name: '에메랄드', swatch: 'linear-gradient(135deg,#7dffb0,#0ea94f)', border:'#2ee879', rarity:2, gem:'🟢', desc: 'PVP 20승 달성', unlock: () => getTotalWins() >= 20 },
+  { id: 'platinum',  name: '플래티넘', swatch: 'linear-gradient(135deg,#e6ddff,#a08aff)', border:'#c4b5fd', rarity:3, gem:'💠', desc: '랭킹 2000 RP 달성', unlock: () => myRankPoints() >= 2000 },
+  { id: 'diamond',   name: '다이아',   swatch: 'linear-gradient(135deg,#d4f6ff,#3ec6f0)', border:'#7dd3fc', rarity:3, gem:'💎', desc: '랭킹 3500 RP 달성', unlock: () => myRankPoints() >= 3500 },
+  { id: 'w50',       name: '루비',     swatch: 'linear-gradient(135deg,#ff8fa3,#c9002e)', border:'#ff3b5c', rarity:3, gem:'🔴', desc: 'PVP 50승 달성', unlock: () => getTotalWins() >= 50 },
+  { id: 'challenger',name: '챌린저',   swatch: 'linear-gradient(135deg,#ffcf7a,#e0700a)', border:'#ff8c00', rarity:4, gem:'🏆', desc: '랭킹 6000 RP 달성', unlock: () => myRankPoints() >= 6000 },
+  { id: 'w100',      name: '레전드',   swatch: 'linear-gradient(135deg,#3a2f0a,#0c0a02)', border:'#ffd700', rarity:4, gem:'🌟', desc: 'PVP 100승 달성', unlock: () => getTotalWins() >= 100 },
 ];
 let myCardBorder = localStorage.getItem('grCardBorder') || 'bronze';
 
@@ -3125,9 +3149,18 @@ function renderBorderGrid() {
   grid.innerHTML = CARD_BORDERS.map(function(b) {
     const unlocked = b.unlock();
     const selected = myCardBorder === b.id;
-    const cls = 'border-opt' + (selected ? ' selected' : '') + (unlocked ? '' : ' locked');
+    const cls = 'border-opt rarity-' + b.rarity + (selected ? ' selected' : '') + (unlocked ? '' : ' locked');
     const clickHandler = unlocked ? 'selectCardBorder(\'' + b.id + '\')' : 'showLockedBorderMsg(\'' + b.id + '\')';
-    return '<div class="' + cls + '" style="border:2.5px solid ' + b.border + ';background:' + b.swatch + '" onclick="' + clickHandler + '" title="' + b.name + '"></div>';
+    let inner = '<div class="border-frame" style="border-color:' + b.border + ';border-width:' + (b.rarity >= 4 ? '3px' : b.rarity >= 3 ? '2.5px' : '2px') + '"></div>';
+    if (b.rarity >= 2 && b.gem) inner += '<span class="border-gem">' + b.gem + '</span>';
+    if (b.rarity === 3) {
+      inner += '<span class="corner-stud tl" style="color:' + b.border + '"></span><span class="corner-stud tr" style="color:' + b.border + '"></span>' +
+               '<span class="corner-stud bl" style="color:' + b.border + '"></span><span class="corner-stud br" style="color:' + b.border + '"></span>';
+    }
+    if (b.rarity === 4) {
+      inner += '<span class="flourish l">✦</span><span class="flourish r">✦</span>';
+    }
+    return '<div class="' + cls + '" style="background:' + b.swatch + '" onclick="' + clickHandler + '" title="' + b.name + '">' + inner + '</div>';
   }).join('');
 }
 
