@@ -1488,34 +1488,56 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       <button class="auth-tab active" id="authTabLogin" onclick="switchAuthTab('login')">로그인</button>
       <button class="auth-tab" id="authTabSignup" onclick="switchAuthTab('signup')">회원가입</button>
     </div>
+
+    <!-- 로그인 폼 -->
     <div id="authLoginForm">
       <div class="auth-field">
-        <label>이메일</label>
-        <input type="email" id="authLoginEmail" placeholder="이메일 입력">
+        <label>아이디</label>
+        <input type="text" id="authLoginId" placeholder="아이디 입력" maxlength="20"
+          onkeydown="if(event.key==='Enter')document.getElementById('authLoginPw').focus()">
       </div>
       <div class="auth-field">
         <label>비밀번호</label>
-        <input type="password" id="authLoginPw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()">
+        <input type="password" id="authLoginPw" placeholder="비밀번호 입력"
+          onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <input type="checkbox" id="authRememberMe" style="width:15px;height:15px;cursor:pointer">
+        <label for="authRememberMe" style="font-size:12px;color:rgba(255,255,255,0.55);cursor:pointer">아이디 저장</label>
       </div>
       <div class="auth-error" id="authLoginError"></div>
       <button class="btn btn-primary" onclick="doLogin()" id="authLoginBtn">🚀 로그인</button>
     </div>
+
+    <!-- 회원가입 폼 -->
     <div id="authSignupForm" style="display:none">
       <div class="auth-field">
-        <label>닉네임</label>
+        <label>아이디 <span style="color:rgba(255,255,255,0.35);font-weight:400">(4~20자, 영문·숫자·_)</span></label>
+        <input type="text" id="authSignupId" placeholder="사용할 아이디 입력" maxlength="20"
+          oninput="validateSignupId()" autocomplete="off">
+        <div id="authIdStatus" style="font-size:11px;margin-top:3px;min-height:14px"></div>
+      </div>
+      <div class="auth-field">
+        <label>닉네임 <span style="color:rgba(255,255,255,0.35);font-weight:400">(게임 내 표시 이름)</span></label>
         <input type="text" id="authSignupName" placeholder="닉네임 입력" maxlength="12">
       </div>
       <div class="auth-field">
-        <label>이메일</label>
-        <input type="email" id="authSignupEmail" placeholder="이메일 입력">
+        <label>비밀번호 <span style="color:rgba(255,255,255,0.35);font-weight:400">(6자 이상)</span></label>
+        <input type="password" id="authSignupPw" placeholder="비밀번호 입력" oninput="validatePwMatch()">
       </div>
       <div class="auth-field">
-        <label>비밀번호 (6자 이상)</label>
-        <input type="password" id="authSignupPw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doSignup()">
+        <label>비밀번호 확인</label>
+        <div style="position:relative">
+          <input type="password" id="authSignupPw2" placeholder="비밀번호 재입력"
+            oninput="validatePwMatch()" onkeydown="if(event.key==='Enter')doSignup()"
+            style="width:100%;padding-right:36px">
+          <span id="authPwMatchIcon" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:16px"></span>
+        </div>
+        <div id="authPwMatchMsg" style="font-size:11px;margin-top:3px;min-height:14px"></div>
       </div>
       <div id="authImportRow" class="auth-import-row" style="display:none">
         <input type="checkbox" id="authImportCheck" checked>
-        <label for="authImportCheck">📦 기존 로컬 전적 승/패 수 가져오기 (<span id="authImportStats"></span>)</label>
+        <label for="authImportCheck">📦 기존 로컬 전적 가져오기 (<span id="authImportStats"></span>)</label>
       </div>
       <div class="auth-error" id="authSignupError"></div>
       <button class="btn btn-primary" onclick="doSignup()" id="authSignupBtn">✨ 회원가입</button>
@@ -2540,8 +2562,19 @@ async function initAuth() {
   }
 }
 
+const AUTH_ID_KEY = 'grSavedLoginId';
+const ID_REGEX = /^[a-zA-Z0-9_]{4,20}$/;
+
+function idToEmail(id) { return `${id.toLowerCase()}@ginrummy.local`; }
+
 function showAuthOverlay() {
   switchAuthTab('login');
+  // Restore saved login id
+  const saved = localStorage.getItem(AUTH_ID_KEY);
+  if (saved) {
+    document.getElementById('authLoginId').value = saved;
+    document.getElementById('authRememberMe').checked = true;
+  }
   // Show local import stats if history exists
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
   const pvp = history.filter(h => h.mode !== 'vsAI');
@@ -2568,39 +2601,73 @@ function switchAuthTab(tab) {
   document.getElementById('authTabSignup').classList.toggle('active', tab === 'signup');
   document.getElementById('authLoginError').textContent = '';
   document.getElementById('authSignupError').textContent = '';
+  if (tab === 'signup') {
+    document.getElementById('authIdStatus').textContent = '';
+    document.getElementById('authPwMatchMsg').textContent = '';
+    document.getElementById('authPwMatchIcon').textContent = '';
+  }
+}
+
+function validateSignupId() {
+  const val = document.getElementById('authSignupId').value;
+  const el = document.getElementById('authIdStatus');
+  if (!val) { el.textContent = ''; return; }
+  if (val.length < 4) { el.style.color = '#ef5350'; el.textContent = '최소 4자 이상 입력해주세요.'; return; }
+  if (!ID_REGEX.test(val)) { el.style.color = '#ef5350'; el.textContent = '영문, 숫자, _만 사용 가능합니다.'; return; }
+  el.style.color = '#69f0ae'; el.textContent = '✓ 사용 가능한 형식입니다.';
+}
+
+function validatePwMatch() {
+  const pw = document.getElementById('authSignupPw').value;
+  const pw2 = document.getElementById('authSignupPw2').value;
+  const msgEl = document.getElementById('authPwMatchMsg');
+  const iconEl = document.getElementById('authPwMatchIcon');
+  if (!pw2) { msgEl.textContent = ''; iconEl.textContent = ''; return; }
+  if (pw === pw2) {
+    iconEl.textContent = '✅'; msgEl.style.color = '#69f0ae'; msgEl.textContent = '비밀번호가 일치합니다!';
+  } else {
+    iconEl.textContent = '❌'; msgEl.style.color = '#ef5350'; msgEl.textContent = '비밀번호가 일치하지 않습니다.';
+  }
 }
 
 async function doLogin() {
-  const email = document.getElementById('authLoginEmail').value.trim();
+  const userId = document.getElementById('authLoginId').value.trim();
   const pw = document.getElementById('authLoginPw').value;
+  const remember = document.getElementById('authRememberMe').checked;
   const errEl = document.getElementById('authLoginError');
   const btn = document.getElementById('authLoginBtn');
-  if (!email || !pw) { errEl.textContent = '이메일과 비밀번호를 입력해주세요.'; return; }
+  if (!userId || !pw) { errEl.textContent = '아이디와 비밀번호를 입력해주세요.'; return; }
   btn.disabled = true; btn.textContent = '로그인 중...';
-  const { data, error } = await supa.auth.signInWithPassword({ email, password: pw });
+  const { data, error } = await supa.auth.signInWithPassword({ email: idToEmail(userId), password: pw });
   if (error) {
-    errEl.textContent = error.message.includes('Invalid') ? '이메일 또는 비밀번호가 틀렸습니다.' : error.message;
+    errEl.textContent = '아이디 또는 비밀번호가 틀렸습니다.';
     btn.disabled = false; btn.textContent = '🚀 로그인'; return;
   }
+  if (remember) localStorage.setItem(AUTH_ID_KEY, userId);
+  else localStorage.removeItem(AUTH_ID_KEY);
   supaUser = data.user;
   await loadProfile();
   hideAuthOverlay();
 }
 
 async function doSignup() {
-  const name = document.getElementById('authSignupName').value.trim();
-  const email = document.getElementById('authSignupEmail').value.trim();
+  const userId = document.getElementById('authSignupId').value.trim();
+  const name = document.getElementById('authSignupName').value.trim() || userId;
   const pw = document.getElementById('authSignupPw').value;
+  const pw2 = document.getElementById('authSignupPw2').value;
   const errEl = document.getElementById('authSignupError');
   const btn = document.getElementById('authSignupBtn');
-  if (!name) { errEl.textContent = '닉네임을 입력해주세요.'; return; }
-  if (!email || !pw) { errEl.textContent = '이메일과 비밀번호를 입력해주세요.'; return; }
-  if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 합니다.'; return; }
-  btn.disabled = true; btn.textContent = '가입 중...';
 
-  const { data, error } = await supa.auth.signUp({ email, password: pw });
+  if (!ID_REGEX.test(userId)) { errEl.textContent = '아이디는 4~20자 영문·숫자·_만 사용 가능합니다.'; return; }
+  if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 합니다.'; return; }
+  if (pw !== pw2) { errEl.textContent = '비밀번호가 일치하지 않습니다.'; return; }
+
+  btn.disabled = true; btn.textContent = '가입 중...';
+  const fakeEmail = idToEmail(userId);
+  const { data, error } = await supa.auth.signUp({ email: fakeEmail, password: pw });
   if (error) {
-    errEl.textContent = error.message; btn.disabled = false; btn.textContent = '✨ 회원가입'; return;
+    errEl.textContent = error.message.includes('already') ? '이미 사용 중인 아이디입니다.' : error.message;
+    btn.disabled = false; btn.textContent = '✨ 회원가입'; return;
   }
   supaUser = data.user;
 
@@ -2615,17 +2682,18 @@ async function doSignup() {
     importLosses = pvp.filter(h => h.result === 'lose').length;
   }
 
-  // Create profile row
   const { error: profErr } = await supa.from('profiles').insert({
     id: supaUser.id,
     username: name,
+    game_id: userId,
     char: myChar,
     rank_points: 0,
     pvp_wins: importWins,
     pvp_losses: importLosses,
   });
-  if (profErr && !profErr.message.includes('duplicate')) {
-    errEl.textContent = profErr.message; btn.disabled = false; btn.textContent = '✨ 회원가입'; return;
+  if (profErr) {
+    errEl.textContent = profErr.message.includes('duplicate') ? '이미 사용 중인 아이디입니다.' : profErr.message;
+    btn.disabled = false; btn.textContent = '✨ 회원가입'; return;
   }
   await loadProfile();
   hideAuthOverlay();
