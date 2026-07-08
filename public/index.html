@@ -382,8 +382,12 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 .profile-stats-row { display: flex; gap: 10px; margin-bottom: 16px; }
 .profile-stat-box {
   flex: 1; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px 8px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-.profile-stat-num { font-size: 20px; font-weight: 700; color: #fff; }
+.profile-stat-num {
+  font-size: 20px; font-weight: 700; color: #fff;
+  display: flex; align-items: center; justify-content: center; min-height: 26px; line-height: 1.2;
+}
 .profile-stat-lbl { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
 .profile-char-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 6px; }
 .profile-char-opt {
