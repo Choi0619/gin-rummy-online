@@ -95,7 +95,7 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
 .btn-settings:hover { background: rgba(255,255,255,0.2); transform: rotate(45deg); }
 
 /* ===== Settings: theme swatches ===== */
-.theme-grid { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.theme-grid { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
 .theme-swatch {
   width: 38px; height: 38px; border-radius: 50%; cursor: pointer; flex-shrink: 0;
   border: 3px solid rgba(255,255,255,0.15); transition: all 0.15s;
@@ -242,7 +242,7 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 /* ===== Theme swatch tooltip ===== */
 .swatch-wrap { position: relative; }
 .swatch-tip {
-  position: absolute; bottom: calc(100% + 9px); left: 50%; transform: translateX(-50%);
+  position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%);
   background: rgba(10,10,18,0.95); color: #e8e8f0; white-space: nowrap;
   padding: 6px 11px; border-radius: 9px; font-size: 11px; line-height: 1.5;
   pointer-events: none; opacity: 0; transition: opacity 0.18s;
@@ -922,6 +922,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .howto-scroll::-webkit-scrollbar { width: 6px; }
 .howto-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 .howto-section { margin-bottom: 18px; }
+.howto-section:last-child { margin-bottom: 0; }
 .howto-section h3 { font-size: 15px; color: #ffd76a; margin-bottom: 7px; display: flex; align-items: center; gap: 7px; }
 .howto-section p, .howto-section li { font-size: 13px; line-height: 1.65; color: rgba(255,255,255,0.85); }
 .howto-section ul { padding-left: 18px; margin-top: 4px; }
