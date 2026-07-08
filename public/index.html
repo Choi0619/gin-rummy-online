@@ -487,6 +487,17 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 }
 .char-opt:hover { background: rgba(255,255,255,0.14); }
 .char-opt.selected { border-color: gold; background: rgba(255,215,0,0.18); transform: scale(1.08); }
+.char-opt.locked {
+  opacity: 0.38; cursor: not-allowed; position: relative; filter: grayscale(0.5);
+}
+.char-opt.locked::after {
+  content: '🔒'; position: absolute; bottom: 2px; right: 4px;
+  font-size: 11px; line-height: 1;
+}
+.char-unlock-req {
+  font-size: 10px; color: rgba(255,255,255,0.45); display: block;
+  margin-top: 2px; line-height: 1.2;
+}
 
 .target-score-select {
   background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
@@ -2446,8 +2457,14 @@ function getCurrentStreak() {
   return streak;
 }
 
-function calcRankDelta(iWon, lastType, turns) {
-  if (!iWon) return -15;
+function calcRankDelta(iWon, lastType, turns, iWasKnocker) {
+  if (!iWon) {
+    // Loss penalties vary by condition
+    if (lastType === 'gin' || lastType === 'big-gin') return -22; // opponent got perfect hand
+    if (lastType === 'undercut') return -20;                      // got outsmarted
+    if (turns < 10) return -10;                                   // very short game, likely unlucky
+    return -15;                                                    // normal knock loss
+  }
   let delta = 20;
   // Turn bonus: more turns = more points (longer fight = harder win), cap +15
   delta += Math.min(Math.floor(turns / 4), 15);
@@ -2455,7 +2472,7 @@ function calcRankDelta(iWon, lastType, turns) {
   if (lastType === 'gin' || lastType === 'big-gin') delta += 10;
   else if (lastType === 'undercut') delta += 5;
   // Streak bonus: +5 per consecutive PVP win, cap +25
-  const streak = getCurrentStreak(); // already includes this win since saveMatchResult ran first
+  const streak = getCurrentStreak();
   delta += Math.min(streak * 5, 25);
   return delta;
 }
@@ -2601,6 +2618,22 @@ const SUITS_ORDER = ['S','H','D','C'];
 
 // ===== Client state =====
 const CHAR_LIST = ['🐱','🐶','🐰','🦊','🐻','🐼','🐨','🐯','🐢','🦁','🐸','🦝'];
+// First 8 always available; last 4 unlock at PVP win thresholds
+const CHAR_UNLOCK_REQ = { '🐢': 3, '🦁': 7, '🐸': 15, '🦝': 30 };
+
+function isCharUnlocked(ch) {
+  if (!CHAR_UNLOCK_REQ[ch]) return true; // base chars
+  return getTotalWins() >= CHAR_UNLOCK_REQ[ch];
+}
+
+function checkNewCharUnlocks(winsBeforeThisGame) {
+  const winsNow = getTotalWins();
+  const newlyUnlocked = [];
+  for (const [ch, req] of Object.entries(CHAR_UNLOCK_REQ)) {
+    if (winsBeforeThisGame < req && winsNow >= req) newlyUnlocked.push(ch);
+  }
+  return newlyUnlocked;
+}
 let myChar = CHAR_LIST[0];
 let socket = null;
 let myIdx = -1;
@@ -2821,14 +2854,45 @@ function spawnFireworks() {
   setTimeout(() => flash.remove(), 650);
 }
 
+function spawnCharUnlockCelebration() {
+  const layer = document.getElementById('confettiLayer');
+  const stars = ['⭐','🌟','✨','💫','🎊','🎉','🏅'];
+  for (let i = 0; i < 55; i++) {
+    const span = document.createElement('span');
+    span.className = 'confetti-piece';
+    span.textContent = stars[Math.floor(Math.random() * stars.length)];
+    span.style.left = (10 + Math.random() * 80) + 'vw';
+    span.style.top = '-20px';
+    span.style.fontSize = (14 + Math.random() * 20) + 'px';
+    const dur = 1.2 + Math.random() * 1.2;
+    span.style.animationDuration = dur + 's';
+    span.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+    layer.appendChild(span);
+    setTimeout(() => span.remove(), dur * 1000 + 200);
+  }
+  const flash = document.createElement('div');
+  flash.className = 'big-flash';
+  flash.style.background = 'radial-gradient(ellipse at center, rgba(255,215,0,0.35) 0%, transparent 70%)';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 600);
+}
+
 function renderCharGrid() {
   const grid = document.getElementById('lobbyCharGrid');
   grid.innerHTML = '';
   CHAR_LIST.forEach(ch => {
+    const unlocked = isCharUnlocked(ch);
+    const req = CHAR_UNLOCK_REQ[ch];
     const btn = document.createElement('div');
-    btn.className = 'char-opt' + (ch === myChar ? ' selected' : '');
-    btn.textContent = ch;
-    btn.onclick = () => { myChar = ch; renderCharGrid(); };
+    btn.className = 'char-opt' + (ch === myChar && unlocked ? ' selected' : '') + (unlocked ? '' : ' locked');
+    btn.innerHTML = ch + (req && !unlocked ? `<span class="char-unlock-req">${req}승</span>` : '');
+    btn.onclick = () => {
+      if (!unlocked) {
+        showConfirmModal({ emoji: ch, title: `${req}승 달성 시 해금!`, sub: `현재 PVP 승리: ${getTotalWins()}승`, acceptLabel: '확인', onAccept: () => {} });
+        return;
+      }
+      myChar = ch; renderCharGrid();
+    };
     grid.appendChild(btn);
   });
 }
@@ -3081,6 +3145,7 @@ function initSocket() {
     document.getElementById('resultOverlay').classList.remove('show');
     // Save to match history
     const matchResult = winnerIdx === -1 ? 'tie' : (winnerIdx === myIdx ? 'win' : 'lose');
+    const winsBeforeThisGame = getTotalWins(); // snapshot BEFORE saving
     saveMatchResult({
       opponentName: ns[1 - myIdx] || '상대방',
       myScore: sc[myIdx],
@@ -3089,6 +3154,24 @@ function initSocket() {
       mode: vsAI ? 'vsAI' : 'pvp',
     });
     updateLockedSwatches();
+
+    // Character unlock check (PVP wins only)
+    if (!vsAI && matchResult === 'win') {
+      const newChars = checkNewCharUnlocks(winsBeforeThisGame);
+      newChars.forEach((ch, i) => {
+        setTimeout(() => {
+          spawnCharUnlockCelebration();
+          showConfirmModal({
+            emoji: ch,
+            title: `새 캐릭터 해금!`,
+            sub: `<span style="font-size:28px">${ch}</span><br>캐릭터가 해금됐어요! 로비에서 선택해보세요 🎉`,
+            acceptLabel: '🎉 확인',
+            onAccept: () => renderCharGrid(),
+          });
+        }, 2000 + i * 2500);
+      });
+      if (newChars.length) renderCharGrid();
+    }
 
     // Rank points (PVP only)
     const rankDeltaEl = document.getElementById('matchEndRankDelta');
