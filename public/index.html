@@ -1589,12 +1589,14 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       <div class="auth-field">
         <label>아이디 <span style="color:rgba(255,255,255,0.35);font-weight:400">(4~20자, 영문·숫자·_)</span></label>
         <input type="text" id="authSignupId" placeholder="사용할 아이디 입력" maxlength="20"
-          oninput="validateSignupId()" autocomplete="off">
+          oninput="validateSignupId()" onblur="checkIdDuplicate()" autocomplete="off">
         <div id="authIdStatus" style="font-size:11px;margin-top:3px;min-height:14px"></div>
       </div>
       <div class="auth-field">
         <label>이메일 <span style="color:rgba(255,255,255,0.35);font-weight:400">(비밀번호 찾기에 사용)</span></label>
-        <input type="email" id="authSignupEmail" placeholder="이메일 입력" autocomplete="off">
+        <input type="email" id="authSignupEmail" placeholder="이메일 입력" autocomplete="off"
+          onblur="checkEmailDuplicate()">
+        <div id="authEmailStatus" style="font-size:11px;margin-top:3px;min-height:14px"></div>
       </div>
       <div class="auth-field">
         <label>비밀번호 <span style="color:rgba(255,255,255,0.35);font-weight:400">(6자 이상)</span></label>
@@ -2704,6 +2706,26 @@ function validateSignupId() {
   if (val.length < 4) { el.style.color = '#ef5350'; el.textContent = '최소 4자 이상 입력해주세요.'; return; }
   if (!ID_REGEX.test(val)) { el.style.color = '#ef5350'; el.textContent = '영문, 숫자, _만 사용 가능합니다.'; return; }
   el.style.color = '#69f0ae'; el.textContent = '✓ 사용 가능한 형식입니다.';
+}
+
+async function checkIdDuplicate() {
+  const val = document.getElementById('authSignupId').value.trim();
+  const el = document.getElementById('authIdStatus');
+  if (!ID_REGEX.test(val)) return;
+  el.textContent = '확인 중...'; el.style.color = 'rgba(255,255,255,0.4)';
+  const { data } = await supa.from('profiles').select('game_id').eq('game_id', val).single();
+  if (data) { el.style.color = '#ef5350'; el.textContent = '❌ 이미 사용 중인 아이디입니다.'; }
+  else { el.style.color = '#69f0ae'; el.textContent = '✅ 사용 가능한 아이디입니다!'; }
+}
+
+async function checkEmailDuplicate() {
+  const val = document.getElementById('authSignupEmail').value.trim();
+  const el = document.getElementById('authEmailStatus');
+  if (!val || !val.includes('@')) { el.textContent = ''; return; }
+  el.textContent = '확인 중...'; el.style.color = 'rgba(255,255,255,0.4)';
+  const { data } = await supa.from('profiles').select('email').eq('email', val).single();
+  if (data) { el.style.color = '#ef5350'; el.textContent = '❌ 이미 사용 중인 이메일입니다.'; }
+  else { el.style.color = '#69f0ae'; el.textContent = '✅ 사용 가능한 이메일입니다!'; }
 }
 
 function togglePw(inputId, btn) {
