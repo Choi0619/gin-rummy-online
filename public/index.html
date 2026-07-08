@@ -1518,10 +1518,6 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
         <div id="authIdStatus" style="font-size:11px;margin-top:3px;min-height:14px"></div>
       </div>
       <div class="auth-field">
-        <label>닉네임 <span style="color:rgba(255,255,255,0.35);font-weight:400">(게임 내 표시 이름)</span></label>
-        <input type="text" id="authSignupName" placeholder="닉네임 입력" maxlength="12">
-      </div>
-      <div class="auth-field">
         <label>비밀번호 <span style="color:rgba(255,255,255,0.35);font-weight:400">(6자 이상)</span></label>
         <input type="password" id="authSignupPw" placeholder="비밀번호 입력" oninput="validatePwMatch()">
       </div>
@@ -1560,7 +1556,14 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   </div>
   <div id="lobbyUserBadge" class="auth-user-badge" style="display:none;max-width:420px;margin:0 auto 4px">
     <span id="lobbyUserChar" style="font-size:18px"></span>
-    <span class="badge-name" id="lobbyUserName"></span>
+    <span style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0">
+      <span class="badge-name" id="lobbyUserName" style="font-size:13px"></span>
+      <span id="lobbyUserId" style="font-size:11px;color:rgba(255,255,255,0.38);display:flex;align-items:center;gap:4px">
+        <span id="lobbyUserIdText"></span>
+        <button onclick="copyGameId()" title="아이디 복사" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:11px;padding:0;line-height:1">📋</button>
+        <span id="lobbyUserIdCopied" style="color:#69f0ae;font-size:10px;display:none">복사됨!</span>
+      </span>
+    </span>
     <span class="badge-logout" onclick="doLogout()">로그아웃</span>
   </div>
 
@@ -1570,7 +1573,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
   <div class="lobby-card">
     <h2 data-i18n="myNameLabel">내 이름</h2>
-    <input id="myName" type="text" data-i18n-placeholder="namePlaceholder" placeholder="닉네임 입력" maxlength="12">
+    <input id="myName" type="text" data-i18n-placeholder="namePlaceholder" placeholder="닉네임 입력" maxlength="12" onblur="saveNickname()">
     <div class="char-picker-label" data-i18n="charSelectLabel">캐릭터 선택</div>
     <div class="char-grid" id="lobbyCharGrid"></div>
     <div id="lobbyRankDisplay" class="rank-display" style="display:none">
@@ -2652,7 +2655,7 @@ async function doLogin() {
 
 async function doSignup() {
   const userId = document.getElementById('authSignupId').value.trim();
-  const name = document.getElementById('authSignupName').value.trim() || userId;
+  const name = userId; // 닉네임은 로비에서 변경 가능, 기본값은 아이디
   const pw = document.getElementById('authSignupPw').value;
   const pw2 = document.getElementById('authSignupPw2').value;
   const errEl = document.getElementById('authSignupError');
@@ -2711,18 +2714,42 @@ async function loadProfile() {
   const { data } = await supa.from('profiles').select('*').eq('id', supaUser.id).single();
   if (!data) return;
   supaProfile = data;
-  // Sync profile → local state
-  document.getElementById('myName').value = data.username;
-  myName = data.username;
+  // 닉네임 → 로비 입력창 (변경 가능)
+  const savedNick = data.username || data.game_id || '';
+  document.getElementById('myName').value = savedNick;
+  myName = savedNick;
   myChar = data.char || myChar;
   renderCharGrid();
-  // Sync rank points from DB (DB is source of truth when logged in)
   localStorage.setItem(RANK_KEY, String(data.rank_points));
   renderLobbyRank();
-  // Show user badge
+  // 유저 배지
+  const gameId = data.game_id || '';
   document.getElementById('lobbyUserChar').textContent = data.char || myChar;
-  document.getElementById('lobbyUserName').textContent = data.username;
+  document.getElementById('lobbyUserName').textContent = savedNick;
+  document.getElementById('lobbyUserIdText').textContent = gameId;
   document.getElementById('lobbyUserBadge').style.display = 'flex';
+}
+
+function copyGameId() {
+  const id = document.getElementById('lobbyUserIdText').textContent;
+  if (!id) return;
+  navigator.clipboard.writeText(id).then(() => {
+    const el = document.getElementById('lobbyUserIdCopied');
+    el.style.display = '';
+    setTimeout(() => { el.style.display = 'none'; }, 1800);
+  });
+}
+
+async function saveNickname() {
+  const nick = document.getElementById('myName').value.trim();
+  if (!nick || !supaUser || !supaProfile) return;
+  if (nick === supaProfile.username) return; // unchanged
+  const { data } = await supa.from('profiles').update({ username: nick })
+    .eq('id', supaUser.id).select().single();
+  if (data) {
+    supaProfile = data;
+    document.getElementById('lobbyUserName').textContent = nick;
+  }
 }
 
 async function saveProfileAfterMatch(iWon, deltaRP) {
