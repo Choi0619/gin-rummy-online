@@ -1511,6 +1511,16 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
     <!-- 회원가입 폼 -->
     <div id="authSignupForm" style="display:none">
+      <div style="display:flex;gap:8px">
+        <div class="auth-field" style="flex:1">
+          <label>성</label>
+          <input type="text" id="authSignupLast" placeholder="홍" maxlength="10">
+        </div>
+        <div class="auth-field" style="flex:2">
+          <label>이름</label>
+          <input type="text" id="authSignupFirst" placeholder="길동" maxlength="20">
+        </div>
+      </div>
       <div class="auth-field">
         <label>아이디 <span style="color:rgba(255,255,255,0.35);font-weight:400">(4~20자, 영문·숫자·_)</span></label>
         <input type="text" id="authSignupId" placeholder="사용할 아이디 입력" maxlength="20"
@@ -2685,6 +2695,8 @@ async function doSignup() {
     importLosses = pvp.filter(h => h.result === 'lose').length;
   }
 
+  const lastName = document.getElementById('authSignupLast').value.trim();
+  const firstName = document.getElementById('authSignupFirst').value.trim();
   const { error: profErr } = await supa.from('profiles').insert({
     id: supaUser.id,
     username: name,
@@ -2693,6 +2705,8 @@ async function doSignup() {
     rank_points: 0,
     pvp_wins: importWins,
     pvp_losses: importLosses,
+    last_name: lastName || null,
+    first_name: firstName || null,
   });
   if (profErr) {
     errEl.textContent = profErr.message.includes('duplicate') ? '이미 사용 중인 아이디입니다.' : profErr.message;
