@@ -1510,6 +1510,30 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   </div>
 </div>
 
+<!-- ===== PASSWORD RESET MODAL ===== -->
+<div id="pwResetOverlay" style="display:none;position:fixed;inset:0;z-index:1300;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center">
+  <div style="background:linear-gradient(160deg,#173d24,#0a2414);border:1px solid rgba(255,215,120,0.35);border-radius:22px;padding:32px 28px;width:92%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.7)">
+    <div style="font-size:32px;text-align:center;margin-bottom:8px">🔑</div>
+    <div style="font-size:18px;font-weight:700;color:#ffd76a;text-align:center;margin-bottom:20px">새 비밀번호 설정</div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:13px">
+      <label style="font-size:12px;color:rgba(255,255,255,0.5);font-weight:600">새 비밀번호 (6자 이상)</label>
+      <div class="auth-pw-wrap">
+        <input type="password" id="pwResetNew" placeholder="새 비밀번호 입력" class="auth-field" style="width:100%;padding-right:38px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:11px 38px 11px 12px;color:#fff;font-size:14px;outline:none">
+        <button type="button" class="auth-pw-toggle" onclick="togglePw('pwResetNew',this)">👁️</button>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:18px">
+      <label style="font-size:12px;color:rgba(255,255,255,0.5);font-weight:600">비밀번호 확인</label>
+      <div class="auth-pw-wrap">
+        <input type="password" id="pwResetConfirm" placeholder="비밀번호 재입력" style="width:100%;padding-right:38px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:11px 38px 11px 12px;color:#fff;font-size:14px;outline:none">
+        <button type="button" class="auth-pw-toggle" onclick="togglePw('pwResetConfirm',this)">👁️</button>
+      </div>
+    </div>
+    <div id="pwResetError" style="font-size:12px;color:#ef5350;text-align:center;margin-bottom:10px;min-height:16px"></div>
+    <button onclick="submitPwReset()" style="width:100%;padding:13px;background:linear-gradient(90deg,#4caf50,#388e3c);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer">🔒 비밀번호 변경</button>
+  </div>
+</div>
+
 <!-- ===== AUTH MODAL ===== -->
 <div class="auth-overlay" id="authOverlay" style="display:none">
   <!-- floating card suit symbols -->
@@ -2642,6 +2666,19 @@ let supaUser = null;   // current auth user
 let supaProfile = null; // current profile row
 
 async function initAuth() {
+  // Check if this is a password reset redirect (URL has access_token + type=recovery)
+  const hash = window.location.hash;
+  if (hash.includes('access_token') && hash.includes('type=recovery')) {
+    const params = new URLSearchParams(hash.slice(1));
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    if (accessToken) {
+      await supa.auth.setSession({ access_token: accessToken, refresh_token: refreshToken || '' });
+      history.replaceState(null, '', window.location.pathname);
+      showPwResetModal();
+      return;
+    }
+  }
   const { data: { session } } = await supa.auth.getSession();
   if (session) {
     supaUser = session.user;
@@ -2649,6 +2686,29 @@ async function initAuth() {
   } else {
     showAuthOverlay();
   }
+}
+
+function showPwResetModal() {
+  const el = document.getElementById('pwResetOverlay');
+  el.style.display = 'flex';
+}
+
+async function submitPwReset() {
+  const pw = document.getElementById('pwResetNew').value;
+  const pw2 = document.getElementById('pwResetConfirm').value;
+  const errEl = document.getElementById('pwResetError');
+  if (pw.length < 6) { errEl.textContent = '비밀번호는 6자 이상이어야 합니다.'; return; }
+  if (pw !== pw2) { errEl.textContent = '비밀번호가 일치하지 않습니다.'; return; }
+  errEl.textContent = '변경 중...'; errEl.style.color = 'rgba(255,255,255,0.5)';
+  const { error } = await supa.auth.updateUser({ password: pw });
+  if (error) { errEl.style.color = '#ef5350'; errEl.textContent = error.message; return; }
+  errEl.style.color = '#69f0ae';
+  errEl.textContent = '✅ 비밀번호가 변경되었습니다! 로그인해주세요.';
+  setTimeout(async () => {
+    document.getElementById('pwResetOverlay').style.display = 'none';
+    await supa.auth.signOut();
+    showAuthOverlay();
+  }, 2000);
 }
 
 const AUTH_ID_KEY = 'grSavedLoginId';
@@ -4374,9 +4434,16 @@ function showResult(data) {
 
   function cardSpan(c) { return `<span class="mini-card ${IS_RED[c.suit]?'red':''}">${c.rank}${SUITS_SYM[c.suit]}</span>`; }
 
-  function meldHtml(meldList, finalDW, rawDW, layoffCards) {
+  function getDWCards(hand, meldList, layoffCards) {
+    const used = new Set();
+    [...meldList.flat(), ...(layoffCards||[])].forEach(c => used.add(c.rank+'_'+c.suit));
+    return (hand||[]).filter(c => !used.has(c.rank+'_'+c.suit));
+  }
+
+  function meldHtml(meldList, finalDW, rawDW, layoffCards, hand) {
     let html = '';
     if (meldList.length) {
+      html += `<div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:3px">✅ 멜드</div>`;
       html += meldList.map(m => `<div class="meld-row">${m.map(cardSpan).join('')}</div>`).join('');
     } else {
       html += '<div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:4px">멜드 없음</div>';
@@ -4390,18 +4457,27 @@ function showResult(data) {
         <span class="layoff-saved">데드우드 ${rawDW}점 → ${finalDW}점 (-${saved}점)</span>
       </div>`;
     }
+    // Deadwood cards
+    const dwCards = getDWCards(hand, meldList, layoffCards);
+    if (dwCards.length > 0) {
+      html += `<div style="font-size:10px;color:rgba(255,255,255,0.4);margin:5px 0 3px">🃏 남은 패 (데드우드)</div>`;
+      html += `<div class="meld-row">${dwCards.map(cardSpan).join('')}</div>`;
+    }
     html += `<div class="dw-final">최종 데드우드: <strong>${finalDW}점</strong></div>`;
     return html;
   }
 
+  const myHand = hands ? hands[myIdx] : [];
+  const oppHand = hands ? hands[1-myIdx] : [];
+
   document.getElementById('resMelds').innerHTML = `
     <div class="meld-section">
       <div class="meld-lbl">🙋 내 멜드</div>
-      ${meldHtml(myMelds, myDW, myRawDW, myLayoff)}
+      ${meldHtml(myMelds, myDW, myRawDW, myLayoff, myHand)}
     </div>
     <div class="meld-section">
       <div class="meld-lbl">👤 ${oppName()} 멜드</div>
-      ${meldHtml(oppMelds, oppDW, oppRawDW, oppLayoff)}
+      ${meldHtml(oppMelds, oppDW, oppRawDW, oppLayoff, oppHand)}
     </div>
   `;
   document.getElementById('resScoreBar').textContent = `나: ${sc[myIdx]}점 | ${oppName()}: ${sc[1-myIdx]}점`;
