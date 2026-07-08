@@ -77,8 +77,17 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
 .lobby-corner-deco.br { bottom: 30px; right: 34px; transform: rotate(-14deg) scaleX(-1); }
 @media (max-width: 600px) { .lobby-corner-deco { font-size: 24px; } }
 
-.logo { font-size: 48px; margin-bottom: 4px; position: relative; z-index: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5)); }
-.logo-title { font-size: 32px; font-weight: bold; letter-spacing: 2px; position: relative; z-index: 1; text-shadow: 0 3px 12px rgba(0,0,0,0.5); }
+.logo { font-size: 48px; margin-bottom: 4px; position: relative; z-index: 1; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5)); display:none; }
+.logo-img {
+  width: 200px; max-width: 72vw; position: relative; z-index: 1;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,0.6));
+  animation: logoFloat 3.5s ease-in-out infinite;
+}
+@keyframes logoFloat {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.logo-title { font-size: 32px; font-weight: bold; letter-spacing: 2px; position: relative; z-index: 1; text-shadow: 0 3px 12px rgba(0,0,0,0.5); display:none; }
 .logo-sub { font-size: 14px; color: rgba(255,255,255,0.55); position: relative; z-index: 1; }
 .btn-howto {
   position: relative; z-index: 1;
@@ -1194,6 +1203,15 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 @keyframes emojiBounce { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.15); } }
 
 #confettiLayer { position: fixed; inset: 0; pointer-events: none; z-index: 350; overflow: hidden; }
+.deal-card-anim {
+  position: fixed; z-index: 500; pointer-events: none;
+  font-size: 36px; will-change: transform, opacity;
+  animation: dealCardFly 0.45s cubic-bezier(.22,.68,0,1.2) forwards;
+}
+@keyframes dealCardFly {
+  0%   { transform: translate(0,0) scale(0.6) rotate(-8deg); opacity: 0.9; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(1) rotate(0deg); opacity: 0; }
+}
 .confetti-piece {
   position: absolute; top: -30px; font-size: 22px; will-change: transform, opacity;
   animation-name: confettiFall; animation-timing-function: ease-in; animation-fill-mode: forwards;
@@ -1800,33 +1818,18 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     </div>
   </div>
 
-  <div class="logo">🃏</div>
-  <div class="logo-title" data-i18n="logoTitle">진 러미 온라인</div>
+  <img class="logo-img" src="/logo.png" alt="진 러미 온라인" onerror="this.style.display='none';document.querySelector('.logo-fallback').style.display=''">
+  <div class="logo-fallback" style="display:none;font-size:48px;position:relative;z-index:1">🃏</div>
   <div class="logo-sub" data-i18n="logoSub">친구와 함께 플레이</div>
 
+  <!-- 이름 입력: 게스트 시 표시, 로그인 시 숨김 (JS가 value만 채움) -->
+  <div id="guestNameRow" style="display:none;position:relative;z-index:1;width:100%;max-width:360px">
+    <input id="myName" type="text" data-i18n-placeholder="namePlaceholder" placeholder="닉네임 입력" maxlength="12" onblur="saveNickname()"
+      style="width:100%;box-sizing:border-box;text-align:center;font-size:15px;padding:10px 16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:14px;color:#fff;outline:none">
+    <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-top:4px">로그인하면 프로필에서 관리할 수 있어요</div>
+  </div>
+
   <div class="lobby-card">
-    <h2 data-i18n="myNameLabel">내 이름</h2>
-    <input id="myName" type="text" data-i18n-placeholder="namePlaceholder" placeholder="닉네임 입력" maxlength="12" onblur="saveNickname()">
-    <div class="char-picker-label" data-i18n="charSelectLabel">캐릭터 선택</div>
-    <div class="char-grid" id="lobbyCharGrid"></div>
-    <div id="lobbyRankDisplay" class="rank-display" style="display:none">
-      <span id="lobbyTierBadge" class="rank-tier-badge"></span>
-      <span class="rank-pts-label">랭킹 포인트</span>
-      <span id="lobbyRankPts" class="rank-pts-val"></span>
-    </div>
-    <div class="char-picker-label" style="font-size:12px;color:rgba(255,255,255,0.4)">목표 점수 · 턴 타이머는 방 만들기 시 설정합니다</div>
-    <select id="targetScoreSelect" class="target-score-select" style="display:none">
-      <option value="100" data-i18n="ts100" selected>100점 (기본)</option>
-      <option value="150" data-i18n="ts150">150점</option>
-      <option value="200" data-i18n="ts200">200점</option>
-      <option value="250" data-i18n="ts250">250점</option>
-      <option value="300" data-i18n="ts300">300점</option>
-      <option value="350" data-i18n="ts350">350점</option>
-      <option value="400" data-i18n="ts400">400점</option>
-      <option value="450" data-i18n="ts450">450점</option>
-      <option value="500" data-i18n="ts500">500점</option>
-      <option value="unlimited" data-i18n="tsUnlimited">♾️ 무제한</option>
-    </select>
     <div class="divider" data-i18n="createRoomDivider">방 만들기</div>
     <button class="btn btn-primary" onclick="openRoomSettings('pvp')" data-i18n="createRoomBtn">✨ 새 방 만들기</button>
     <div class="divider" data-i18n="joinRoomDivider">방 참가</div>
@@ -1835,6 +1838,12 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div class="divider" data-i18n="soloDivider">솔로 플레이</div>
     <button class="btn btn-gold" onclick="openRoomSettings('ai')" data-i18n="aiBtn">🤖 AI와 대결하기</button>
     <div class="error-msg" id="lobbyError"></div>
+  </div>
+
+  <!-- 숨겨진 레거시 요소들 (JS 참조용) -->
+  <div style="display:none">
+    <div class="char-grid" id="lobbyCharGrid"></div>
+    <div id="lobbyRankDisplay"><span id="lobbyTierBadge"></span><span id="lobbyRankPts"></span></div>
   </div>
 </div>
 
@@ -1848,6 +1857,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       <div class="copy-hint" id="copyHint" data-i18n="shareCodeHint">친구에게 이 코드를 알려주세요</div>
       <div class="target-score-lbl" id="waitingTargetScoreLbl" style="display:inline-block;margin-top:10px"></div>
       <div id="waitingRoomBadge" style="margin-top:8px;font-size:13px;color:rgba(255,255,255,0.5)"></div>
+      <div id="spectatorCount" style="display:none;margin-top:4px;font-size:12px;color:rgba(255,255,255,0.35)">👁️ 관전자 <span id="spectatorNum">0</span>명</div>
     </div>
 
     <div class="players-status">
@@ -1872,7 +1882,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 <!-- ===== GAME ===== -->
 <div id="gameScreen" class="screen">
   <div class="game-header">
-    <div class="title-sm">🃏 진 러미 <span class="target-score-lbl" id="targetScoreLbl"></span><span class="game-mode-lbl" id="gameModeLbl" style="display:none"></span><span class="revenge-lbl" id="revengeLbl" style="display:none">🔥 리벤지 전</span></div>
+    <div class="title-sm">🃏 진 러미 <span class="target-score-lbl" id="targetScoreLbl"></span><span class="game-mode-lbl" id="gameModeLbl" style="display:none"></span><span class="revenge-lbl" id="revengeLbl" style="display:none">🔥 리벤지 전</span><span id="gameSpectatorCount" style="display:none;font-size:11px;color:rgba(255,255,255,0.35);margin-left:6px">👁️<span id="gameSpectatorNum">0</span></span></div>
     <div class="score-box-pretty" id="scoreBoxPretty">
       <div class="score-side" id="myScoreSide">
         <span class="score-label" data-i18n="me">나</span>
@@ -2059,6 +2069,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div id="panelHistory" class="howto-scroll" style="max-height:62vh">
       <div id="historyStats" style="display:flex;gap:12px;margin-bottom:16px;justify-content:center;flex-wrap:wrap"></div>
       <div id="historyList"></div>
+      <div id="historyPagination" style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:12px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08)"></div>
     </div>
     <!-- 랭킹 탭 -->
     <div id="panelRanking" class="howto-scroll" style="max-height:62vh;display:none">
@@ -2903,6 +2914,7 @@ const ID_REGEX = /^[a-zA-Z0-9_]{4,20}$/;
 function idToEmail(id) { return `${id.toLowerCase()}@ginrummy.local`; }
 
 function showAuthOverlay() {
+  document.getElementById('guestNameRow').style.display = '';
   switchAuthTab('login');
   // Restore saved login id
   const saved = localStorage.getItem(AUTH_ID_KEY);
@@ -3106,6 +3118,10 @@ async function loadProfile() {
   document.getElementById('lobbyUserIdText').textContent = gameId;
   document.getElementById('lobbyUserRP').textContent = `${tierInfo.emoji} ${rp} RP`;
   document.getElementById('lobbyUserBadge').style.display = 'flex';
+  document.getElementById('guestNameRow').style.display = 'none';
+  // Set myName input value from profile so confirmRoomSettings() can use it
+  const nameInput = document.getElementById('myName');
+  if (nameInput) nameInput.value = savedNick;
 }
 
 
@@ -3249,6 +3265,7 @@ async function doLogout() {
   await supa.auth.signOut();
   supaUser = null; supaProfile = null;
   document.getElementById('lobbyUserBadge').style.display = 'none';
+  document.getElementById('guestNameRow').style.display = '';
   showAuthOverlay();
 }
 
@@ -3377,80 +3394,105 @@ function renderRankingTab() {
   }).join('');
 }
 
+const HISTORY_PAGE_SIZE = 10;
+let _historyPage = 0;
+
 function showHistory() {
+  _historyPage = 0;
+  _renderHistory();
+  document.getElementById('historyOverlay').classList.add('show');
+}
+
+function _renderHistory() {
   const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
   const statsEl = document.getElementById('historyStats');
   const listEl = document.getElementById('historyList');
+  const pageEl = document.getElementById('historyPagination');
 
   if (history.length === 0) {
     statsEl.innerHTML = '';
     listEl.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);padding:32px 0">아직 기록이 없어요<br><span style="font-size:28px">📭</span></div>';
-  } else {
-    // PVP-only stats (vsAI excluded from win/loss counts)
-    const pvp = history.filter(h => h.mode !== 'vsAI');
-    const wins = pvp.filter(h => h.result === 'win').length;
-    const loses = pvp.filter(h => h.result === 'lose').length;
-    const ties = pvp.filter(h => h.result === 'tie').length;
-    const total = pvp.length;
-    const winRate = total > 0 ? Math.round((wins / (total - ties || 1)) * 100) : 0;
-
-    // Opponent stats
-    const oppMap = {};
-    history.forEach(h => {
-      if (h.mode === 'vsAI') return;
-      if (!oppMap[h.opponentName]) oppMap[h.opponentName] = { win: 0, lose: 0 };
-      if (h.result === 'win') oppMap[h.opponentName].win++;
-      else if (h.result === 'lose') oppMap[h.opponentName].lose++;
-    });
-
-    statsEl.innerHTML = `
-      <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px">
-        <div style="font-size:22px;font-weight:700;color:#69f0ae">${wins}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.5)">승리</div>
-      </div>
-      <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px">
-        <div style="font-size:22px;font-weight:700;color:#ef5350">${loses}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.5)">패배</div>
-      </div>
-      ${ties > 0 ? `<div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px">
-        <div style="font-size:22px;font-weight:700;color:#ffd76a">${ties}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.5)">무승부</div>
-      </div>` : ''}
-      <div style="background:rgba(255,215,120,0.1);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px;border:1px solid rgba(255,215,120,0.2)">
-        <div style="font-size:22px;font-weight:700;color:#ffd76a">${winRate}%</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.5)">승률</div>
-      </div>
-    `;
-
-    const oppEntries = Object.entries(oppMap).sort((a,b) => (b[1].win+b[1].lose) - (a[1].win+a[1].lose));
-    const oppHtml = oppEntries.length > 0 ? `
-      <div style="margin:12px 0 8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em">상대별 전적 (PVP)</div>
-      ${oppEntries.map(([name, r]) => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:4px;font-size:13px">
-          <span style="color:rgba(255,255,255,0.85)">${escapeHtml(name)}</span>
-          <span><span style="color:#69f0ae">${r.win}승</span> <span style="color:rgba(255,255,255,0.3)"> / </span> <span style="color:#ef5350">${r.lose}패</span></span>
-        </div>
-      `).join('')}
-      <div style="margin-top:14px;margin-bottom:8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em">최근 기록</div>
-    ` : `<div style="margin:12px 0 6px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5)">최근 기록</div>`;
-
-    listEl.innerHTML = oppHtml + history.map(h => {
-      const d = new Date(h.date);
-      const dateStr = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-      const resultColor = h.result === 'win' ? '#69f0ae' : h.result === 'lose' ? '#ef5350' : '#ffd76a';
-      const resultTxt = h.result === 'win' ? '승' : h.result === 'lose' ? '패' : '무';
-      const modeTag = h.mode === 'vsAI' ? '🤖 AI전' : '👤 PVP';
-      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:rgba(255,255,255,0.04);font-size:13px">
-        <span style="font-weight:700;color:${resultColor};min-width:20px">${resultTxt}</span>
-        <span style="flex:1;padding:0 8px;color:rgba(255,255,255,0.8)">${escapeHtml(h.opponentName)}</span>
-        <span style="color:rgba(255,255,255,0.4);font-size:11px;margin-right:8px">${h.myScore ?? '?'} - ${h.oppScore ?? '?'}</span>
-        <span style="color:rgba(255,255,255,0.3);font-size:10px;margin-right:6px">${modeTag}</span>
-        <span style="color:rgba(255,255,255,0.25);font-size:10px">${dateStr}</span>
-      </div>`;
-    }).join('');
+    pageEl.innerHTML = '';
+    return;
   }
 
-  document.getElementById('historyOverlay').classList.add('show');
+  const pvp = history.filter(h => h.mode !== 'vsAI');
+  const wins = pvp.filter(h => h.result === 'win').length;
+  const loses = pvp.filter(h => h.result === 'lose').length;
+  const ties = pvp.filter(h => h.result === 'tie').length;
+  const total = pvp.length;
+  const winRate = total > 0 ? Math.round((wins / (total - ties || 1)) * 100) : 0;
+
+  statsEl.innerHTML =
+    '<div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px">' +
+      '<div style="font-size:22px;font-weight:700;color:#69f0ae">' + wins + '</div>' +
+      '<div style="font-size:11px;color:rgba(255,255,255,0.5)">승리</div></div>' +
+    '<div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px">' +
+      '<div style="font-size:22px;font-weight:700;color:#ef5350">' + loses + '</div>' +
+      '<div style="font-size:11px;color:rgba(255,255,255,0.5)">패배</div></div>' +
+    (ties > 0 ? '<div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px">' +
+      '<div style="font-size:22px;font-weight:700;color:#ffd76a">' + ties + '</div>' +
+      '<div style="font-size:11px;color:rgba(255,255,255,0.5)">무승부</div></div>' : '') +
+    '<div style="background:rgba(255,215,120,0.1);border-radius:12px;padding:12px 20px;text-align:center;min-width:80px;border:1px solid rgba(255,215,120,0.2)">' +
+      '<div style="font-size:22px;font-weight:700;color:#ffd76a">' + winRate + '%</div>' +
+      '<div style="font-size:11px;color:rgba(255,255,255,0.5)">승률</div></div>';
+
+  // Pagination
+  const totalPages = Math.ceil(history.length / HISTORY_PAGE_SIZE);
+  _historyPage = Math.max(0, Math.min(_historyPage, totalPages - 1));
+  const pageItems = history.slice(_historyPage * HISTORY_PAGE_SIZE, (_historyPage + 1) * HISTORY_PAGE_SIZE);
+
+  const oppMap = {};
+  history.forEach(h => {
+    if (h.mode === 'vsAI') return;
+    if (!oppMap[h.opponentName]) oppMap[h.opponentName] = { win: 0, lose: 0 };
+    if (h.result === 'win') oppMap[h.opponentName].win++;
+    else if (h.result === 'lose') oppMap[h.opponentName].lose++;
+  });
+
+  let html = '';
+  if (_historyPage === 0) {
+    const oppEntries = Object.entries(oppMap).sort((a,b) => (b[1].win+b[1].lose) - (a[1].win+a[1].lose));
+    if (oppEntries.length > 0) {
+      html += '<div style="margin:0 0 8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em">상대별 전적 (PVP)</div>';
+      oppEntries.forEach(function(entry) {
+        const name = entry[0], r = entry[1];
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:4px;font-size:13px">' +
+          '<span style="color:rgba(255,255,255,0.85)">' + escapeHtml(name) + '</span>' +
+          '<span><span style="color:#69f0ae">' + r.win + '승</span> <span style="color:rgba(255,255,255,0.3)"> / </span> <span style="color:#ef5350">' + r.lose + '패</span></span></div>';
+      });
+    }
+    html += '<div style="margin:12px 0 8px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em">최근 기록</div>';
+  }
+
+  pageItems.forEach(function(h) {
+    const d = new Date(h.date);
+    const dateStr = (d.getMonth()+1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    const resultColor = h.result === 'win' ? '#69f0ae' : h.result === 'lose' ? '#ef5350' : '#ffd76a';
+    const resultTxt = h.result === 'win' ? '승' : h.result === 'lose' ? '패' : '무';
+    const modeTag = h.mode === 'vsAI' ? '🤖 AI전' : '👤 PVP';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:rgba(255,255,255,0.04);font-size:13px">' +
+      '<span style="font-weight:700;color:' + resultColor + ';min-width:20px">' + resultTxt + '</span>' +
+      '<span style="flex:1;padding:0 8px;color:rgba(255,255,255,0.8)">' + escapeHtml(h.opponentName) + '</span>' +
+      '<span style="color:rgba(255,255,255,0.4);font-size:11px;margin-right:8px">' + (h.myScore ?? '?') + ' - ' + (h.oppScore ?? '?') + '</span>' +
+      '<span style="color:rgba(255,255,255,0.3);font-size:10px;margin-right:6px">' + modeTag + '</span>' +
+      '<span style="color:rgba(255,255,255,0.25);font-size:10px">' + dateStr + '</span></div>';
+  });
+  listEl.innerHTML = html;
+
+  // Pagination controls
+  if (totalPages <= 1) { pageEl.innerHTML = ''; return; }
+  const btnStyle = 'background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:5px 14px;border-radius:8px;font-size:13px;cursor:pointer;';
+  const disabledStyle = 'background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);color:rgba(255,255,255,0.25);padding:5px 14px;border-radius:8px;font-size:13px;cursor:default;';
+  pageEl.innerHTML =
+    '<button style="' + (_historyPage > 0 ? btnStyle : disabledStyle) + '" onclick="historyPageNav(-1)" ' + (_historyPage === 0 ? 'disabled' : '') + '>‹ 이전</button>' +
+    '<span style="font-size:12px;color:rgba(255,255,255,0.45)">' + (_historyPage + 1) + ' / ' + totalPages + '</span>' +
+    '<button style="' + (_historyPage < totalPages - 1 ? btnStyle : disabledStyle) + '" onclick="historyPageNav(1)" ' + (_historyPage >= totalPages - 1 ? 'disabled' : '') + '>다음 ›</button>';
+}
+
+function historyPageNav(dir) {
+  _historyPage += dir;
+  _renderHistory();
 }
 
 function hideHistory() { document.getElementById('historyOverlay').classList.remove('show'); }
@@ -3656,6 +3698,34 @@ function showToast(html, type = 'waiting') {
 }
 function hideToast() {
   document.getElementById('toastBanner').className = 'toast-banner';
+}
+
+// ===== Card dealing animation =====
+function playDealAnimation(cardCount, onDone) {
+  const handZone = document.getElementById('myHandZone');
+  if (!handZone) { if (onDone) onDone(); return; }
+  const rect = handZone.getBoundingClientRect();
+  const destX = rect.left + rect.width / 2;
+  const destY = rect.top + rect.height / 2;
+  const srcX = window.innerWidth / 2;
+  const srcY = window.innerHeight / 2;
+
+  let done = 0;
+  for (let i = 0; i < cardCount; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'deal-card-anim';
+      el.textContent = '🂠';
+      el.style.left = srcX + 'px';
+      el.style.top = srcY + 'px';
+      el.style.setProperty('--tx', (destX - srcX) + 'px');
+      el.style.setProperty('--ty', (destY - srcY) + 'px');
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 500);
+      done++;
+      if (done === cardCount && onDone) setTimeout(onDone, 120);
+    }, i * 80);
+  }
 }
 
 // ===== Reaction emojis =====
@@ -4031,6 +4101,15 @@ function initSocket() {
     setTimeout(() => hideToast(), 3000);
   });
 
+  socket.on('spectator-update', ({ count }) => {
+    const waitEl = document.getElementById('spectatorCount');
+    const waitNum = document.getElementById('spectatorNum');
+    const gameEl = document.getElementById('gameSpectatorCount');
+    const gameNum = document.getElementById('gameSpectatorNum');
+    if (waitEl) { waitEl.style.display = count > 0 ? '' : 'none'; if (waitNum) waitNum.textContent = count; }
+    if (gameEl) { gameEl.style.display = count > 0 ? '' : 'none'; if (gameNum) gameNum.textContent = count; }
+  });
+
   socket.on('reaction', ({ emoji, fromIdx }) => {
     const avatarId = fromIdx === myIdx ? 'myAvatarEmoji' : 'oppAvatarEmoji';
     showReactionFloat(emoji, avatarId);
@@ -4253,6 +4332,7 @@ function initSocket() {
     document.querySelectorAll('.vs-ai-hide').forEach(el => el.style.display = vsAI ? 'none' : '');
     document.getElementById('reactionBar').style.display = vsAI ? 'none' : 'flex';
     showGame();
+    playDealAnimation(data.hand ? data.hand.length : 10, null);
     renderGame();
     if (currentPhase === 'upcard-offer') {
       setStatus(isMyTurn()

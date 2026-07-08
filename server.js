@@ -181,6 +181,7 @@ io.on('connection', socket => {
       gameMode: normalizeGameMode(gameMode),
       handSize: normalizeHandSize(handSize),
       isPublic: isPublic !== false,
+      spectators: new Set(),
     });
     socket.join(code);
     socket.data.room = code;
@@ -224,7 +225,31 @@ io.on('connection', socket => {
     if (!room.players[0]) slotIdx = 0;
     else if (room.players.length < 2 || !room.players[1]) slotIdx = 1;
 
-    if (slotIdx === -1) { socket.emit('err', '방이 가득 찼습니다.'); return; }
+    if (slotIdx === -1) {
+      // Room full → join as spectator
+      if (!room.spectators) room.spectators = new Set();
+      room.spectators.add(socket.id);
+      socket.join(code);
+      socket.data.room = code;
+      socket.data.idx = -1; // spectator
+      socket.data.spectator = true;
+      const specCount = room.spectators.size;
+      io.to(code).emit('spectator-update', { count: specCount });
+      // Send current game state to spectator if game in progress
+      if (room.game && !room.game.over) {
+        const g = room.game;
+        socket.emit('spectate-state', {
+          discardTop: g.discardPile[g.discardPile.length - 1] || null,
+          deckCount: g.deck.length,
+          turn: g.turn,
+          scores: room.scores,
+          names: room.names,
+          chars: room.chars,
+        });
+      }
+      socket.emit('joined-as-spectator', { specCount });
+      return;
+    }
 
     const oppIdx = 1 - slotIdx;
     room.players[slotIdx] = socket.id;
@@ -494,6 +519,15 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     const code = socket.data.room;
     if (!code) return;
+    // Spectator disconnect
+    if (socket.data.spectator) {
+      const room = rooms.get(code);
+      if (room && room.spectators) {
+        room.spectators.delete(socket.id);
+        io.to(code).emit('spectator-update', { count: room.spectators.size });
+      }
+      return;
+    }
     const room = rooms.get(code);
     if (!room || room.leaving) return;
     const idx = socket.data.idx;
