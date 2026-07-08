@@ -1608,11 +1608,12 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
         <div class="auth-pw-wrap">
           <input type="password" id="authSignupPw2" placeholder="비밀번호 재입력"
             oninput="validatePwMatch()" onkeydown="if(event.key==='Enter')doSignup()"
-            style="padding-right:64px">
-          <button type="button" class="auth-pw-toggle" style="right:36px" onclick="togglePw('authSignupPw2',this)">👁️</button>
-          <span id="authPwMatchIcon" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:16px"></span>
+            style="padding-right:38px">
+          <button type="button" class="auth-pw-toggle" onclick="togglePw('authSignupPw2',this)">👁️</button>
         </div>
-        <div id="authPwMatchMsg" style="font-size:11px;margin-top:3px;min-height:14px"></div>
+        <div id="authPwMatchMsg" style="font-size:11px;margin-top:4px;min-height:14px;display:flex;align-items:center;gap:4px">
+          <span id="authPwMatchIcon"></span><span id="authPwMatchText"></span>
+        </div>
       </div>
       <div id="authImportRow" class="auth-import-row" style="display:none">
         <input type="checkbox" id="authImportCheck" checked>
@@ -2714,13 +2715,13 @@ function togglePw(inputId, btn) {
 function validatePwMatch() {
   const pw = document.getElementById('authSignupPw').value;
   const pw2 = document.getElementById('authSignupPw2').value;
-  const msgEl = document.getElementById('authPwMatchMsg');
   const iconEl = document.getElementById('authPwMatchIcon');
-  if (!pw2) { msgEl.textContent = ''; iconEl.textContent = ''; return; }
+  const textEl = document.getElementById('authPwMatchText');
+  if (!pw2) { iconEl.textContent = ''; textEl.textContent = ''; return; }
   if (pw === pw2) {
-    iconEl.textContent = '✅'; msgEl.style.color = '#69f0ae'; msgEl.textContent = '비밀번호가 일치합니다!';
+    iconEl.textContent = '✅'; textEl.style.color = '#69f0ae'; textEl.textContent = '비밀번호가 일치합니다!';
   } else {
-    iconEl.textContent = '❌'; msgEl.style.color = '#ef5350'; msgEl.textContent = '비밀번호가 일치하지 않습니다.';
+    iconEl.textContent = '❌'; textEl.style.color = '#ef5350'; textEl.textContent = '비밀번호가 일치하지 않습니다.';
   }
 }
 
@@ -2810,7 +2811,7 @@ async function doSignup() {
   // 이메일 인증 안내 (인증 후 로그인)
   btn.disabled = false; btn.textContent = '✨ 회원가입';
   errEl.style.color = '#69f0ae';
-  errEl.textContent = '✅ 가입 완료! 이메일함을 확인하고 인증 후 로그인해주세요.';
+  errEl.textContent = '✅ 가입 완료! 로그인 탭으로 이동합니다...';
   if (doImport && importWins + importLosses > 0) {
     errEl.textContent += ` (전적 ${importWins}승 ${importLosses}패 계승 예정)`;
   }
