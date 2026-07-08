@@ -394,9 +394,6 @@ body.theme-aurora .logo-title { animation: auroraText 6s linear infinite; }
 }
 .room-opt-btn:hover { background: rgba(255,255,255,0.15); }
 .room-opt-btn.active { background: rgba(255,215,120,0.25); border-color: #ffd76a; color: #ffd76a; }
-.room-score-grid {
-  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px;
-}
 .room-timer-row {
   display: flex; align-items: center; gap: 10px; justify-content: center; margin-top: 8px;
 }
@@ -1368,7 +1365,12 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       </div>
       <div class="howto-section">
         <h3>🎯 목표 점수</h3>
-        <div class="room-score-grid" id="roomScoreGrid"></div>
+        <div class="room-timer-row">
+          <button class="room-stepper" onclick="adjustRoomScore(-50)">−</button>
+          <div id="roomScoreDisplay" class="room-timer-val">100점</div>
+          <button class="room-stepper" onclick="adjustRoomScore(50)">+</button>
+          <button class="room-opt-btn" id="roomScoreUnlimitedBtn" onclick="setRoomScoreUnlimited()">♾️ 무제한</button>
+        </div>
       </div>
       <div class="howto-section">
         <h3>⏱️ 턴 제한시간</h3>
@@ -2201,7 +2203,7 @@ let _roomTimer = 20; // null = unlimited
 let _gameMode = 'classic';
 let _handSize = 10;
 
-const ROOM_SCORE_OPTIONS = [100, 150, 200, 250, 300, 350, 400, 450, 500, null];
+// ROOM_SCORE_OPTIONS removed — now uses stepper
 const DIFF_DESCS = {
   easy: '😊 쉬움 — 느리고 실수가 잦은 AI입니다',
   normal: '🤖 보통 — 기본 전략으로 플레이합니다',
@@ -2267,16 +2269,25 @@ function _renderHandSize() {
 }
 
 function _renderRoomScore() {
-  const grid = document.getElementById('roomScoreGrid');
-  grid.innerHTML = ROOM_SCORE_OPTIONS.map(v => {
-    const label = v === null ? '♾️ 무제한' : v + '점';
-    const act = v === _roomScore ? ' active' : '';
-    return `<button class="room-opt-btn${act}" onclick="_setRoomScore(${v})">${label}</button>`;
-  }).join('');
+  const disp = document.getElementById('roomScoreDisplay');
+  const unlBtn = document.getElementById('roomScoreUnlimitedBtn');
+  if (_roomScore === null) {
+    disp.textContent = '♾️';
+    unlBtn.classList.add('active');
+  } else {
+    disp.textContent = _roomScore + '점';
+    unlBtn.classList.remove('active');
+  }
 }
 
-function _setRoomScore(v) {
-  _roomScore = v;
+function adjustRoomScore(delta) {
+  if (_roomScore === null) _roomScore = delta > 0 ? 100 : 500;
+  else _roomScore = Math.max(100, Math.min(500, _roomScore + delta));
+  _renderRoomScore();
+}
+
+function setRoomScoreUnlimited() {
+  _roomScore = _roomScore === null ? 100 : null;
   _renderRoomScore();
 }
 
