@@ -260,10 +260,10 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
   100% { background-position: 0% 50%; }
 }
 @keyframes floatUp {
-  0%   { transform: translateY(0)   rotate(0deg)   scale(1);   opacity: 0; }
-  10%  { opacity: 0.18; }
-  90%  { opacity: 0.12; }
-  100% { transform: translateY(-110vh) rotate(360deg) scale(1.3); opacity: 0; }
+  0%   { transform: translateY(0)   rotate(0deg);   opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 0.7; }
+  100% { transform: translateY(-110vh) rotate(180deg); opacity: 0; }
 }
 @keyframes authBoxIn {
   from { transform: translateY(24px) scale(0.96); opacity: 0; }
@@ -1513,16 +1513,16 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 <!-- ===== AUTH MODAL ===== -->
 <div class="auth-overlay" id="authOverlay" style="display:none">
   <!-- floating card suit symbols -->
-  <span class="auth-bg-symbol" style="left:8%;font-size:56px;color:rgba(255,80,80,0.22);animation-duration:14s;animation-delay:0s;">♥</span>
-  <span class="auth-bg-symbol" style="left:22%;font-size:34px;color:rgba(255,255,255,0.13);animation-duration:18s;animation-delay:-4s;">♠</span>
-  <span class="auth-bg-symbol" style="left:38%;font-size:48px;color:rgba(255,80,80,0.18);animation-duration:11s;animation-delay:-7s;">♦</span>
-  <span class="auth-bg-symbol" style="left:55%;font-size:38px;color:rgba(255,255,255,0.12);animation-duration:16s;animation-delay:-2s;">♣</span>
-  <span class="auth-bg-symbol" style="left:70%;font-size:60px;color:rgba(255,215,120,0.15);animation-duration:13s;animation-delay:-9s;">🃏</span>
-  <span class="auth-bg-symbol" style="left:85%;font-size:42px;color:rgba(255,80,80,0.2);animation-duration:19s;animation-delay:-5s;">♥</span>
-  <span class="auth-bg-symbol" style="left:15%;font-size:30px;color:rgba(255,215,120,0.13);animation-duration:22s;animation-delay:-11s;">♦</span>
-  <span class="auth-bg-symbol" style="left:48%;font-size:52px;color:rgba(255,255,255,0.1);animation-duration:15s;animation-delay:-3s;">♠</span>
-  <span class="auth-bg-symbol" style="left:78%;font-size:36px;color:rgba(255,80,80,0.16);animation-duration:20s;animation-delay:-8s;">♣</span>
-  <span class="auth-bg-symbol" style="left:92%;font-size:44px;color:rgba(255,215,120,0.14);animation-duration:12s;animation-delay:-6s;">♥</span>
+  <span class="auth-bg-symbol" style="left:5%;font-size:52px;color:rgba(255,100,100,0.55);animation-duration:9s;animation-delay:0s;">♥</span>
+  <span class="auth-bg-symbol" style="left:20%;font-size:38px;color:rgba(220,220,255,0.5);animation-duration:12s;animation-delay:-3s;">♠</span>
+  <span class="auth-bg-symbol" style="left:36%;font-size:48px;color:rgba(255,100,100,0.5);animation-duration:8s;animation-delay:-5s;">♦</span>
+  <span class="auth-bg-symbol" style="left:54%;font-size:42px;color:rgba(180,255,180,0.45);animation-duration:11s;animation-delay:-1s;">♣</span>
+  <span class="auth-bg-symbol" style="left:68%;font-size:56px;color:rgba(255,220,100,0.5);animation-duration:10s;animation-delay:-7s;">🃏</span>
+  <span class="auth-bg-symbol" style="left:82%;font-size:44px;color:rgba(255,100,100,0.5);animation-duration:13s;animation-delay:-4s;">♥</span>
+  <span class="auth-bg-symbol" style="left:12%;font-size:34px;color:rgba(255,220,100,0.45);animation-duration:15s;animation-delay:-9s;">♦</span>
+  <span class="auth-bg-symbol" style="left:45%;font-size:50px;color:rgba(220,220,255,0.45);animation-duration:10s;animation-delay:-2s;">♠</span>
+  <span class="auth-bg-symbol" style="left:75%;font-size:36px;color:rgba(180,255,180,0.45);animation-duration:14s;animation-delay:-6s;">♣</span>
+  <span class="auth-bg-symbol" style="left:90%;font-size:46px;color:rgba(255,220,100,0.5);animation-duration:9s;animation-delay:-8s;">♥</span>
   <div class="auth-box">
     <div class="auth-logo">🃏</div>
     <div class="auth-title">진 러미 온라인</div>
