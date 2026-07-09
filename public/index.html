@@ -219,6 +219,15 @@ body.theme-pink .card.meld {
   box-shadow: 0 2px 10px rgba(255,80,160,0.25);
 }
 body.theme-pink .card.selected { border-color: #ff2d78 !important; box-shadow: 0 16px 32px rgba(255,45,120,0.6), 0 0 0 8px rgba(255,45,120,0.12); }
+/* Pink card backs (opponent's face-down hand) get a matching pink design instead of the default blue */
+body.theme-pink .card.face-down {
+  background: linear-gradient(135deg, #c0397a, #7a1d4e);
+  border-color: rgba(255,150,200,0.55);
+}
+body.theme-pink .card.face-down::after {
+  background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,200,225,0.08) 4px, rgba(255,200,225,0.08) 5px);
+  border-color: rgba(255,200,225,0.2);
+}
 body.theme-pink .middle-zone { background: rgba(100,10,50,0.38); border-color: rgba(255,130,190,0.2); box-shadow: inset 0 2px 16px rgba(150,0,80,0.35); }
 body.theme-pink .hand-zone { background: rgba(90,5,40,0.45); border-color: rgba(255,130,190,0.2); }
 body.theme-pink .score-bar { border-color: rgba(255,150,200,0.2); }
@@ -294,6 +303,15 @@ body.theme-rainbow .card {
 body.theme-rainbow .card.selected {
   animation: rainbowBorder 1s linear infinite !important;
   box-shadow: 0 16px 32px rgba(200,100,255,0.6), 0 0 0 8px rgba(160,80,255,0.15) !important;
+}
+/* Rainbow card backs shimmer with the same animated hue cycle + soft glow */
+body.theme-rainbow .card.face-down {
+  background: linear-gradient(135deg, #2a1a3a, #150c22);
+  animation: rainbowBorder 3s linear infinite, rainbowBackGlow 3s ease-in-out infinite;
+}
+@keyframes rainbowBackGlow {
+  0%,100% { box-shadow: 0 0 10px rgba(200,100,255,0.35); }
+  50%      { box-shadow: 0 0 18px rgba(100,200,255,0.5); }
 }
 body.theme-rainbow .middle-zone { animation: rainbowGlow 4s linear infinite; }
 body.theme-rainbow .logo-title,
@@ -615,6 +633,25 @@ body.theme-aurora .card.selected {
   border-color: #00ffcc !important;
   box-shadow: 0 16px 32px rgba(0,255,180,0.55), 0 0 0 8px rgba(0,255,180,0.12) !important;
   animation: auroraBorder 1.5s linear infinite !important;
+}
+/* Aurora is the rarest theme — card backs get the richest treatment: drifting aurora gradient + pulsing glow */
+body.theme-aurora .card.face-down {
+  background: linear-gradient(135deg, #06111e, #0c1e30, #0a2a2a, #06111e);
+  background-size: 300% 300%;
+  border-color: rgba(0,255,190,0.5);
+  animation: auroraBorder 6s linear infinite, auroraBackDrift 8s ease-in-out infinite, auroraBackGlow 4s ease-in-out infinite;
+}
+body.theme-aurora .card.face-down::after {
+  background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,255,190,0.06) 4px, rgba(0,255,190,0.06) 5px);
+  border-color: rgba(0,255,190,0.25);
+}
+@keyframes auroraBackDrift {
+  0%,100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+@keyframes auroraBackGlow {
+  0%,100% { box-shadow: 0 0 12px rgba(0,220,160,0.4); }
+  50%      { box-shadow: 0 0 22px rgba(120,80,255,0.55); }
 }
 body.theme-aurora .middle-zone { animation: auroraGlow 5s linear infinite; }
 body.theme-aurora .logo-title { animation: auroraText 6s linear infinite; }
@@ -3716,7 +3753,7 @@ async function loadProfile() {
   const gameId = data.game_id || '';
   const rp = data.rank_points || 0;
   const tierInfo = getTierInfo(rp);
-  document.getElementById('lobbyUserChar').textContent = data.char || myChar;
+  document.getElementById('lobbyUserChar').innerHTML = charHTML(data.char || myChar);
   applyAvatarBorder('lobbyUserChar', myCardBorder);
   document.getElementById('lobbyUserName').textContent = savedNick;
   document.getElementById('lobbyUserIdText').textContent = gameId;
@@ -3734,7 +3771,7 @@ function showProfileModal() {
   if (!supaProfile) return;
   const rp = supaProfile.rank_points || 0;
   const tier = getTierInfo(rp);
-  document.getElementById('profileAvatar').textContent = supaProfile.char || '🐱';
+  document.getElementById('profileAvatar').innerHTML = charHTML(supaProfile.char || '🐱');
   applyAvatarBorder('profileAvatar', myCardBorder);
   document.getElementById('profileNicknameInput').value = supaProfile.username || supaProfile.game_id || '';
   document.getElementById('profileIdValue').textContent = supaProfile.game_id || '';
@@ -3763,16 +3800,16 @@ function renderProfileCharGrid() {
     const reqTxt = locked ? '<div class="profile-char-req">' + req + '승</div>' : '';
     const cls = 'profile-char-opt' + (selected ? ' selected' : '') + (locked ? ' locked' : '');
     const clickHandler = locked ? '' : 'selectProfileChar(\'' + ch + '\')';
-    return '<div class="' + cls + '" onclick="' + clickHandler + '">' + ch + reqTxt + '</div>';
+    return '<div class="' + cls + '" onclick="' + clickHandler + '">' + charHTML(ch) + reqTxt + '</div>';
   }).join('');
 }
 
 async function selectProfileChar(ch) {
   if (!supaUser) return;
   supaProfile.char = ch;
-  document.getElementById('profileAvatar').textContent = ch;
+  document.getElementById('profileAvatar').innerHTML = charHTML(ch);
   renderProfileCharGrid();
-  document.getElementById('lobbyUserChar').textContent = ch;
+  document.getElementById('lobbyUserChar').innerHTML = charHTML(ch);
   myChar = ch;
   renderCharGrid();
   if (socket && roomCode) socket.emit('set-character', { char: ch });
@@ -4060,7 +4097,7 @@ function renderFriendsList() {
     const online = st !== 'offline';
     const inviteBtn = (online && roomCode && !vsAI) ? '<button class="f-btn accept" onclick="inviteFriend(\'' + f.id + '\')">🎮 초대</button>' : '';
     return '<div class="friend-row" oncontextmenu="showFriendCtxMenu(event,\'' + f.id + '\');return false;">' +
-      '<span class="f-char cb-' + (f.cardBorder || 'bronze') + '" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' + f.char + '<span class="f-dot ' + st + '"></span></span>' +
+      '<span class="f-char cb-' + (f.cardBorder || 'bronze') + '" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' + charHTML(f.char) + '<span class="f-dot ' + st + '"></span></span>' +
       '<div class="f-info" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' +
         '<div class="f-name">' + escapeHtml(f.name) + '</div>' +
         '<div class="f-sub">' + (STATUS_LABELS[st] || st) + '</div>' +
@@ -4121,7 +4158,7 @@ function renderFriendReqs() {
   }
   el.innerHTML = _friendReqs.map(function(r) {
     return '<div class="friend-row">' +
-      '<span class="f-char">' + r.char + '</span>' +
+      '<span class="f-char">' + charHTML(r.char) + '</span>' +
       '<div class="f-info"><div class="f-name">' + escapeHtml(r.name) + '</div><div class="f-sub">' + escapeHtml(r.gameId) + '</div></div>' +
       '<button class="f-btn accept" onclick="acceptFriendReq(\'' + r.fid + '\')">✅ 수락</button>' +
       '<button class="f-btn danger" onclick="declineFriendReq(\'' + r.fid + '\')">거절</button>' +
@@ -4249,7 +4286,7 @@ async function renderUserProfileBody(prof) {
   }
 
   body.innerHTML =
-    '<span class="avatar-frame cb-' + (prof.card_border || 'bronze') + '" style="width:76px;height:76px;font-size:38px;margin:0 auto 10px">' + (prof.char || '🐱') + '</span>' +
+    '<span class="avatar-frame cb-' + (prof.card_border || 'bronze') + '" style="width:76px;height:76px;font-size:38px;margin:0 auto 10px">' + charHTML(prof.char || '🐱') + '</span>' +
     '<div style="font-size:18px;font-weight:800">' + escapeHtml(prof.username || prof.game_id || '???') + '</div>' +
     '<div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px">' + escapeHtml(prof.game_id || '') + '</div>' +
     '<div style="font-size:12px;color:' + (st !== 'offline' ? '#69f0ae' : 'rgba(255,255,255,0.4)') + ';margin-top:6px">' + (STATUS_LABELS[st] || st) + '</div>' +
@@ -4308,7 +4345,7 @@ async function openDmDirect(target) {
   // target: { id, name, char }
   const friendId = target.id;
   _dmTarget = target;
-  document.getElementById('dmFriendChar').textContent = target.char || '🐱';
+  document.getElementById('dmFriendChar').innerHTML = charHTML(target.char || '🐱');
   applyAvatarBorder('dmFriendChar', target.cardBorder || 'bronze');
   document.getElementById('dmFriendName').textContent = target.name;
   const st = (_statusMap[friendId] || {}).status || 'offline';
@@ -4772,6 +4809,21 @@ function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+// Turtle uses a custom image instead of an emoji glyph; scales with surrounding font-size via 1em.
+function charHTML(ch) {
+  if (ch === '🐢') return '<img src="/turtle.png" alt="turtle" style="height:1em;width:1em;vertical-align:-0.2em;object-fit:contain;display:inline-block">';
+  return escapeHtml(ch);
+}
+
+// .avatar-emoji keeps a face-overlay span as its 2nd child; swap only the char node.
+function setAvatarEmojiChar(elId, ch) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const overlay = el.querySelector('.face-overlay');
+  el.innerHTML = charHTML(ch);
+  if (overlay) el.appendChild(overlay);
+}
+
 // One-time migration: PVP history is now tracked server-side (Supabase);
 // old locally-stored PVP entries used pre-online nicknames and are stale.
 if (!localStorage.getItem('grHistoryResetV3')) {
@@ -5146,7 +5198,7 @@ function renderCharGrid() {
     const req = CHAR_UNLOCK_REQ[ch];
     const btn = document.createElement('div');
     btn.className = 'char-opt' + (ch === myChar && unlocked ? ' selected' : '') + (unlocked ? '' : ' locked');
-    btn.innerHTML = ch + (req && !unlocked ? `<span class="char-unlock-req">${req}승</span>` : '');
+    btn.innerHTML = charHTML(ch) + (req && !unlocked ? `<span class="char-unlock-req">${req}승</span>` : '');
     btn.onclick = () => {
       if (!unlocked) {
         showConfirmModal({ emoji: ch, title: `${req}승 달성 시 해금!`, sub: `현재 PVP 승리: ${getTotalWins()}승`, acceptLabel: '확인', onAccept: () => {} });
@@ -5280,7 +5332,7 @@ function initSocket() {
     chars[idx] = char;
     const slotIdx = idx;
     const iconEl = document.getElementById('slotIcon' + slotIdx);
-    if (iconEl) iconEl.textContent = char;
+    if (iconEl) iconEl.innerHTML = charHTML(char);
     renderGame();
   });
 
@@ -5412,7 +5464,7 @@ function initSocket() {
     readyBtn.disabled = true;
     // Reset slot display: I'm now slot 0
     document.getElementById('slotName0').textContent = myName + ' (' + t('me') + ')';
-    document.getElementById('slotIcon0').textContent = myChar;
+    document.getElementById('slotIcon0').innerHTML = charHTML(myChar);
     document.getElementById('slot0').className = 'player-slot connected';
     document.getElementById('slotName1').textContent = t('waitingForOpponent');
     document.getElementById('slotIcon1').innerHTML = '<span class="spinner">⏳</span>';
@@ -5515,7 +5567,7 @@ function initSocket() {
           showConfirmModal({
             emoji: ch,
             title: `새 캐릭터 해금!`,
-            sub: `<span style="font-size:28px">${ch}</span><br>캐릭터가 해금됐어요! 로비에서 선택해보세요 🎉`,
+            sub: `<span style="font-size:28px">${charHTML(ch)}</span><br>캐릭터가 해금됐어요! 로비에서 선택해보세요 🎉`,
             acceptLabel: '🎉 확인',
             onAccept: () => renderCharGrid(),
           });
@@ -5839,7 +5891,7 @@ function _renderRoomsList(list) {
     const tt = r.turnTimeSecs === null ? '♾️' : r.turnTimeSecs + '초';
     const gm = r.gameMode === 'oklahoma' ? '오클라호마' : r.gameMode === 'speed' ? '스피드' : '클래식';
     return '<div class="room-browser-row">' +
-      '<span class="avatar-frame" style="width:44px;height:44px;font-size:20px;flex-shrink:0">' + r.char + '</span>' +
+      '<span class="avatar-frame" style="width:44px;height:44px;font-size:20px;flex-shrink:0">' + charHTML(r.char) + '</span>' +
       '<div style="flex:1;min-width:0">' +
         '<div style="font-size:14px;font-weight:700">' + escapeHtml(r.host) + ' 님의 방</div>' +
         '<div style="font-size:11px;color:rgba(255,255,255,0.45)">🎯 ' + ts + ' · ⏱️ ' + tt + ' · 🎮 ' + gm + '</div>' +
@@ -5859,7 +5911,7 @@ function showWaiting(code, isPublic) {
   if (badge) badge.textContent = isPublic === false ? '🔒 비공개방' : '🌐 공개방';
   document.getElementById('slotName0').textContent = myIdx === 0 ? `${myName} (${t('me')})` : names[0];
   document.getElementById('slotName1').textContent = myIdx === 1 ? `${myName} (${t('me')})` : t('waitingForOpponent');
-  document.getElementById('slotIcon0').textContent = myIdx === 0 ? myChar : (chars[0] || CHAR_LIST[0]);
+  document.getElementById('slotIcon0').innerHTML = charHTML(myIdx === 0 ? myChar : (chars[0] || CHAR_LIST[0]));
   applyAvatarBorder('slotIcon0', myIdx === 0 ? myCardBorder : cardBorders[0]);
   document.getElementById('slot0').className = 'player-slot connected';
   document.getElementById('slot1').className = 'player-slot';
@@ -5870,7 +5922,7 @@ function showWaiting(code, isPublic) {
     readyBtn.disabled = true;
   } else {
     // Joiner: show Ready button, enable immediately
-    document.getElementById('slotIcon1').textContent = myChar;
+    document.getElementById('slotIcon1').innerHTML = charHTML(myChar);
     applyAvatarBorder('slotIcon1', myCardBorder);
     readyBtn.textContent = '✅ 준비 완료';
     readyBtn.disabled = false;
@@ -5898,7 +5950,7 @@ function onOpponentJoined(name, char) {
   names[1-myIdx] = name;
   if (char) chars[1-myIdx] = char;
   document.getElementById('slotName' + oppSlotIdx).textContent = name;
-  document.getElementById('slotIcon' + oppSlotIdx).textContent = char || '🐶';
+  document.getElementById('slotIcon' + oppSlotIdx).innerHTML = charHTML(char || '🐶');
   applyAvatarBorder('slotIcon' + oppSlotIdx, cardBorders[1-myIdx]);
   document.getElementById('slotStatus' + oppSlotIdx).textContent = t('connectedLbl');
   document.getElementById('slot' + oppSlotIdx).className = 'player-slot connected';
@@ -6119,8 +6171,8 @@ function renderGame() {
   document.getElementById('oppTurnArrow').textContent = !isMyTurn() ? '▶' : '';
 
   // Avatar bar
-  document.getElementById('myAvatarEmoji').firstChild.textContent = chars[myIdx] || CHAR_LIST[0];
-  document.getElementById('oppAvatarEmoji').firstChild.textContent = chars[1-myIdx] || CHAR_LIST[1];
+  setAvatarEmojiChar('myAvatarEmoji', chars[myIdx] || CHAR_LIST[0]);
+  setAvatarEmojiChar('oppAvatarEmoji', chars[1-myIdx] || CHAR_LIST[1]);
   applyAvatarBorder('myAvatarEmoji', cardBorders[myIdx] || myCardBorder);
   applyAvatarBorder('oppAvatarEmoji', cardBorders[1-myIdx]);
   document.getElementById('myAvatarName').textContent = (names[myIdx] || myName || t('me')) + ` (${t('me')})`;
@@ -6471,7 +6523,7 @@ function updateRevengeProgress() {
 
 // ===== In-game confirm modal =====
 function showConfirmModal({ emoji, title, sub, acceptLabel, declineLabel, onAccept, onDecline }) {
-  document.getElementById('confirmModalEmoji').textContent = emoji || '❓';
+  document.getElementById('confirmModalEmoji').innerHTML = charHTML(emoji || '❓');
   document.getElementById('confirmModalTitle').textContent = title || '';
   document.getElementById('confirmModalSub').innerHTML = sub || '';
   const acceptBtn = document.getElementById('confirmModalAccept');
