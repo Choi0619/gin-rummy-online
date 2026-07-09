@@ -459,7 +459,7 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
    surrounding badge/card container (not playing cards), not just the circle ===== */
 .avatar-frame.cb-green, .badge-char.cb-green, .slot-icon.cb-green, .f-char.cb-green,
 .avatar-card.cb-green, .auth-user-badge.cb-green, .friend-row.cb-green, .dm-header.cb-green
-  { border-color: #4caf50 !important; box-shadow: 0 0 0 3px rgba(76,175,80,0.18), 0 3px 8px rgba(0,0,0,0.35) !important; }
+  { border-color: #00e676 !important; box-shadow: 0 0 8px rgba(0,230,118,0.55) !important; }
 .avatar-frame.cb-bronze, .badge-char.cb-bronze, .slot-icon.cb-bronze, .f-char.cb-bronze,
 .avatar-card.cb-bronze, .auth-user-badge.cb-bronze, .friend-row.cb-bronze, .dm-header.cb-bronze
   { border-color: #cd7f32 !important; box-shadow: 0 0 0 3px rgba(205,127,50,0.2), 0 3px 8px rgba(0,0,0,0.35) !important; }
@@ -511,7 +511,7 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 .avatar-card.cb-w100, .auth-user-badge.cb-w100::after, .friend-row.cb-w100::after, .dm-header.cb-w100::after
   { content: '✦'; position: absolute; bottom: -8px; right: 14px; font-size: 12px; z-index: 2; opacity: 0.85; }
 /* In-game avatar emoji has no built-in border box, so use a non-layout-shifting outline ring instead */
-.avatar-emoji.cb-green      { outline: 2.5px solid #4caf50; outline-offset: 4px; border-radius: 50%; }
+.avatar-emoji.cb-green      { outline: 2.5px solid #00e676; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 8px rgba(0,230,118,0.5); }
 .avatar-emoji.cb-bronze     { outline: 2.5px solid #cd7f32; outline-offset: 4px; border-radius: 50%; }
 .avatar-emoji.cb-silver     { outline: 2.5px solid #c0c0c0; outline-offset: 4px; border-radius: 50%; }
 .avatar-emoji.cb-gold       { outline: 2.5px solid #ffd700; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(255,215,0,0.5); }
@@ -687,12 +687,13 @@ body.theme-aurora .card {
   background: linear-gradient(145deg, #eafcff 0%, #d9f3ff 45%, #c3e9ff 100%);
   border-color: rgba(0,200,180,0.55);
   color: #0a2432;
-  position: relative; overflow: hidden;
+  position: relative;
   box-shadow: 0 2px 10px rgba(0,200,180,0.25);
   animation: auroraBorder 6s linear infinite;
 }
 body.theme-aurora .card:not(.face-down)::before {
   content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  border-radius: inherit; overflow: hidden;
   background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.35) 45%, rgba(180,255,240,0.25) 52%, transparent 68%);
   background-size: 250% 250%;
   mix-blend-mode: soft-light;
@@ -702,6 +703,22 @@ body.theme-aurora .card:not(.face-down)::before {
   0%   { background-position: 120% 0%; }
   50%  { background-position: 0% 100%; }
   100% { background-position: 120% 0%; }
+}
+/* Tiny nebula star-dust baked into the card face, twinkling softly */
+body.theme-aurora .card:not(.face-down) .card-inner::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: -1;
+  background-image:
+    radial-gradient(1.4px 1.4px at 15% 20%, rgba(120,80,255,0.9), transparent),
+    radial-gradient(1.2px 1.2px at 75% 15%, rgba(0,220,190,0.9), transparent),
+    radial-gradient(1.6px 1.6px at 40% 70%, rgba(255,255,255,0.9), transparent),
+    radial-gradient(1.2px 1.2px at 85% 60%, rgba(120,80,255,0.8), transparent),
+    radial-gradient(1.3px 1.3px at 60% 85%, rgba(0,220,190,0.85), transparent),
+    radial-gradient(1.1px 1.1px at 25% 55%, rgba(255,255,255,0.8), transparent);
+  animation: auroraCardTwinkle 3s ease-in-out infinite;
+}
+@keyframes auroraCardTwinkle {
+  0%,100% { opacity: 0.5; }
+  50%      { opacity: 1; }
 }
 /* Soft ambient glow sitting behind each card, independent of the sheen sweep */
 body.theme-aurora .card:not(.face-down) {
@@ -857,23 +874,23 @@ body.theme-aurora .logo-title { animation: auroraText 6s linear infinite; }
   flex-direction: column;
   gap: 10px;
 }
-/* Aurora theme: only the thin border ring cycles color — the card interior
-   stays the normal translucent panel, no wash/tint across the whole card. */
-body.theme-aurora .lobby-card {
-  border-color: transparent;
-  background:
-    linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)) padding-box,
-    conic-gradient(from 0deg, #00e6b8, #7a5cff, #00c8ff, #ff6ec7, #00e6b8) border-box;
-  border: 1.5px solid transparent;
-  animation: nebulaBorderSpin 10s linear infinite, nebulaBorderBreathe 4s ease-in-out infinite;
+/* Aurora theme: the card's own background/border/shadow are untouched (stays the
+   normal translucent panel over the cosmic page background) — a separate ::after
+   ring is the ONLY thing that carries the nebula color, drawn just outside the edge. */
+body.theme-aurora .lobby-card { position: relative; }
+body.theme-aurora .lobby-card::after {
+  content: ''; position: absolute; inset: -2px; border-radius: 24px; z-index: -1;
+  padding: 2px;
+  background: conic-gradient(from 0deg, #00e6b8, #7a5cff, #00c8ff, #ff6ec7, #00e6b8);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: nebulaRingSpin 10s linear infinite, nebulaRingBreathe 4s ease-in-out infinite;
+  pointer-events: none;
 }
-@keyframes nebulaBorderSpin {
-  0%   { background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), conic-gradient(from 0deg, #00e6b8, #7a5cff, #00c8ff, #ff6ec7, #00e6b8); }
-  100% { background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), conic-gradient(from 360deg, #00e6b8, #7a5cff, #00c8ff, #ff6ec7, #00e6b8); }
-}
-@keyframes nebulaBorderBreathe {
-  0%,100% { box-shadow: 0 20px 50px rgba(0,0,0,0.45), 0 0 6px rgba(120,80,255,0.25); }
-  50%      { box-shadow: 0 20px 50px rgba(0,0,0,0.45), 0 0 12px rgba(0,220,180,0.4); }
+@keyframes nebulaRingSpin { to { filter: hue-rotate(360deg); } }
+@keyframes nebulaRingBreathe {
+  0%,100% { opacity: 0.75; }
+  50%      { opacity: 1; }
 }
 .lobby-card h2 { font-size: 18px; margin-bottom: 4px; }
 .lobby-section {
@@ -1862,12 +1879,19 @@ body.theme-aurora .avatar-card.my-turn::after {
 .util-btn:hover { background: rgba(255,255,255,0.18); }
 .util-btn.away-on { background: rgba(255,152,0,0.3); border-color: #ff9800; }
 .util-btn.danger:hover { background: rgba(239,83,80,0.3); border-color: #ef5350; }
-/* Aurora theme: default white-on-dark buttons were low contrast against the deep navy bg */
+/* Aurora theme: default white-on-dark buttons were low contrast against the deep navy bg —
+   give them a solid dark backing panel so text stays readable regardless of the busy backdrop. */
 body.theme-aurora .util-btn {
-  background: rgba(0,220,190,0.12); border-color: rgba(0,220,190,0.4); color: #d0fff5;
+  background: rgba(4,14,20,0.75); border-color: rgba(0,230,190,0.55); color: #d0fff5;
+  box-shadow: 0 0 6px rgba(0,230,190,0.25);
 }
-body.theme-aurora .util-btn:hover { background: rgba(0,220,190,0.24); border-color: rgba(0,255,210,0.6); }
-body.theme-aurora .util-btn.danger { background: rgba(239,83,80,0.16); border-color: rgba(239,83,80,0.5); color: #ffd0ce; }
+body.theme-aurora .util-btn:hover { background: rgba(4,14,20,0.9); border-color: rgba(0,255,210,0.85); box-shadow: 0 0 10px rgba(0,255,210,0.4); }
+body.theme-aurora .util-btn.danger { background: rgba(30,4,4,0.75); border-color: rgba(239,83,80,0.65); color: #ffd0ce; }
+body.theme-aurora .reaction-btn {
+  background: rgba(4,14,20,0.7); border-color: rgba(0,230,190,0.5);
+  box-shadow: 0 0 6px rgba(0,230,190,0.25);
+}
+body.theme-aurora .reaction-btn:hover { background: rgba(4,14,20,0.9); border-color: rgba(0,255,210,0.8); }
 
 /* ===== Chat ===== */
 .chat-toggle-btn {
@@ -3681,7 +3705,7 @@ function hideSettings() { document.getElementById('settingsOverlay').classList.r
 let _collectionSwatchesWired = false;
 // ===== Card border collection =====
 const CARD_BORDERS = [
-  { id: 'green',     name: '그린',     swatch: 'linear-gradient(135deg,#7ed992,#2e7d32)', border:'#4caf50', rarity:1, gem:'', desc: '기본 테두리 · 항상 사용 가능', unlock: () => true },
+  { id: 'green',     name: '그린',     swatch: 'linear-gradient(135deg,#7effc0,#00c060)', border:'#00e676', rarity:1, gem:'', desc: '기본 테두리 · 항상 사용 가능', unlock: () => true },
   { id: 'bronze',    name: '브론즈',   swatch: 'linear-gradient(135deg,#e0a86a,#8a5323)', border:'#cd7f32', rarity:1, gem:'', desc: '항상 사용 가능', unlock: () => true },
   { id: 'silver',    name: '실버',     swatch: 'linear-gradient(135deg,#e8e8e8,#9e9e9e)', border:'#c0c0c0', rarity:1, gem:'', desc: '랭킹 500 RP 달성', unlock: () => myRankPoints() >= 500 },
   { id: 'w5',        name: '스틸',     swatch: 'linear-gradient(135deg,#cfd8dc,#78909c)', border:'#90a4ae', rarity:1, gem:'', desc: 'PVP 5승 달성', unlock: () => getTotalWins() >= 5 },
