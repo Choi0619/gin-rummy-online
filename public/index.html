@@ -2469,7 +2469,6 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <button class="util-btn vs-ai-hide" onclick="requestEnd()" data-i18n="requestEndBtn">🛑 게임 종료 요청</button>
     <button class="util-btn danger" onclick="confirmSurrender()" data-i18n="surrenderBtn">🏳️ 항복</button>
     <button class="util-btn danger" onclick="confirmLeave()" data-i18n="leaveBtn">🚪 나가기</button>
-    <button class="util-btn vs-ai-hide" onclick="toggleSecretMode()" title="비밀 모드 (Ctrl+Shift+H)">🕵️ 비밀 모드</button>
     <button class="util-btn" onclick="showFriendsModal()" title="친구">👥 친구<span id="friendReqBadgeGame" style="display:none;background:#ef5350;color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;margin-left:4px"></span></button>
     <button class="util-btn" onclick="showCollectionModal()" title="컬렉션/테마">🎨</button>
     <button class="util-btn" onclick="showSettings()" title="설정">⚙️</button>
@@ -4198,6 +4197,7 @@ function updateFriendBadge() {
   if (c) { c.style.display = n > 0 ? '' : 'none'; c.textContent = n; }
 }
 
+let _friendsRefreshTimer = null;
 function showFriendsModal() {
   if (!supaUser) {
     showConfirmModal({ emoji: '🔒', title: '로그인이 필요해요', sub: '친구 기능은 로그인 후 사용할 수 있어요.', acceptLabel: '확인', onAccept: () => {} });
@@ -4206,8 +4206,18 @@ function showFriendsModal() {
   document.getElementById('friendsOverlay').classList.add('show');
   switchFriendsTab('list');
   loadFriends().then(() => { renderFriendsList(); renderFriendReqs(); updateFriendBadge(); });
+  // Realtime status pushes can be missed on long-lived connections, so re-fetch
+  // fresh presence while the modal stays open to avoid showing stale online/offline.
+  clearInterval(_friendsRefreshTimer);
+  _friendsRefreshTimer = setInterval(() => {
+    if (!document.getElementById('friendsOverlay').classList.contains('show')) { clearInterval(_friendsRefreshTimer); return; }
+    loadFriends().then(() => { renderFriendsList(); renderFriendReqs(); updateFriendBadge(); });
+  }, 15000);
 }
-function hideFriendsModal() { document.getElementById('friendsOverlay').classList.remove('show'); }
+function hideFriendsModal() {
+  document.getElementById('friendsOverlay').classList.remove('show');
+  clearInterval(_friendsRefreshTimer);
+}
 
 function switchFriendsTab(tab) {
   ['list','req','add'].forEach(tKey => {
@@ -4356,11 +4366,16 @@ function removeFriend(fid) {
 
 async function inviteFriend(friendId) {
   if (!roomCode) return;
-  await supa.from('direct_messages').insert({
+  const { error } = await supa.from('direct_messages').insert({
     sender_id: supaUser.id, receiver_id: friendId,
     content: '🎮 게임 초대: 방 코드 ' + roomCode + ' 로 들어오세요!',
   });
-  showToast('📨 초대를 보냈어요!', 'info');
+  if (error) {
+    showToast('❌ 초대 실패: ' + error.message, 'alert');
+    setTimeout(() => hideToast(), 3000);
+    return;
+  }
+  showToast('📨 초대를 보냈어요! (친구가 오프라인이면 다음 접속 시 확인해요)', 'info');
   setTimeout(() => hideToast(), 2500);
 }
 
