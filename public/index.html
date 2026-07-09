@@ -848,6 +848,23 @@ body.theme-aurora .logo-title { animation: auroraText 6s linear infinite; }
   flex-direction: column;
   gap: 10px;
 }
+/* Aurora theme: the whole lobby card gets a slow-drifting nebula border glow */
+body.theme-aurora .lobby-card {
+  border-color: transparent;
+  background:
+    linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)) padding-box,
+    conic-gradient(from 0deg, #00e6b8, #7a5cff, #00c8ff, #ff6ec7, #00e6b8) border-box;
+  border: 1.5px solid transparent;
+  animation: nebulaBorderSpin 10s linear infinite, nebulaBorderBreathe 4s ease-in-out infinite;
+}
+@keyframes nebulaBorderSpin {
+  0%   { background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), conic-gradient(from 0deg, #00e6b8, #7a5cff, #00c8ff, #ff6ec7, #00e6b8); }
+  100% { background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), conic-gradient(from 360deg, #00e6b8, #7a5cff, #00c8ff, #ff6ec7, #00e6b8); }
+}
+@keyframes nebulaBorderBreathe {
+  0%,100% { box-shadow: 0 20px 50px rgba(0,0,0,0.45), 0 0 22px rgba(120,80,255,0.35); }
+  50%      { box-shadow: 0 20px 50px rgba(0,0,0,0.45), 0 0 40px rgba(0,220,180,0.55); }
+}
 .lobby-card h2 { font-size: 18px; margin-bottom: 4px; }
 .lobby-section {
   display: flex; flex-direction: column; gap: 10px;
@@ -3297,7 +3314,7 @@ function setTheme(theme) {
   document.querySelectorAll('.theme-swatch').forEach(el => el.classList.toggle('selected', el.dataset.theme === theme));
   if (theme === 'pink') startPetals(); else stopPetals();
   if (theme === 'rainbow') startGrass(); else stopGrass();
-  if (theme === 'aurora') { startAuroraStars(); startAuroraSparkleLoop(); } else { stopAuroraStars(); stopAuroraSparkleLoop(); }
+  if (theme === 'aurora') { startAuroraStars(); startAuroraSparkleLoop(); startAuroraShootingStarLoop(); } else { stopAuroraStars(); stopAuroraSparkleLoop(); stopAuroraShootingStarLoop(); }
   updatePetalSection();
   updateGrassSection();
 }
@@ -3343,6 +3360,32 @@ function stopAuroraSparkleLoop() {
   clearTimeout(_auroraSparkleTimer);
   _auroraSparkleTimer = null;
 }
+// One lone shooting star streaking across, much rarer than the sparkle bursts —
+// this is the "가끔씩 별똥별" effect visible on the lobby/waiting screens too.
+let _auroraShootingStarTimer = null;
+function startAuroraShootingStarLoop() {
+  stopAuroraShootingStarLoop();
+  const schedule = () => {
+    _auroraShootingStarTimer = setTimeout(() => {
+      if (document.body.classList.contains('theme-aurora')) spawnAuroraShootingStar();
+      schedule();
+    }, 15000 + Math.random() * 15000);
+  };
+  schedule();
+}
+function stopAuroraShootingStarLoop() {
+  clearTimeout(_auroraShootingStarTimer);
+  _auroraShootingStarTimer = null;
+}
+function spawnAuroraShootingStar() {
+  const m = document.createElement('div');
+  m.className = 'aurora-meteor';
+  const startX = Math.random() * 110 - 10;
+  m.style.cssText = `left:${startX}vw; top:${-100 + Math.random() * 20}px; animation-duration:${1.1 + Math.random() * 0.6}s; opacity:${0.75 + Math.random() * 0.25}`;
+  document.body.appendChild(m);
+  setTimeout(() => m.remove(), 2000);
+}
+
 function spawnAuroraSparkle() {
   const el = document.createElement('div');
   el.className = 'aurora-sparkle';
