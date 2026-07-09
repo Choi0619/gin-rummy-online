@@ -406,7 +406,7 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 .auth-user-badge {
   display: flex; align-items: center; gap: 12px; padding: 9px 16px 9px 9px;
   background: linear-gradient(135deg, rgba(10,10,16,0.55), rgba(10,10,16,0.4));
-  border: 1px solid rgba(255,215,120,0.35);
+  border: 2px solid rgba(255,215,120,0.35);
   box-shadow: 0 6px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
   border-radius: 16px; margin-bottom: 2px; cursor: pointer;
   backdrop-filter: blur(6px);
@@ -454,27 +454,73 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
   box-shadow: 0 0 0 3px rgba(255,215,120,0.12), 0 3px 10px rgba(0,0,0,0.4);
 }
 
-/* ===== Profile border collection — applies to every avatar display, not playing cards ===== */
-.avatar-frame.cb-bronze, .badge-char.cb-bronze, .slot-icon.cb-bronze, .f-char.cb-bronze
+/* ===== Profile border collection — applies to every avatar display AND its
+   surrounding badge/card container (not playing cards), not just the circle ===== */
+.avatar-frame.cb-green, .badge-char.cb-green, .slot-icon.cb-green, .f-char.cb-green,
+.avatar-card.cb-green, .auth-user-badge.cb-green, .friend-row.cb-green, .dm-header.cb-green
+  { border-color: #4caf50 !important; box-shadow: 0 0 0 3px rgba(76,175,80,0.18), 0 3px 8px rgba(0,0,0,0.35) !important; }
+.avatar-frame.cb-bronze, .badge-char.cb-bronze, .slot-icon.cb-bronze, .f-char.cb-bronze,
+.avatar-card.cb-bronze, .auth-user-badge.cb-bronze, .friend-row.cb-bronze, .dm-header.cb-bronze
   { border-color: #cd7f32 !important; box-shadow: 0 0 0 3px rgba(205,127,50,0.2), 0 3px 8px rgba(0,0,0,0.35) !important; }
-.avatar-frame.cb-silver, .badge-char.cb-silver, .slot-icon.cb-silver, .f-char.cb-silver
+.avatar-frame.cb-silver, .badge-char.cb-silver, .slot-icon.cb-silver, .f-char.cb-silver,
+.avatar-card.cb-silver, .auth-user-badge.cb-silver, .friend-row.cb-silver, .dm-header.cb-silver
   { border-color: #c0c0c0 !important; box-shadow: 0 0 0 3px rgba(192,192,192,0.25), 0 3px 8px rgba(0,0,0,0.35) !important; }
-.avatar-frame.cb-gold, .badge-char.cb-gold, .slot-icon.cb-gold, .f-char.cb-gold
-  { border-color: #ffd700 !important; box-shadow: 0 0 10px rgba(255,215,0,0.5) !important; }
-.avatar-frame.cb-platinum, .badge-char.cb-platinum, .slot-icon.cb-platinum, .f-char.cb-platinum
-  { border-color: #c4b5fd !important; box-shadow: 0 0 12px rgba(196,181,253,0.55) !important; }
-.avatar-frame.cb-diamond, .badge-char.cb-diamond, .slot-icon.cb-diamond, .f-char.cb-diamond
-  { border-color: #7dd3fc !important; box-shadow: 0 0 14px rgba(125,211,252,0.6) !important; }
-.avatar-frame.cb-challenger, .badge-char.cb-challenger, .slot-icon.cb-challenger, .f-char.cb-challenger
-  { border-color: #ff8c00 !important; box-shadow: 0 0 16px rgba(255,140,0,0.7) !important; animation: cbChallengerPulse 2s ease-in-out infinite; }
-.avatar-frame.cb-w5, .badge-char.cb-w5, .slot-icon.cb-w5, .f-char.cb-w5
+.avatar-frame.cb-w5, .badge-char.cb-w5, .slot-icon.cb-w5, .f-char.cb-w5,
+.avatar-card.cb-w5, .auth-user-badge.cb-w5, .friend-row.cb-w5, .dm-header.cb-w5
   { border-color: #90a4ae !important; box-shadow: 0 0 10px rgba(144,164,174,0.5) !important; }
-.avatar-frame.cb-w20, .badge-char.cb-w20, .slot-icon.cb-w20, .f-char.cb-w20
+/* --- rarity 2: uncommon, gets a small corner gem on the badge --- */
+.avatar-frame.cb-gold, .badge-char.cb-gold, .slot-icon.cb-gold, .f-char.cb-gold,
+.avatar-card.cb-gold, .auth-user-badge.cb-gold, .friend-row.cb-gold, .dm-header.cb-gold
+  { border-color: #ffd700 !important; box-shadow: 0 0 10px rgba(255,215,0,0.5) !important; }
+.avatar-frame.cb-w20, .badge-char.cb-w20, .slot-icon.cb-w20, .f-char.cb-w20,
+.avatar-card.cb-w20, .auth-user-badge.cb-w20, .friend-row.cb-w20, .dm-header.cb-w20
   { border-color: #2ee879 !important; box-shadow: 0 0 12px rgba(46,232,121,0.55) !important; }
-.avatar-frame.cb-w50, .badge-char.cb-w50, .slot-icon.cb-w50, .f-char.cb-w50
+.avatar-card.cb-gold, .auth-user-badge.cb-gold::before, .friend-row.cb-gold::before, .dm-header.cb-gold::before
+  { content: '⭐'; position: absolute; top: -8px; left: 14px; font-size: 12px; z-index: 2; }
+.avatar-card.cb-w20, .auth-user-badge.cb-w20::before, .friend-row.cb-w20::before, .dm-header.cb-w20::before
+  { content: '🟢'; position: absolute; top: -8px; left: 14px; font-size: 11px; z-index: 2; }
+/* --- rarity 3: rare, gem + brighter glow --- */
+.avatar-frame.cb-platinum, .badge-char.cb-platinum, .slot-icon.cb-platinum, .f-char.cb-platinum,
+.avatar-card.cb-platinum, .auth-user-badge.cb-platinum, .friend-row.cb-platinum, .dm-header.cb-platinum
+  { border-color: #c4b5fd !important; box-shadow: 0 0 12px rgba(196,181,253,0.55) !important; }
+.avatar-frame.cb-diamond, .badge-char.cb-diamond, .slot-icon.cb-diamond, .f-char.cb-diamond,
+.avatar-card.cb-diamond, .auth-user-badge.cb-diamond, .friend-row.cb-diamond, .dm-header.cb-diamond
+  { border-color: #7dd3fc !important; box-shadow: 0 0 14px rgba(125,211,252,0.6) !important; }
+.avatar-frame.cb-w50, .badge-char.cb-w50, .slot-icon.cb-w50, .f-char.cb-w50,
+.avatar-card.cb-w50, .auth-user-badge.cb-w50, .friend-row.cb-w50, .dm-header.cb-w50
   { border-color: #ff3b5c !important; box-shadow: 0 0 14px rgba(255,59,92,0.6) !important; }
-.avatar-frame.cb-w100, .badge-char.cb-w100, .slot-icon.cb-w100, .f-char.cb-w100
+.avatar-card.cb-platinum, .auth-user-badge.cb-platinum::before, .friend-row.cb-platinum::before, .dm-header.cb-platinum::before
+  { content: '💠'; position: absolute; top: -8px; left: 14px; font-size: 13px; z-index: 2; }
+.avatar-card.cb-diamond, .auth-user-badge.cb-diamond::before, .friend-row.cb-diamond::before, .dm-header.cb-diamond::before
+  { content: '💎'; position: absolute; top: -8px; left: 14px; font-size: 13px; z-index: 2; }
+.avatar-card.cb-w50, .auth-user-badge.cb-w50::before, .friend-row.cb-w50::before, .dm-header.cb-w50::before
+  { content: '🔴'; position: absolute; top: -8px; left: 14px; font-size: 12px; z-index: 2; }
+/* --- rarity 4: legendary, gem + corner flourishes + shimmer across the whole badge --- */
+.avatar-frame.cb-challenger, .badge-char.cb-challenger, .slot-icon.cb-challenger, .f-char.cb-challenger,
+.avatar-card.cb-challenger, .auth-user-badge.cb-challenger, .friend-row.cb-challenger, .dm-header.cb-challenger
+  { border-color: #ff8c00 !important; box-shadow: 0 0 16px rgba(255,140,0,0.7) !important; animation: cbChallengerPulse 2s ease-in-out infinite; }
+.avatar-frame.cb-w100, .badge-char.cb-w100, .slot-icon.cb-w100, .f-char.cb-w100,
+.avatar-card.cb-w100, .auth-user-badge.cb-w100, .friend-row.cb-w100, .dm-header.cb-w100
   { border-color: #ffd700 !important; box-shadow: 0 0 18px rgba(255,215,0,0.75) !important; animation: cbLegendShine 2.4s linear infinite; }
+.avatar-card.cb-challenger, .auth-user-badge.cb-challenger::before, .friend-row.cb-challenger::before, .dm-header.cb-challenger::before
+  { content: '🏆'; position: absolute; top: -9px; left: 14px; font-size: 14px; z-index: 2; filter: drop-shadow(0 0 3px rgba(255,140,0,0.8)); }
+.avatar-card.cb-w100, .auth-user-badge.cb-w100::before, .friend-row.cb-w100::before, .dm-header.cb-w100::before
+  { content: '🌟'; position: absolute; top: -9px; left: 14px; font-size: 14px; z-index: 2; filter: drop-shadow(0 0 3px rgba(255,215,0,0.8)); }
+.avatar-card.cb-challenger, .auth-user-badge.cb-challenger::after, .friend-row.cb-challenger::after, .dm-header.cb-challenger::after,
+.avatar-card.cb-w100, .auth-user-badge.cb-w100::after, .friend-row.cb-w100::after, .dm-header.cb-w100::after
+  { content: '✦'; position: absolute; bottom: -8px; right: 14px; font-size: 12px; z-index: 2; opacity: 0.85; }
+/* In-game avatar emoji has no built-in border box, so use a non-layout-shifting outline ring instead */
+.avatar-emoji.cb-green      { outline: 2.5px solid #4caf50; outline-offset: 4px; border-radius: 50%; }
+.avatar-emoji.cb-bronze     { outline: 2.5px solid #cd7f32; outline-offset: 4px; border-radius: 50%; }
+.avatar-emoji.cb-silver     { outline: 2.5px solid #c0c0c0; outline-offset: 4px; border-radius: 50%; }
+.avatar-emoji.cb-gold       { outline: 2.5px solid #ffd700; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+.avatar-emoji.cb-platinum   { outline: 2.5px solid #c4b5fd; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(196,181,253,0.5); }
+.avatar-emoji.cb-diamond    { outline: 2.5px solid #7dd3fc; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(125,211,252,0.55); }
+.avatar-emoji.cb-challenger { outline: 3px solid #ff8c00; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 14px rgba(255,140,0,0.65); animation: cbChallengerPulse 2s ease-in-out infinite; }
+.avatar-emoji.cb-w5         { outline: 2.5px solid #90a4ae; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(144,164,174,0.5); }
+.avatar-emoji.cb-w20        { outline: 2.5px solid #2ee879; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(46,232,121,0.5); }
+.avatar-emoji.cb-w50        { outline: 2.5px solid #ff3b5c; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(255,59,92,0.55); }
+.avatar-emoji.cb-w100       { outline: 3px solid #ffd700; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 14px rgba(255,215,0,0.7); animation: cbLegendShine 2.4s linear infinite; }
 /* In-game avatar emoji has no built-in border box, so use a non-layout-shifting outline ring instead */
 .avatar-emoji.cb-bronze     { outline: 2.5px solid #cd7f32; outline-offset: 4px; border-radius: 50%; }
 .avatar-emoji.cb-silver     { outline: 2.5px solid #c0c0c0; outline-offset: 4px; border-radius: 50%; }
@@ -1451,6 +1497,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .friend-row {
   display: flex; align-items: center; gap: 10px; padding: 10px 12px;
   background: rgba(255,255,255,0.04); border-radius: 12px; margin-bottom: 6px;
+  border: 2px solid transparent; position: relative;
 }
 .friend-row .f-char {
   font-size: 20px; position: relative; flex-shrink: 0;
@@ -1489,8 +1536,9 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .history-row[onclick]:hover { background: rgba(255,215,120,0.08) !important; }
 .dm-box { border: 1px solid rgba(105,240,174,0.25); background: linear-gradient(165deg, #16321f, #0a1c11); }
 .dm-header {
-  display: flex; align-items: center; gap: 10px; padding-bottom: 10px; margin-bottom: 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin-bottom: 6px;
+  border: 2px solid transparent; border-radius: 12px; position: relative;
+  background: rgba(255,255,255,0.03);
 }
 .dm-bubble {
   max-width: 78%; padding: 9px 13px; border-radius: 16px; font-size: 13.5px; line-height: 1.5;
@@ -2297,7 +2345,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 <div class="overlay" id="dmOverlay">
   <div class="howto-box dm-box" style="max-width:400px;height:74vh;display:flex;flex-direction:column">
     <button class="howto-close" onclick="hideDmModal()">✕</button>
-    <div class="dm-header">
+    <div class="dm-header" id="dmHeaderBox">
       <span class="avatar-frame" id="dmFriendChar" style="width:36px;height:36px;font-size:18px">🐱</span>
       <div>
         <div id="dmFriendName" style="font-weight:800;font-size:15px"></div>
@@ -3428,6 +3476,7 @@ function hideSettings() { document.getElementById('settingsOverlay').classList.r
 let _collectionSwatchesWired = false;
 // ===== Card border collection =====
 const CARD_BORDERS = [
+  { id: 'green',     name: '그린',     swatch: 'linear-gradient(135deg,#7ed992,#2e7d32)', border:'#4caf50', rarity:1, gem:'', desc: '기본 테두리 · 항상 사용 가능', unlock: () => true },
   { id: 'bronze',    name: '브론즈',   swatch: 'linear-gradient(135deg,#e0a86a,#8a5323)', border:'#cd7f32', rarity:1, gem:'', desc: '항상 사용 가능', unlock: () => true },
   { id: 'silver',    name: '실버',     swatch: 'linear-gradient(135deg,#e8e8e8,#9e9e9e)', border:'#c0c0c0', rarity:1, gem:'', desc: '랭킹 500 RP 달성', unlock: () => myRankPoints() >= 500 },
   { id: 'w5',        name: '스틸',     swatch: 'linear-gradient(135deg,#cfd8dc,#78909c)', border:'#90a4ae', rarity:1, gem:'', desc: 'PVP 5승 달성', unlock: () => getTotalWins() >= 5 },
@@ -3439,7 +3488,7 @@ const CARD_BORDERS = [
   { id: 'challenger',name: '챌린저',   swatch: 'linear-gradient(135deg,#ffcf7a,#e0700a)', border:'#ff8c00', rarity:4, gem:'🏆', desc: '랭킹 6000 RP 달성', unlock: () => myRankPoints() >= 6000 },
   { id: 'w100',      name: '레전드',   swatch: 'linear-gradient(135deg,#3a2f0a,#0c0a02)', border:'#ffd700', rarity:4, gem:'🌟', desc: 'PVP 100승 달성', unlock: () => getTotalWins() >= 100 },
 ];
-let myCardBorder = localStorage.getItem('grCardBorder') || 'bronze';
+let myCardBorder = localStorage.getItem('grCardBorder') || 'green';
 
 function renderBorderGrid() {
   const grid = document.getElementById('borderGrid');
@@ -3478,11 +3527,13 @@ function selectCardBorder(id) {
   localStorage.setItem('grCardBorder', id);
   if (supaUser) supa.from('profiles').update({ card_border: id }).eq('id', supaUser.id).then(() => {});
   applyAvatarBorder('lobbyUserChar', id);
+  applyAvatarBorder('lobbyUserBadge', id);
   applyAvatarBorder('profileAvatar', id);
   if (typeof socket !== 'undefined' && socket && roomCode) {
     cardBorders[myIdx] = id;
     socket.emit('set-card-border', { border: id });
     applyAvatarBorder('myAvatarEmoji', id);
+    applyAvatarBorder('myAvatarCard', id);
   }
   renderBorderGrid();
   const desc = document.getElementById('borderDesc');
@@ -3777,7 +3828,7 @@ async function loadProfile() {
   document.getElementById('myName').value = savedNick;
   myName = savedNick;
   myChar = data.char || myChar;
-  myCardBorder = data.card_border || 'bronze';
+  myCardBorder = data.card_border || 'green';
   renderCharGrid();
   localStorage.setItem(RANK_KEY, String(data.rank_points));
   renderLobbyRank();
@@ -3786,6 +3837,7 @@ async function loadProfile() {
   const tierInfo = getTierInfo(rp);
   document.getElementById('lobbyUserChar').innerHTML = charHTML(data.char || myChar);
   applyAvatarBorder('lobbyUserChar', myCardBorder);
+  applyAvatarBorder('lobbyUserBadge', myCardBorder);
   document.getElementById('lobbyUserName').textContent = savedNick;
   document.getElementById('lobbyUserIdText').textContent = gameId;
   document.getElementById('lobbyUserRP').textContent = `${tierInfo.emoji} ${rp} RP`;
@@ -4128,11 +4180,11 @@ async function loadFriends() {
   _friends = accepted.map(r => {
     const oid = r.requester_id === supaUser.id ? r.receiver_id : r.requester_id;
     const p = profMap[oid] || {};
-    return { fid: r.id, id: oid, name: p.username || p.game_id || '???', gameId: p.game_id || '', char: p.char || '🐱', cardBorder: p.card_border || 'bronze' };
+    return { fid: r.id, id: oid, name: p.username || p.game_id || '???', gameId: p.game_id || '', char: p.char || '🐱', cardBorder: p.card_border || 'green' };
   });
   _friendReqs = incoming.map(r => {
     const p = profMap[r.requester_id] || {};
-    return { fid: r.id, id: r.requester_id, name: p.username || p.game_id || '???', gameId: p.game_id || '', char: p.char || '🐱', cardBorder: p.card_border || 'bronze' };
+    return { fid: r.id, id: r.requester_id, name: p.username || p.game_id || '???', gameId: p.game_id || '', char: p.char || '🐱', cardBorder: p.card_border || 'green' };
   });
 }
 
@@ -4185,8 +4237,8 @@ function renderFriendsList() {
     const msg = (_statusMap[f.id] || {}).status_msg || '';
     const online = st !== 'offline';
     const inviteBtn = (online && roomCode && !vsAI) ? '<button class="f-btn accept" onclick="inviteFriend(\'' + f.id + '\')">🎮 초대</button>' : '';
-    return '<div class="friend-row" oncontextmenu="showFriendCtxMenu(event,\'' + f.id + '\');return false;">' +
-      '<span class="f-char cb-' + (f.cardBorder || 'bronze') + '" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' + charHTML(f.char) + '<span class="f-dot ' + st + '"></span></span>' +
+    return '<div class="friend-row cb-' + (f.cardBorder || 'green') + '" oncontextmenu="showFriendCtxMenu(event,\'' + f.id + '\');return false;">' +
+      '<span class="f-char cb-' + (f.cardBorder || 'green') + '" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' + charHTML(f.char) + '<span class="f-dot ' + st + '"></span></span>' +
       '<div class="f-info" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' +
         '<div class="f-name">' + escapeHtml(f.name) + '</div>' +
         '<div class="f-sub">' + (STATUS_LABELS[st] || st) + '</div>' +
@@ -4363,7 +4415,7 @@ async function renderUserProfileBody(prof) {
       .or('and(requester_id.eq.' + supaUser.id + ',receiver_id.eq.' + prof.id + '),and(requester_id.eq.' + prof.id + ',receiver_id.eq.' + supaUser.id + ')')
       .maybeSingle();
     if (rel && rel.status === 'accepted') {
-      _profileDmTarget = { id: prof.id, name: prof.username || prof.game_id, char: prof.char || '🐱', cardBorder: prof.card_border || 'bronze' };
+      _profileDmTarget = { id: prof.id, name: prof.username || prof.game_id, char: prof.char || '🐱', cardBorder: prof.card_border || 'green' };
       actionHtml = '<button class="btn btn-primary" onclick="openDmFromProfile()">💬 메시지 보내기</button>';
     } else if (rel && rel.status === 'pending' && rel.requester_id === supaUser.id) {
       actionHtml = '<button class="btn btn-secondary" disabled>⏳ 친구 요청 대기 중</button>';
@@ -4375,7 +4427,7 @@ async function renderUserProfileBody(prof) {
   }
 
   body.innerHTML =
-    '<span class="avatar-frame cb-' + (prof.card_border || 'bronze') + '" style="width:76px;height:76px;font-size:38px;margin:0 auto 10px">' + charHTML(prof.char || '🐱') + '</span>' +
+    '<span class="avatar-frame cb-' + (prof.card_border || 'green') + '" style="width:76px;height:76px;font-size:38px;margin:0 auto 10px">' + charHTML(prof.char || '🐱') + '</span>' +
     '<div style="font-size:18px;font-weight:800">' + escapeHtml(prof.username || prof.game_id || '???') + '</div>' +
     '<div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px">' + escapeHtml(prof.game_id || '') + '</div>' +
     '<div style="font-size:12px;color:' + (st !== 'offline' ? '#69f0ae' : 'rgba(255,255,255,0.4)') + ';margin-top:6px">' + (STATUS_LABELS[st] || st) + '</div>' +
@@ -4435,7 +4487,8 @@ async function openDmDirect(target) {
   const friendId = target.id;
   _dmTarget = target;
   document.getElementById('dmFriendChar').innerHTML = charHTML(target.char || '🐱');
-  applyAvatarBorder('dmFriendChar', target.cardBorder || 'bronze');
+  applyAvatarBorder('dmFriendChar', target.cardBorder || 'green');
+  applyAvatarBorder('dmHeaderBox', target.cardBorder || 'green');
   document.getElementById('dmFriendName').textContent = target.name;
   const st = effectiveStatus(_statusMap[friendId]);
   document.getElementById('dmFriendStatus').textContent = STATUS_LABELS[st] || st;
@@ -4988,7 +5041,7 @@ let myName = '';
 let names = ['', ''];
 let chars = [CHAR_LIST[0], CHAR_LIST[1]];
 let gameIds = ['', ''];
-let cardBorders = ['bronze', 'bronze'];
+let cardBorders = ['green', 'green'];
 let away = [false, false];
 let scores = [0, 0];
 let sortMode = 'meld';   // 'meld' | 'rank' | 'suit'
@@ -5392,7 +5445,7 @@ function initSocket() {
     names[1-myIdx] = opponentName;
     gameIds[1-myIdx] = opponentGameId || '';
     cardBorders[myIdx] = myCardBorder;
-    cardBorders[1-myIdx] = opponentCardBorder || 'bronze';
+    cardBorders[1-myIdx] = opponentCardBorder || 'green';
     targetScore = (ts === undefined) ? 100 : ts;
     myTurnTimeSecs = (tt === undefined) ? 20 : tt;
     gameMode = gm || 'classic';
@@ -5426,12 +5479,12 @@ function initSocket() {
 
   socket.on('opponent-joined', ({ name, char, gameId, cardBorder }) => {
     gameIds[1-myIdx] = gameId || '';
-    cardBorders[1-myIdx] = cardBorder || 'bronze';
+    cardBorders[1-myIdx] = cardBorder || 'green';
     onOpponentJoined(name, char);
   });
 
   socket.on('card-border-update', ({ idx, border }) => {
-    cardBorders[idx] = border || 'bronze';
+    cardBorders[idx] = border || 'green';
     renderGame();
   });
 
@@ -6282,6 +6335,8 @@ function renderGame() {
   setAvatarEmojiChar('oppAvatarEmoji', chars[1-myIdx] || CHAR_LIST[1]);
   applyAvatarBorder('myAvatarEmoji', cardBorders[myIdx] || myCardBorder);
   applyAvatarBorder('oppAvatarEmoji', cardBorders[1-myIdx]);
+  applyAvatarBorder('myAvatarCard', cardBorders[myIdx] || myCardBorder);
+  applyAvatarBorder('oppAvatarCard', cardBorders[1-myIdx]);
   document.getElementById('myAvatarName').textContent = (names[myIdx] || myName || t('me')) + ` (${t('me')})`;
   document.getElementById('oppAvatarName').textContent = oppName();
   document.getElementById('myAvatarCard').classList.toggle('my-turn', isMyTurn());

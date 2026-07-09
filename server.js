@@ -171,7 +171,7 @@ io.on('connection', socket => {
       names: [name || '플레이어1', ''],
       chars: [char || '🐱', ''],
       gameIds: [gameId || '', ''],
-      cardBorders: [cardBorder || 'bronze', 'bronze'],
+      cardBorders: [cardBorder || 'green', 'green'],
       away: [false, false],
       aiControlled: [false, false],
       ready: [false, false],
@@ -255,12 +255,12 @@ io.on('connection', socket => {
 
     const oppIdx = 1 - slotIdx;
     if (!room.gameIds) room.gameIds = ['', ''];
-    if (!room.cardBorders) room.cardBorders = ['bronze', 'bronze'];
+    if (!room.cardBorders) room.cardBorders = ['green', 'green'];
     room.players[slotIdx] = socket.id;
     room.names[slotIdx] = name || (slotIdx === 0 ? '플레이어1' : '플레이어2');
     room.chars[slotIdx] = char || (slotIdx === 0 ? '🐱' : '🐶');
     room.gameIds[slotIdx] = gameId || '';
-    room.cardBorders[slotIdx] = cardBorder || 'bronze';
+    room.cardBorders[slotIdx] = cardBorder || 'green';
     socket.join(code);
     socket.data.room = code;
     socket.data.idx = slotIdx;
@@ -270,7 +270,7 @@ io.on('connection', socket => {
       opponentName: room.names[oppIdx] || '',
       opponentChar: room.chars[oppIdx] || '',
       opponentGameId: room.gameIds[oppIdx] || '',
-      opponentCardBorder: room.cardBorders[oppIdx] || 'bronze',
+      opponentCardBorder: room.cardBorders[oppIdx] || 'green',
       targetScore: room.targetScore,
       turnTimeSecs: room.turnTimeSecs, gameMode: room.gameMode, handSize: room.handSize, isPublic: room.isPublic,
     });
@@ -304,8 +304,8 @@ io.on('connection', socket => {
     const room = rooms.get(socket.data.room);
     if (!room) return;
     const idx = socket.data.idx;
-    if (!room.cardBorders) room.cardBorders = ['bronze', 'bronze'];
-    room.cardBorders[idx] = String(border || 'bronze').slice(0, 20);
+    if (!room.cardBorders) room.cardBorders = ['green', 'green'];
+    room.cardBorders[idx] = String(border || 'green').slice(0, 20);
     io.to(room.code).emit('card-border-update', { idx, border: room.cardBorders[idx] });
   });
 
@@ -689,7 +689,7 @@ function startGame(room) {
       names: room.names,
       chars: room.chars,
       gameIds: room.gameIds || ['', ''],
-      cardBorders: room.cardBorders || ['bronze', 'bronze'],
+      cardBorders: room.cardBorders || ['green', 'green'],
       playerIndex: i,
       vsAI: !!room.vsAI,
       isRevenge: !!room.isRevenge,
