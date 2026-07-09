@@ -188,7 +188,7 @@ io.on('connection', socket => {
     socket.data.room = code;
     socket.data.idx = 0;
     const r = rooms.get(code);
-    socket.emit('room-created', { code, playerIndex: 0, targetScore: r.targetScore, isPublic: r.isPublic });
+    socket.emit('room-created', { code, playerIndex: 0, targetScore: r.targetScore, isPublic: r.isPublic, turnTimeSecs: r.turnTimeSecs, gameMode: r.gameMode, handSize: r.handSize });
   });
 
   socket.on('create-ai-room', ({ name, char, targetScore, turnTimeSecs, aiDifficulty, gameMode, handSize }) => {
@@ -268,6 +268,7 @@ io.on('connection', socket => {
       opponentChar: room.chars[oppIdx] || '',
       opponentGameId: room.gameIds[oppIdx] || '',
       targetScore: room.targetScore,
+      turnTimeSecs: room.turnTimeSecs, gameMode: room.gameMode, handSize: room.handSize, isPublic: room.isPublic,
     });
     emitToPlayer(room, oppIdx, 'opponent-joined', { name: room.names[slotIdx], char: room.chars[slotIdx], gameId: room.gameIds[slotIdx] });
 
@@ -486,6 +487,24 @@ io.on('connection', socket => {
     if (room.ready[0] && room.ready[1]) startGame(room);
   });
 
+  socket.on('update-room-settings', ({ targetScore, turnTimeSecs, gameMode, handSize, isPublic }) => {
+    const room = rooms.get(socket.data.room);
+    if (!room || room.vsAI || room.game) return;
+    if (socket.data.idx !== 0) return; // host only
+    room.targetScore = normalizeTargetScore(targetScore);
+    room.turnTimeSecs = normalizeTurnTime(turnTimeSecs !== undefined ? turnTimeSecs : 20);
+    room.gameMode = normalizeGameMode(gameMode);
+    room.handSize = normalizeHandSize(handSize);
+    if (isPublic !== undefined) room.isPublic = isPublic !== false;
+    const anyoneWasReady = room.ready[0] || room.ready[1];
+    room.ready = [false, false];
+    io.to(room.code).emit('room-settings-updated', {
+      targetScore: room.targetScore, turnTimeSecs: room.turnTimeSecs,
+      gameMode: room.gameMode, handSize: room.handSize, isPublic: room.isPublic,
+      resetReady: anyoneWasReady,
+    });
+  });
+
   socket.on('action', ({ type, cardId }) => {
     const room = rooms.get(socket.data.room);
     if (!room || !room.game || room.game.over) return;
@@ -496,6 +515,7 @@ io.on('connection', socket => {
     }
   });
 
+  // (room_code presence tracking now lives client-side via Supabase user_status)
   socket.on('list-rooms', () => {
     const list = [];
     for (const room of rooms.values()) {

@@ -119,11 +119,16 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
 .btn-settings:hover { background: rgba(255,255,255,0.2); transform: rotate(45deg); }
 
 /* ===== Collection: card border picker ===== */
-.border-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px 8px; margin-top: 8px; }
+.border-grid {
+  display: flex; gap: 12px; margin-top: 10px; padding: 4px 4px 20px;
+  overflow-x: auto; overflow-y: visible; scroll-snap-type: x proximity;
+}
+.border-grid::-webkit-scrollbar { height: 5px; }
+.border-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 .border-opt {
-  position: relative; width: 100%; aspect-ratio: 0.86; border-radius: 8px; cursor: pointer;
+  position: relative; width: 56px; height: 72px; flex: 0 0 auto; border-radius: 8px; cursor: pointer;
   background: #17321f; display: flex; align-items: center; justify-content: center;
-  transition: transform 0.15s; overflow: visible;
+  transition: transform 0.15s; overflow: visible; scroll-snap-align: start;
 }
 .border-opt:hover { transform: translateY(-2px); }
 .border-opt.selected { outline: 3px solid #fff; outline-offset: 2px; }
@@ -1366,6 +1371,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .friend-row .f-info { flex: 1; min-width: 0; }
 .friend-row .f-name { font-size: 14px; font-weight: 700; }
 .friend-row .f-sub { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.friend-row .f-status-msg { font-size: 10.5px; color: #ffd76a; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 .f-btn {
   background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff;
   border-radius: 9px; padding: 6px 10px; font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
@@ -1381,13 +1387,26 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .room-browser-row:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,215,120,0.3); }
 .history-row { transition: background 0.15s; }
 .history-row[onclick]:hover { background: rgba(255,215,120,0.08) !important; }
-.dm-bubble {
-  max-width: 78%; padding: 8px 12px; border-radius: 14px; font-size: 13px; line-height: 1.45;
-  word-break: break-word;
+.dm-box { border: 1px solid rgba(105,240,174,0.25); background: linear-gradient(165deg, #16321f, #0a1c11); }
+.dm-header {
+  display: flex; align-items: center; gap: 10px; padding-bottom: 10px; margin-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-.dm-bubble.mine { align-self: flex-end; background: rgba(105,240,174,0.16); border: 1px solid rgba(105,240,174,0.2); }
-.dm-bubble.theirs { align-self: flex-start; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); }
+.dm-bubble {
+  max-width: 78%; padding: 9px 13px; border-radius: 16px; font-size: 13.5px; line-height: 1.5;
+  word-break: break-word; box-shadow: 0 2px 8px rgba(0,0,0,0.15); animation: dmBubbleIn 0.18s ease-out;
+}
+@keyframes dmBubbleIn { from { opacity:0; transform: translateY(4px) scale(0.97); } to { opacity:1; transform: translateY(0) scale(1); } }
+.dm-bubble.mine { align-self: flex-end; background: linear-gradient(135deg, rgba(105,240,174,0.28), rgba(105,240,174,0.14)); border: 1px solid rgba(105,240,174,0.3); border-bottom-right-radius: 4px; }
+.dm-bubble.theirs { align-self: flex-start; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-bottom-left-radius: 4px; }
+.dm-bubble.emoji-only { background: none; border: none; box-shadow: none; font-size: 30px; padding: 2px 4px; }
 .dm-time { font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+.dm-emoji-bar { display: flex; gap: 4px; overflow-x: auto; padding: 2px 0; }
+.dm-emoji-bar button {
+  flex-shrink: 0; font-size: 19px; background: rgba(255,255,255,0.06); border: none; border-radius: 8px;
+  padding: 4px 7px; cursor: pointer; transition: transform 0.12s, background 0.12s;
+}
+.dm-emoji-bar button:hover { background: rgba(255,255,255,0.14); transform: scale(1.15); }
 
 .deal-card-anim {
   position: fixed; z-index: 500; pointer-events: none;
@@ -1479,6 +1498,39 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .avatar-name { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .avatar-turn-lbl { font-size: 10px; color: #69f0ae; font-weight: bold; display: none; white-space: nowrap; }
 .avatar-card.my-turn .avatar-turn-lbl { display: block; }
+.avatar-card.hoverable { cursor: pointer; overflow: hidden; }
+.avatar-hover-hint {
+  position: absolute; inset: 0; border-radius: 12px;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(1px);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #ffd76a;
+  opacity: 0; transition: opacity 0.15s; pointer-events: none;
+}
+.avatar-card.hoverable:hover .avatar-hover-hint { opacity: 1; }
+.dm-toast {
+  display: none; position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+  z-index: 900; background: linear-gradient(135deg, #1c2b1f, #0f1b12);
+  border: 1px solid rgba(105,240,174,0.4); border-radius: 14px;
+  padding: 10px 16px; max-width: 320px; cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: dmToastIn 0.25s ease-out;
+}
+.dm-toast.show { display: block; }
+@keyframes dmToastIn { from { opacity:0; transform: translateX(-50%) translateY(-12px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+.dm-toast .dm-toast-name { font-size: 12px; font-weight: 700; color: #69f0ae; margin-bottom: 2px; }
+.dm-toast .dm-toast-body { font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ctx-menu {
+  display: none; position: fixed; z-index: 1500; min-width: 180px;
+  background: linear-gradient(160deg, #1d3d26, #0f2417); border: 1px solid rgba(255,215,120,0.3);
+  border-radius: 12px; padding: 6px; box-shadow: 0 12px 34px rgba(0,0,0,0.55);
+}
+.ctx-menu.show { display: block; animation: fadeIn 0.12s ease-out; }
+.ctx-menu-item {
+  display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 8px;
+  font-size: 13px; color: #fff; cursor: pointer; white-space: nowrap;
+}
+.ctx-menu-item:hover { background: rgba(255,255,255,0.1); }
+.ctx-menu-item.disabled { opacity: 0.4; cursor: not-allowed; }
+.ctx-menu-sep { height: 1px; background: rgba(255,255,255,0.08); margin: 4px 2px; }
 .status-pill {
   display: none; font-size: 10px; background: rgba(255,152,0,0.25); color: #ffb74d;
   padding: 1px 7px; border-radius: 8px; margin-top: 2px; width: fit-content; white-space: nowrap;
@@ -2047,11 +2099,18 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
   <!-- 친구 DM 채팅 -->
   <div class="overlay" id="dmOverlay">
-    <div class="howto-box" style="max-width:400px;height:70vh;display:flex;flex-direction:column">
+    <div class="howto-box dm-box" style="max-width:400px;height:74vh;display:flex;flex-direction:column">
       <button class="howto-close" onclick="hideDmModal()">✕</button>
-      <div class="howto-title" style="margin-bottom:8px"><span id="dmFriendChar">🐱</span> <span id="dmFriendName"></span></div>
+      <div class="dm-header">
+        <span class="avatar-frame" id="dmFriendChar" style="width:36px;height:36px;font-size:18px">🐱</span>
+        <div>
+          <div id="dmFriendName" style="font-weight:800;font-size:15px"></div>
+          <div id="dmFriendStatus" style="font-size:11px;color:rgba(255,255,255,0.4)"></div>
+        </div>
+      </div>
       <div id="dmMessages" style="flex:1;overflow-y:auto;padding:8px 4px;display:flex;flex-direction:column;gap:6px"></div>
-      <div style="display:flex;gap:8px;margin-top:10px">
+      <div class="dm-emoji-bar" id="dmEmojiBar"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
         <input id="dmInput" type="text" placeholder="메시지 입력..." maxlength="300" style="flex:1;padding:10px 14px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);border-radius:12px;color:#fff;font-size:14px;outline:none" onkeydown="if(event.key==='Enter')sendDm()">
         <button class="btn btn-primary" style="width:auto;padding:10px 16px;margin:0" onclick="sendDm()">전송</button>
       </div>
@@ -2117,6 +2176,14 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       <div id="spectatorCount" style="display:none;margin-top:4px;font-size:12px;color:rgba(255,255,255,0.35)">👁️ 관전자 <span id="spectatorNum">0</span>명</div>
     </div>
 
+    <div id="roomSettingsSummary" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;font-size:11.5px"></div>
+    <div id="roomSettingsHostActions" style="display:none;gap:8px">
+      <button class="btn btn-secondary" style="flex:1;font-size:13px;padding:9px" onclick="openRoomSettingsEdit()">✏️ 설정 변경</button>
+    </div>
+    <div id="roomInviteRow" style="display:none">
+      <button class="btn btn-secondary" style="width:100%;font-size:13px;padding:9px;background:rgba(105,240,174,0.1);border-color:rgba(105,240,174,0.3);color:#69f0ae" onclick="showFriendsModal()">👥 친구 초대하기</button>
+    </div>
+
     <div class="players-status">
       <div class="player-slot connected" id="slot0">
         <div class="slot-icon" id="slotIcon0">🐱</div>
@@ -2161,22 +2228,24 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   <div class="turn-timer-badge" id="turnTimerBadge"></div>
 
   <div class="player-bar">
-    <div class="avatar-card" id="oppAvatarCard" onclick="showOpponentProfile()" style="cursor:pointer">
+    <div class="avatar-card hoverable" id="oppAvatarCard" onclick="showOpponentProfile()">
       <div class="avatar-emoji" id="oppAvatarEmoji">🐶<span class="face-overlay" id="oppFaceOverlay"></span></div>
       <div class="avatar-info">
         <div class="avatar-name" id="oppAvatarName" data-i18n="opponent">상대방</div>
         <div class="avatar-turn-lbl" data-i18n="oppTurnLbl">▶ 상대 턴</div>
         <div class="status-pill" id="oppStatusPill" data-i18n="away">⏸ 자리비움</div>
       </div>
+      <div class="avatar-hover-hint">👤 프로필 보기</div>
     </div>
     <div class="vs-label">VS</div>
-    <div class="avatar-card" id="myAvatarCard">
+    <div class="avatar-card hoverable" id="myAvatarCard" onclick="showProfileModal()">
       <div class="avatar-emoji" id="myAvatarEmoji">🐱<span class="face-overlay" id="myFaceOverlay"></span></div>
       <div class="avatar-info">
         <div class="avatar-name" id="myAvatarName" data-i18n="me">나</div>
         <div class="avatar-turn-lbl" data-i18n="myTurnLbl">▶ 내 턴</div>
         <div class="status-pill" id="myStatusPill" data-i18n="away">⏸ 자리비움</div>
       </div>
+      <div class="avatar-hover-hint">👤 내 프로필</div>
     </div>
   </div>
   <div id="reactionBar" style="display:none;justify-content:center;gap:8px;padding:4px 0">
@@ -2194,6 +2263,8 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <button class="util-btn vs-ai-hide" onclick="requestEnd()" data-i18n="requestEndBtn">🛑 게임 종료 요청</button>
     <button class="util-btn danger" onclick="confirmSurrender()" data-i18n="surrenderBtn">🏳️ 항복</button>
     <button class="util-btn danger" onclick="confirmLeave()" data-i18n="leaveBtn">🚪 나가기</button>
+    <button class="util-btn" onclick="showFriendsModal()" title="친구">👥 친구<span id="friendReqBadgeGame" style="display:none;background:#ef5350;color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;margin-left:4px"></span></button>
+    <button class="util-btn" onclick="showCollectionModal()" title="컬렉션/테마">🎨</button>
     <button class="util-btn" onclick="showSettings()" title="설정">⚙️</button>
   </div>
 
@@ -2265,6 +2336,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <div class="result-emoji" id="resEmoji"></div>
     <div class="result-title" id="resTitle"></div>
     <div class="result-pts" id="resPts"></div>
+    <div id="resRoundRP" style="font-size:12px;text-align:center;margin-top:-4px;margin-bottom:4px"></div>
     <div id="resMelds"></div>
     <div class="score-bar" id="resScoreBar"></div>
     <div class="rematch-row">
@@ -2426,8 +2498,9 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       </div>
       <div class="howto-section" style="margin-bottom:0">
         <h3>🖼️ 카드 테두리</h3>
+        <div style="font-size:10.5px;color:rgba(255,255,255,0.35);margin-bottom:2px">← 옆으로 스와이프해서 더 보기 →</div>
         <div class="border-grid" id="borderGrid"></div>
-        <div id="borderDesc" style="min-height:16px;text-align:center;font-size:12px;color:rgba(255,255,255,0.5);margin-top:8px"></div>
+        <div id="borderDesc" style="min-height:16px;text-align:center;font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px"></div>
       </div>
     </div>
     <button class="btn btn-primary" style="margin-top:14px" onclick="hideCollectionModal()">확인했어요!</button>
@@ -2436,6 +2509,12 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 
 <!-- ===== TOAST BANNER (요청/대기 상태) ===== -->
 <div class="toast-banner" id="toastBanner"></div>
+
+<!-- ===== DM 알림 토스트 ===== -->
+<div id="dmToast" class="dm-toast" onclick=""></div>
+
+<!-- ===== 친구 우클릭 컨텍스트 메뉴 ===== -->
+<div id="friendCtxMenu" class="ctx-menu"></div>
 
 <!-- ===== CONFETTI LAYER ===== -->
 <div id="confettiLayer"></div>
@@ -2953,7 +3032,10 @@ const GAME_MODE_DESCS = {
   oklahoma: '첫 공개 카드 숫자가 녹 캡을 결정. 전략적!',
 };
 
+let _roomEditMode = false;
+
 function openRoomSettings(mode) {
+  _roomEditMode = false;
   _roomMode = mode;
   _roomDiff = 'normal';
   _roomScore = 100;
@@ -2971,6 +3053,27 @@ function openRoomSettings(mode) {
   _roomPublic = true;
   _renderRoomVisibility();
   document.getElementById('roomVisibilitySection').style.display = mode === 'ai' ? 'none' : '';
+  document.getElementById('roomSettingsOverlay').classList.add('show');
+}
+
+function openRoomSettingsEdit() {
+  if (myIdx !== 0) return; // host only
+  _roomEditMode = true;
+  _roomMode = 'pvp';
+  _roomScore = targetScore;
+  _roomTimer = myTurnTimeSecs;
+  _gameMode = gameMode;
+  _handSize = handSize;
+  _roomPublic = myRoomIsPublic;
+  document.getElementById('roomSettingsTitle').textContent = '✏️ 방 설정 변경';
+  document.getElementById('aiDiffSection').style.display = 'none';
+  document.getElementById('roomConfirmBtn').textContent = '💾 설정 저장';
+  _renderRoomScore();
+  _renderRoomTimer();
+  _renderGameMode();
+  _renderHandSize();
+  _renderRoomVisibility();
+  document.getElementById('roomVisibilitySection').style.display = '';
   document.getElementById('roomSettingsOverlay').classList.add('show');
 }
 
@@ -3062,6 +3165,11 @@ function _renderRoomVisibility() {
 
 function confirmRoomSettings() {
   closeRoomSettings();
+  if (_roomEditMode) {
+    socket.emit('update-room-settings', { targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic });
+    _roomEditMode = false;
+    return;
+  }
   myName = document.getElementById('myName').value.trim() || t('defaultPlayer1');
   if (!socket) initSocket();
   document.getElementById('lobbyError').textContent = '';
@@ -3656,6 +3764,25 @@ async function setMyStatus(status) {
   } catch (e) { /* ignore */ }
 }
 
+async function setRoomPresence(code, isPublic) {
+  if (!supaUser) return;
+  try {
+    await supa.from('user_status').upsert({
+      user_id: supaUser.id, status: 'gaming', room_code: code, room_public: isPublic !== false,
+      last_seen: new Date().toISOString(),
+    });
+  } catch (e) { /* ignore */ }
+}
+
+async function clearRoomPresence() {
+  if (!supaUser) return;
+  try {
+    await supa.from('user_status').upsert({
+      user_id: supaUser.id, status: 'online', room_code: null, last_seen: new Date().toISOString(),
+    });
+  } catch (e) { /* ignore */ }
+}
+
 async function initFriendSystem() {
   if (!supaUser) return;
   await setMyStatus('online');
@@ -3668,7 +3795,7 @@ async function initFriendSystem() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'user_status' }, payload => {
       const row = payload.new;
       if (row && row.user_id) {
-        _statusMap[row.user_id] = { status: row.status, status_msg: row.status_msg || '' };
+        _statusMap[row.user_id] = { status: row.status, status_msg: row.status_msg || '', room_code: row.room_code || null, room_public: row.room_public !== false };
         if (document.getElementById('friendsOverlay').classList.contains('show')) renderFriendsList();
       }
     })
@@ -3683,15 +3810,17 @@ async function initFriendSystem() {
         appendDmBubble(m, false);
         supa.from('direct_messages').update({ read: true }).eq('id', m.id).then(() => {});
       } else {
+        const senderName = (_friends.find(f => f.id === m.sender_id) || {}).name || '친구';
         // Game invite shortcut: auto-show toast for invites
         if (m.content.startsWith('🎮 게임 초대:')) {
           const codeMatch = m.content.match(/[A-Z0-9]{5,6}/);
-          const senderName = (_friends.find(f => f.id === m.sender_id) || {}).name || '친구';
           showConfirmModal({
             emoji: '🎮', title: senderName + ' 님의 게임 초대!',
             sub: m.content, acceptLabel: '🚀 바로 입장',
             onAccept: () => { if (codeMatch) joinRoomByCode(codeMatch[0]); },
           });
+        } else {
+          showDmNotifyToast(senderName, m.content, m.sender_id);
         }
         updateFriendBadge();
       }
@@ -3722,7 +3851,7 @@ async function loadFriends() {
     const { data: profs } = await supa.from('profiles').select('id,game_id,username,char').in('id', otherIds);
     (profs || []).forEach(p => { profMap[p.id] = p; });
     const { data: stats } = await supa.from('user_status').select('*').in('user_id', otherIds);
-    (stats || []).forEach(s => { _statusMap[s.user_id] = { status: s.status, status_msg: s.status_msg || '' }; });
+    (stats || []).forEach(s => { _statusMap[s.user_id] = { status: s.status, status_msg: s.status_msg || '', room_code: s.room_code || null, room_public: s.room_public !== false }; });
   }
 
   _friends = accepted.map(r => {
@@ -3738,9 +3867,11 @@ async function loadFriends() {
 
 function updateFriendBadge() {
   const b = document.getElementById('friendReqBadge');
+  const g = document.getElementById('friendReqBadgeGame');
   const c = document.getElementById('fReqCount');
   const n = _friendReqs.length;
   if (b) { b.style.display = n > 0 ? '' : 'none'; b.textContent = n; }
+  if (g) { g.style.display = n > 0 ? '' : 'none'; g.textContent = n; }
   if (c) { c.style.display = n > 0 ? '' : 'none'; c.textContent = n; }
 }
 
@@ -3783,11 +3914,12 @@ function renderFriendsList() {
     const msg = (_statusMap[f.id] || {}).status_msg || '';
     const online = st !== 'offline';
     const inviteBtn = (online && roomCode && !vsAI) ? '<button class="f-btn accept" onclick="inviteFriend(\'' + f.id + '\')">🎮 초대</button>' : '';
-    return '<div class="friend-row">' +
+    return '<div class="friend-row" oncontextmenu="showFriendCtxMenu(event,\'' + f.id + '\');return false;">' +
       '<span class="f-char" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' + f.char + '<span class="f-dot ' + st + '"></span></span>' +
       '<div class="f-info" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' +
         '<div class="f-name">' + escapeHtml(f.name) + '</div>' +
-        '<div class="f-sub">' + (STATUS_LABELS[st] || st) + (msg ? ' · ' + escapeHtml(msg) : '') + '</div>' +
+        '<div class="f-sub">' + (STATUS_LABELS[st] || st) + '</div>' +
+        (msg ? '<div class="f-status-msg">💬 ' + escapeHtml(msg) + '</div>' : '') +
       '</div>' +
       inviteBtn +
       '<button class="f-btn" onclick="openDm(\'' + f.id + '\')">💬</button>' +
@@ -3795,6 +3927,46 @@ function renderFriendsList() {
     '</div>';
   }).join('');
 }
+
+function showFriendCtxMenu(evt, friendId) {
+  const f = _friends.find(x => x.id === friendId);
+  if (!f) return;
+  const st = _statusMap[friendId] || {};
+  const inGame = st.status === 'gaming' && st.room_code;
+  const items = [];
+  items.push({ label: '👤 프로필 보기', action: () => showUserProfileById(friendId) });
+  items.push({ label: '💬 메시지 보내기', action: () => openDm(friendId) });
+  if (inGame) {
+    items.push({ sep: true });
+    items.push({ label: '👁️ 관전하기', action: () => joinRoomByCode(st.room_code) });
+    items.push({
+      label: st.room_public ? '🤝 같이 하기' : '📨 초대 요청 보내기',
+      action: () => {
+        if (st.room_public) { joinRoomByCode(st.room_code); }
+        else {
+          supa.from('direct_messages').insert({ sender_id: supaUser.id, receiver_id: friendId, content: '🙋 같이 플레이하고 싶어요! 방에 초대해주세요 (' + st.room_code + ')' });
+          showToast('📨 초대 요청을 보냈어요!', 'info');
+          setTimeout(() => hideToast(), 2000);
+        }
+      },
+    });
+  }
+  const menu = document.getElementById('friendCtxMenu');
+  menu.innerHTML = items.map(it => it.sep
+    ? '<div class="ctx-menu-sep"></div>'
+    : '<div class="ctx-menu-item" data-idx="' + items.indexOf(it) + '">' + it.label + '</div>'
+  ).join('');
+  menu.querySelectorAll('.ctx-menu-item').forEach(el => {
+    el.onclick = () => { items[+el.dataset.idx].action(); hideFriendCtxMenu(); };
+  });
+  const x = Math.min(evt.clientX, window.innerWidth - 200);
+  const y = Math.min(evt.clientY, window.innerHeight - (items.length * 40 + 20));
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+  menu.classList.add('show');
+}
+function hideFriendCtxMenu() { document.getElementById('friendCtxMenu').classList.remove('show'); }
+document.addEventListener('click', e => { if (!e.target.closest('#friendCtxMenu')) hideFriendCtxMenu(); });
 
 function renderFriendReqs() {
   const el = document.getElementById('fPanelReq');
@@ -3843,11 +4015,20 @@ async function declineFriendReq(fid) {
   await loadFriends();
   renderFriendReqs(); updateFriendBadge();
 }
-async function removeFriend(fid) {
-  if (!confirm('이 친구를 삭제할까요?')) return;
-  await supa.from('friendships').delete().eq('id', fid);
-  await loadFriends();
-  renderFriendsList();
+function removeFriend(fid) {
+  const f = _friends.find(x => x.fid === fid);
+  showConfirmModal({
+    emoji: '💔',
+    title: '친구를 삭제할까요?',
+    sub: (f ? escapeHtml(f.name) + ' 님을' : '이 친구를') + ' 친구 목록에서 삭제합니다.<br><span style="font-size:12px;color:rgba(255,255,255,0.45)">채팅 기록은 유지되지만 다시 추가하기 전까진 메시지를 보낼 수 없어요.</span>',
+    acceptLabel: '🗑️ 삭제',
+    declineLabel: '취소',
+    onAccept: async () => {
+      await supa.from('friendships').delete().eq('id', fid);
+      await loadFriends();
+      renderFriendsList();
+    },
+  });
 }
 
 async function inviteFriend(friendId) {
@@ -3926,7 +4107,8 @@ async function renderUserProfileBody(prof) {
     '<span class="avatar-frame" style="width:76px;height:76px;font-size:38px;margin:0 auto 10px">' + (prof.char || '🐱') + '</span>' +
     '<div style="font-size:18px;font-weight:800">' + escapeHtml(prof.username || prof.game_id || '???') + '</div>' +
     '<div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px">' + escapeHtml(prof.game_id || '') + '</div>' +
-    '<div style="font-size:12px;color:' + (st !== 'offline' ? '#69f0ae' : 'rgba(255,255,255,0.4)') + ';margin-top:6px">' + (STATUS_LABELS[st] || st) + (statusMsg ? ' · ' + escapeHtml(statusMsg) : '') + '</div>' +
+    '<div style="font-size:12px;color:' + (st !== 'offline' ? '#69f0ae' : 'rgba(255,255,255,0.4)') + ';margin-top:6px">' + (STATUS_LABELS[st] || st) + '</div>' +
+    (statusMsg ? '<div style="font-size:12px;color:#ffd76a;opacity:0.85;margin-top:2px">💬 ' + escapeHtml(statusMsg) + '</div>' : '') +
     '<div style="display:flex;gap:8px;margin:18px 0 4px">' +
       '<div style="flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 4px">' +
         '<div style="font-size:19px;font-weight:700;color:#69f0ae">' + wins + '</div><div style="font-size:10px;color:rgba(255,255,255,0.5)">승리</div></div>' +
@@ -3969,12 +4151,23 @@ async function openDm(friendId) {
   await openDmDirect(f);
 }
 
+const DM_QUICK_EMOJIS = ['👍','😂','😭','😮','😡','❤️','🔥','🎉','🤔','👏','😎','💯','🙏','😴','🥳','🤝'];
+
+function _renderDmEmojiBar() {
+  const bar = document.getElementById('dmEmojiBar');
+  if (!bar || bar.childElementCount) return;
+  bar.innerHTML = DM_QUICK_EMOJIS.map(e => '<button onclick="sendDmEmoji(\'' + e + '\')">' + e + '</button>').join('');
+}
+
 async function openDmDirect(target) {
   // target: { id, name, char }
   const friendId = target.id;
   _dmTarget = target;
   document.getElementById('dmFriendChar').textContent = target.char || '🐱';
   document.getElementById('dmFriendName').textContent = target.name;
+  const st = (_statusMap[friendId] || {}).status || 'offline';
+  document.getElementById('dmFriendStatus').textContent = STATUS_LABELS[st] || st;
+  _renderDmEmojiBar();
   document.getElementById('dmMessages').innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.3);font-size:12px;padding:20px 0">불러오는 중...</div>';
   document.getElementById('dmOverlay').classList.add('show');
 
@@ -3990,13 +4183,24 @@ async function openDmDirect(target) {
 }
 function hideDmModal() { document.getElementById('dmOverlay').classList.remove('show'); _dmTarget = null; }
 
+let _dmToastTimer = null;
+function showDmNotifyToast(senderName, content, senderId) {
+  const el = document.getElementById('dmToast');
+  el.innerHTML = '<div class="dm-toast-name">💬 ' + escapeHtml(senderName) + '</div><div class="dm-toast-body">' + escapeHtml(content) + '</div>';
+  el.onclick = () => { openDm(senderId); el.classList.remove('show'); };
+  el.classList.add('show');
+  clearTimeout(_dmToastTimer);
+  _dmToastTimer = setTimeout(() => el.classList.remove('show'), 4500);
+}
+
 function appendDmBubble(m, mine) {
   const box = document.getElementById('dmMessages');
   const d = new Date(m.created_at);
   const time = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
   const div = document.createElement('div');
-  div.className = 'dm-bubble ' + (mine ? 'mine' : 'theirs');
-  div.innerHTML = escapeHtml(m.content) + '<div class="dm-time">' + time + '</div>';
+  const isEmojiOnly = DM_QUICK_EMOJIS.includes(m.content) || /^(\p{Emoji_Presentation}|\p{Extended_Pictographic}){1,3}$/u.test(m.content);
+  div.className = 'dm-bubble ' + (mine ? 'mine' : 'theirs') + (isEmojiOnly ? ' emoji-only' : '');
+  div.innerHTML = escapeHtml(m.content) + (isEmojiOnly ? '' : '<div class="dm-time">' + time + '</div>');
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 }
@@ -4008,6 +4212,14 @@ async function sendDm() {
   input.value = '';
   const { data, error } = await supa.from('direct_messages')
     .insert({ sender_id: supaUser.id, receiver_id: _dmTarget.id, content: text })
+    .select().single();
+  if (!error && data) appendDmBubble(data, true);
+}
+
+async function sendDmEmoji(emoji) {
+  if (!_dmTarget) return;
+  const { data, error } = await supa.from('direct_messages')
+    .insert({ sender_id: supaUser.id, receiver_id: _dmTarget.id, content: emoji })
     .select().single();
   if (!error && data) appendDmBubble(data, true);
 }
@@ -4043,24 +4255,55 @@ function getCurrentStreak() {
   return streak;
 }
 
-function calcRankDelta(iWon, lastType, turns, iWasKnocker) {
+// Longer matchpoint games (500 vs 100) are a bigger grind → scale RP reward/penalty accordingly.
+function matchPointRPMultiplier(ts) {
+  if (ts === null || ts === undefined) return 1.3; // unlimited: longest possible grind
+  if (ts >= 500) return 1.5;
+  if (ts >= 300) return 1.25;
+  if (ts >= 200) return 1.1;
+  return 1.0; // 100 (default/shortest)
+}
+
+function calcRankDelta(iWon, lastType, turns, iWasKnocker, matchTargetScore) {
+  let delta;
   if (!iWon) {
     // Loss penalties vary by condition
-    if (lastType === 'gin' || lastType === 'big-gin') return -22; // opponent got perfect hand
-    if (lastType === 'undercut') return -20;                      // got outsmarted
-    if (turns < 10) return -10;                                   // very short game, likely unlucky
-    return -15;                                                    // normal knock loss
+    if (lastType === 'gin' || lastType === 'big-gin') delta = -22; // opponent got perfect hand
+    else if (lastType === 'undercut') delta = -20;                 // got outsmarted
+    else if (turns < 10) delta = -10;                              // very short game, likely unlucky
+    else delta = -15;                                              // normal knock loss
+  } else {
+    delta = 20;
+    // Turn bonus: more turns = more points (longer fight = harder win), cap +15
+    delta += Math.min(Math.floor(turns / 4), 15);
+    // Result type bonus
+    if (lastType === 'gin' || lastType === 'big-gin') delta += 10;
+    else if (lastType === 'undercut') delta += 5;
+    // Streak bonus: +5 per consecutive PVP win, cap +25
+    const streak = getCurrentStreak();
+    delta += Math.min(streak * 5, 25);
   }
-  let delta = 20;
-  // Turn bonus: more turns = more points (longer fight = harder win), cap +15
-  delta += Math.min(Math.floor(turns / 4), 15);
-  // Result type bonus
-  if (lastType === 'gin' || lastType === 'big-gin') delta += 10;
-  else if (lastType === 'undercut') delta += 5;
-  // Streak bonus: +5 per consecutive PVP win, cap +25
-  const streak = getCurrentStreak();
-  delta += Math.min(streak * 5, 25);
-  return delta;
+  const mult = matchPointRPMultiplier(matchTargetScore);
+  return Math.round(delta * mult);
+}
+
+async function applyRoundRP(iWonRound) {
+  // iWonRound: true/false, or null for a tied/no-decision round
+  const el = document.getElementById('resRoundRP');
+  if (vsAI || !supaUser || !supaProfile || iWonRound === null) {
+    if (el) el.textContent = '';
+    return;
+  }
+  const delta = iWonRound ? 3 : -2;
+  const newRP = Math.max(0, (supaProfile.rank_points || 0) + delta);
+  const { data } = await supa.from('profiles').update({ rank_points: newRP }).eq('id', supaUser.id).select().single();
+  if (data) supaProfile = data;
+  localStorage.setItem(RANK_KEY, String(newRP));
+  renderLobbyRank();
+  if (el) {
+    el.innerHTML = '<span style="color:' + (delta > 0 ? '#69f0ae' : '#ef5350') + ';font-weight:700">' + (delta > 0 ? '+' : '') + delta + ' RP</span>' +
+      ' <span style="color:rgba(255,255,255,0.35)">이번 라운드</span>';
+  }
 }
 
 function applyRankDelta(delta) {
@@ -4450,6 +4693,8 @@ let targetScore = 100; // null = unlimited
 let gameMode = 'classic'; // 'classic' | 'straight' | 'oklahoma'
 let oklahomaCap = null;   // number when Oklahoma Gin, else null
 let handSize = 10;
+let myTurnTimeSecs = 20;  // null = unlimited turn timer for current room
+let myRoomIsPublic = true;
 let matchTurns = 0;       // discard count this match (for RP calculation)
 let lastRoundType = '';   // resultType of the most recent round
 let lastRoundDetail = null; // { myDW, oppDW, pts, knockerIdx } of the most recent round
@@ -4816,15 +5061,19 @@ function initSocket() {
 
   socket.on('chat-message', appendChatMessage);
 
-  socket.on('room-created', ({ code, playerIndex, targetScore: ts, isPublic: pub }) => {
+  socket.on('room-created', ({ code, playerIndex, targetScore: ts, isPublic: pub, turnTimeSecs: tt, gameMode: gm, handSize: hs }) => {
     myIdx = playerIndex;
     roomCode = code;
     chars[myIdx] = myChar;
     targetScore = (ts === undefined) ? 100 : ts;
+    myTurnTimeSecs = (tt === undefined) ? 20 : tt;
+    gameMode = gm || 'classic';
+    handSize = hs || 10;
+    myRoomIsPublic = pub !== false;
     showWaiting(code, pub !== false);
   });
 
-  socket.on('room-joined', ({ code, playerIndex, opponentName, opponentChar, opponentGameId, targetScore: ts }) => {
+  socket.on('room-joined', ({ code, playerIndex, opponentName, opponentChar, opponentGameId, targetScore: ts, turnTimeSecs: tt, gameMode: gm, handSize: hs, isPublic: pub }) => {
     myIdx = playerIndex;
     roomCode = code;
     chars[myIdx] = myChar;
@@ -4832,9 +5081,26 @@ function initSocket() {
     names[1-myIdx] = opponentName;
     gameIds[1-myIdx] = opponentGameId || '';
     targetScore = (ts === undefined) ? 100 : ts;
-    showWaiting(code);
+    myTurnTimeSecs = (tt === undefined) ? 20 : tt;
+    gameMode = gm || 'classic';
+    handSize = hs || 10;
+    myRoomIsPublic = pub !== false;
+    showWaiting(code, pub !== false);
     // Opponent already in room
     onOpponentJoined(opponentName, opponentChar);
+  });
+
+  socket.on('room-settings-updated', ({ targetScore: ts, turnTimeSecs: tt, gameMode: gm, handSize: hs, isPublic: pub, resetReady }) => {
+    targetScore = ts; myTurnTimeSecs = tt; gameMode = gm; handSize = hs; myRoomIsPublic = pub !== false;
+    document.getElementById('waitingTargetScoreLbl').textContent = formatTargetScore();
+    const badge = document.getElementById('waitingRoomBadge');
+    if (badge) badge.textContent = myRoomIsPublic === false ? '🔒 비공개방' : '🌐 공개방';
+    renderRoomSettingsSummary();
+    if (resetReady) {
+      updateReadyUI([false, false]);
+      showToast('⚙️ 방장이 게임 설정을 변경했습니다. 다시 준비해주세요!', 'alert');
+      setTimeout(() => hideToast(), 3500);
+    }
   });
 
   socket.on('err', msg => {
@@ -5087,7 +5353,7 @@ function initSocket() {
     const rankDeltaEl = document.getElementById('matchEndRankDelta');
     if (!vsAI) {
       const iWon = matchResult === 'win';
-      const delta = calcRankDelta(iWon, lastRoundType, matchTurns);
+      const delta = calcRankDelta(iWon, lastRoundType, matchTurns, undefined, targetScore);
       const { prev, next, delta: actual } = applyRankDelta(delta);
       const tierPrev = getTierInfo(prev);
       const tierNext = getTierInfo(next);
@@ -5422,6 +5688,22 @@ function showWaiting(code, isPublic) {
     readyBtn.textContent = '✅ 준비 완료';
     readyBtn.disabled = false;
   }
+  document.getElementById('roomSettingsHostActions').style.display = (myIdx === 0 && !vsAI) ? 'flex' : 'none';
+  document.getElementById('roomInviteRow').style.display = (supaUser && !vsAI) ? '' : 'none';
+  renderRoomSettingsSummary();
+  if (!vsAI) setRoomPresence(code, isPublic);
+}
+
+function renderRoomSettingsSummary() {
+  const el = document.getElementById('roomSettingsSummary');
+  if (!el || vsAI) return;
+  const chipStyle = 'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 10px;color:rgba(255,255,255,0.65)';
+  const gm = gameMode === 'oklahoma' ? '오클라호마' : gameMode === 'speed' ? '스피드' : '클래식';
+  const tt = myTurnTimeSecs === null ? '♾️ 무제한' : myTurnTimeSecs + '초';
+  el.innerHTML =
+    '<span style="' + chipStyle + '">🖐️ ' + handSize + '장</span>' +
+    '<span style="' + chipStyle + '">⏱️ ' + tt + '</span>' +
+    '<span style="' + chipStyle + '">🎮 ' + gm + '</span>';
 }
 
 function onOpponentJoined(name, char) {
@@ -5469,7 +5751,7 @@ async function copyCode() {
 }
 
 function leaveRoom() {
-  location.reload();
+  clearRoomPresence().finally(() => location.reload());
 }
 
 // ===== Game render =====
@@ -5775,6 +6057,7 @@ function confirmSurrender() {
 function confirmLeave() {
   if (!confirm('정말 나가시겠습니까? 상대방에게 퇴장 알림이 전송되고 방이 종료됩니다.')) return;
   socket.emit('leave-game');
+  clearRoomPresence();
   setTimeout(() => location.reload(), 150);
 }
 
@@ -5830,6 +6113,7 @@ function showResult(data) {
   document.getElementById('resPts').textContent = pts > 0
     ? (iWon ? `+${pts}점` : `${oppName()} +${pts}점`)
     : '점수 변동 없음';
+  applyRoundRP(winnerIdx === -1 ? null : iWon);
 
   // Big win/lose entrance effect
   const isTie = winnerIdx === -1;
