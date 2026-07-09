@@ -132,7 +132,7 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
   transition: transform 0.15s; overflow: visible; scroll-snap-align: start;
 }
 .border-opt:hover { transform: translateY(-2px); }
-.border-opt.selected { outline: 3px solid #fff; outline-offset: 2px; }
+.border-opt.selected { box-shadow: inset 0 0 0 3px #fff, 0 0 8px rgba(255,255,255,0.5); }
 .border-opt.locked { opacity: 0.4; filter: grayscale(0.6); cursor: not-allowed; }
 .border-opt.locked::after {
   content: '🔒'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
