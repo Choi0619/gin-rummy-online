@@ -1638,9 +1638,38 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
   display: flex; align-items: center; gap: 10px;
   transition: all 0.2s; position: relative;
 }
-/* Turn indicator uses outline so it's never overridden by fire animation border */
-.avatar-card.my-turn { outline: 3px solid #69f0ae; outline-offset: -1px; box-shadow: 0 0 18px rgba(105,240,174,0.5); background: rgba(105,240,174,0.08); }
-.avatar-card.my-turn.revenge-fire-intense { outline: 3px solid #69f0ae; outline-offset: -1px; box-shadow: 0 0 18px rgba(105,240,174,0.6); }
+/* Turn indicator is a separate ::after ring layer so it's never hidden behind a
+   profile border skin's own (!important) border-color/box-shadow. */
+.avatar-card.my-turn { background: rgba(105,240,174,0.08); }
+.avatar-card.my-turn::after {
+  content: ''; position: absolute; inset: -4px; border-radius: 18px;
+  border: 3px solid #69f0ae; box-shadow: 0 0 16px rgba(105,240,174,0.6);
+  pointer-events: none; z-index: 6;
+  animation: turnRingPulse 1.3s ease-in-out infinite;
+}
+@keyframes turnRingPulse {
+  0%,100% { opacity: 0.7; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.02); }
+}
+@keyframes turnRingSpin { to { transform: rotate(360deg); } }
+/* Rare themes get a fancier animated turn ring: rotating conic-gradient hue ring */
+body.theme-rainbow .avatar-card.my-turn::after {
+  border: 3px solid transparent;
+  background: conic-gradient(from 0deg, #ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff,#ff4e4e) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  box-shadow: 0 0 20px rgba(180,120,255,0.55);
+  animation: turnRingPulse 1.3s ease-in-out infinite, turnRingSpin 3s linear infinite;
+}
+body.theme-aurora .avatar-card.my-turn::after {
+  border: 3px solid transparent;
+  background: conic-gradient(from 0deg, #00e6b8,#7a5cff,#00c8ff,#00e6b8) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  box-shadow: 0 0 24px rgba(120,80,255,0.6);
+  animation: turnRingPulse 1.6s ease-in-out infinite, turnRingSpin 4s linear infinite reverse;
+}
+.avatar-card.my-turn.revenge-fire-intense::after { border-color: #69f0ae; box-shadow: 0 0 18px rgba(105,240,174,0.6); }
 .avatar-emoji { font-size: 40px; line-height: 1; position: relative; flex-shrink: 0; }
 .avatar-emoji .face-overlay { position: absolute; bottom: -4px; right: -10px; font-size: 17px; }
 .avatar-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
@@ -3411,7 +3440,7 @@ function confirmRoomSettings() {
   document.getElementById('lobbyError').textContent = '';
   if (_roomMode === 'ai') {
     myIdx = 0;
-    socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff, gameMode: _gameMode, handSize: _handSize });
+    socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff, gameMode: _gameMode, handSize: _handSize, cardBorder: myCardBorder });
   } else {
     socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder });
   }

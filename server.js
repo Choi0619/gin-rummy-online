@@ -192,13 +192,14 @@ io.on('connection', socket => {
     socket.emit('room-created', { code, playerIndex: 0, targetScore: r.targetScore, isPublic: r.isPublic, turnTimeSecs: r.turnTimeSecs, gameMode: r.gameMode, handSize: r.handSize });
   });
 
-  socket.on('create-ai-room', ({ name, char, targetScore, turnTimeSecs, aiDifficulty, gameMode, handSize }) => {
+  socket.on('create-ai-room', ({ name, char, targetScore, turnTimeSecs, aiDifficulty, gameMode, handSize, cardBorder }) => {
     const code = makeCode();
     const room = {
       code,
       players: [socket.id],
       names: [name || '플레이어1', 'AI'],
       chars: [char || '🐱', '🤖'],
+      cardBorders: [cardBorder || 'green', 'green'],
       away: [false, false],
       ready: [true, true],
       game: null,
