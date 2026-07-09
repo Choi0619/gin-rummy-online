@@ -487,6 +487,14 @@ io.on('connection', socket => {
     if (room.ready[0] && room.ready[1]) startGame(room);
   });
 
+  socket.on('cancel-ready', () => {
+    const room = rooms.get(socket.data.room);
+    if (!room || room.game) return;
+    const idx = socket.data.idx;
+    room.ready[idx] = false;
+    io.to(room.code).emit('ready-update', { ready: room.ready, names: room.names });
+  });
+
   socket.on('update-room-settings', ({ targetScore, turnTimeSecs, gameMode, handSize, isPublic }) => {
     const room = rooms.get(socket.data.room);
     if (!room || room.vsAI || room.game) return;

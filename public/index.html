@@ -5732,12 +5732,27 @@ function updateReadyUI(ready) {
       slotEl.classList.remove('ready-state');
     }
   });
-  if (ready[myIdx] && myIdx !== 0) document.getElementById('readyBtn').disabled = true;
+  if (myIdx !== 0) {
+    const btn = document.getElementById('readyBtn');
+    btn.disabled = false;
+    btn.textContent = ready[myIdx] ? '❌ 준비 취소' : '✅ 준비 완료';
+  }
 }
 
 function setReady() {
+  // Joiner toggles between ready / cancel-ready; host always just starts.
+  if (myIdx !== 0) {
+    const btn = document.getElementById('readyBtn');
+    const amReady = btn.textContent.includes('취소');
+    if (amReady) {
+      socket.emit('cancel-ready');
+      btn.textContent = '✅ 준비 완료';
+      document.getElementById('slotStatus' + myIdx).textContent = t('waitingDots');
+      return;
+    }
+  }
   socket.emit('set-ready');
-  if (myIdx !== 0) document.getElementById('readyBtn').disabled = true;
+  if (myIdx !== 0) document.getElementById('readyBtn').textContent = '❌ 준비 취소';
   document.getElementById('slotStatus' + myIdx).textContent = t('readyDoneLbl');
 }
 
