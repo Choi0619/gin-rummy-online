@@ -1766,6 +1766,10 @@ body.theme-aurora .avatar-card.my-turn::after {
 .avatar-emoji .face-overlay { position: absolute; bottom: -4px; right: -10px; font-size: 17px; }
 .avatar-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .avatar-name { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.avatar-subline { display: none; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 800; color: rgba(255,255,255,0.48); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.avatar-subline.show { display: flex; }
+.avatar-subline .tier-chip { color: #ffd76a; text-shadow: 0 0 7px rgba(255,215,106,0.28); }
+.avatar-subline .id-chip { color: rgba(190,255,241,0.78); }
 .avatar-turn-lbl { font-size: 10px; color: #69f0ae; font-weight: bold; display: none; white-space: nowrap; }
 .avatar-card.my-turn .avatar-turn-lbl { display: block; }
 .avatar-card.hoverable { cursor: pointer; }
@@ -2148,6 +2152,17 @@ body.theme-aurora .avatar-name {
   color: #f5fffb;
   text-shadow: 0 1px 2px rgba(0,0,0,0.68);
 }
+body.theme-aurora .avatar-subline {
+  margin-top: 1px;
+  color: rgba(211,255,247,0.72);
+}
+body.theme-aurora .avatar-subline .tier-chip {
+  color: #ffdc72;
+  text-shadow: 0 0 10px rgba(255,220,114,0.36);
+}
+body.theme-aurora .avatar-subline .id-chip {
+  color: #9fffe8;
+}
 body.theme-aurora .avatar-turn-lbl {
   color: #96ffe8;
   text-shadow: 0 0 8px rgba(0,255,210,0.35);
@@ -2197,18 +2212,36 @@ body.theme-aurora .util-row {
   padding: 2px 16px 8px;
 }
 body.theme-aurora .util-btn {
-  min-height: 35px;
-  padding: 8px 14px;
+  position: relative;
+  isolation: isolate;
+  min-height: 36px;
+  padding: 8px 15px;
   border-radius: 11px;
   background:
-    linear-gradient(180deg, rgba(16,54,66,0.96), rgba(7,24,36,0.96));
-  border: 1px solid rgba(151,255,236,0.58);
-  color: #f0fffb;
+    linear-gradient(180deg, rgba(24,82,92,0.98), rgba(8,34,48,0.98));
+  border: 1px solid rgba(176,255,241,0.78);
+  color: #ffffff;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 950;
   opacity: 1;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.72);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 5px 14px rgba(0,0,0,0.22), 0 0 12px rgba(0,240,210,0.18);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.86), 0 0 9px rgba(126,255,228,0.28);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 6px 15px rgba(0,0,0,0.28), 0 0 16px rgba(0,240,210,0.26);
+  overflow: hidden;
+}
+body.theme-aurora .util-btn::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 10px;
+  pointer-events: none;
+  background:
+    linear-gradient(110deg, transparent 0 24%, rgba(255,255,255,0.38) 36%, transparent 50%),
+    radial-gradient(1.5px 1.5px at 22% 74%, rgba(255,255,255,0.75), transparent 62%),
+    radial-gradient(1.2px 1.2px at 76% 28%, rgba(143,255,236,0.78), transparent 62%);
+  background-size: 210% 100%, 100% 100%, 100% 100%;
+  opacity: 0.55;
+  animation: auroraButtonGlitter 4.2s ease-in-out infinite;
+  z-index: 0;
 }
 body.theme-aurora .util-btn:hover {
   transform: translateY(-1px);
@@ -2217,14 +2250,18 @@ body.theme-aurora .util-btn:hover {
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), 0 8px 18px rgba(0,0,0,0.26), 0 0 18px rgba(0,255,220,0.28);
 }
 body.theme-aurora .util-btn.danger {
-  background: linear-gradient(180deg, rgba(95,27,45,0.98), rgba(45,12,29,0.98));
-  border-color: rgba(255,151,181,0.72);
-  color: #fff4f7;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 5px 14px rgba(0,0,0,0.24), 0 0 14px rgba(255,74,126,0.22);
+  background: linear-gradient(180deg, rgba(113,31,53,0.99), rgba(58,13,33,0.99));
+  border-color: rgba(255,185,204,0.86);
+  color: #fff8fa;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), 0 6px 15px rgba(0,0,0,0.30), 0 0 18px rgba(255,74,126,0.30);
 }
 body.theme-aurora .util-btn.danger:hover {
-  border-color: rgba(255,205,218,0.95);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.20), 0 8px 18px rgba(0,0,0,0.28), 0 0 20px rgba(255,92,146,0.36);
+  border-color: rgba(255,225,234,0.98);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.24), 0 8px 18px rgba(0,0,0,0.32), 0 0 22px rgba(255,92,146,0.42);
+}
+@keyframes auroraButtonGlitter {
+  0%,100% { background-position: 130% 0, 0 0, 0 0; opacity: 0.45; }
+  48% { background-position: -70% 0, 0 0, 0 0; opacity: 0.82; }
 }
 
 body.theme-aurora .hand-zone,
@@ -3010,6 +3047,7 @@ body.theme-aurora .card.just-drawn {
       <div class="avatar-emoji" id="oppAvatarEmoji">🐶<span class="face-overlay" id="oppFaceOverlay"></span></div>
       <div class="avatar-info">
         <div class="avatar-name" id="oppAvatarName" data-i18n="opponent">상대방</div>
+        <div class="avatar-subline" id="oppAvatarSubline"></div>
         <div class="avatar-turn-lbl" data-i18n="oppTurnLbl">▶ 상대 턴</div>
         <div class="status-pill" id="oppStatusPill" data-i18n="away">⏸ 자리비움</div>
       </div>
@@ -3020,6 +3058,7 @@ body.theme-aurora .card.just-drawn {
       <div class="avatar-emoji" id="myAvatarEmoji">🐱<span class="face-overlay" id="myFaceOverlay"></span></div>
       <div class="avatar-info">
         <div class="avatar-name" id="myAvatarName" data-i18n="me">나</div>
+        <div class="avatar-subline" id="myAvatarSubline"></div>
         <div class="avatar-turn-lbl" data-i18n="myTurnLbl">▶ 내 턴</div>
         <div class="status-pill" id="myStatusPill" data-i18n="away">⏸ 자리비움</div>
       </div>
@@ -7201,6 +7240,35 @@ function statusPillText(idx) {
   return '⏸ 자리비움';
 }
 
+function avatarMetaHtml(idText, rp, isMine, fallback) {
+  const parts = [];
+  if (idText) parts.push('<span class="id-chip">' + escapeHtml(idText) + '</span>');
+  if (isMine) {
+    const pts = Number.isFinite(rp) ? rp : myRankPoints();
+    const tier = getTierInfo(pts);
+    parts.push('<span class="tier-chip">' + tier.emoji + ' ' + pts.toLocaleString() + ' RP</span>');
+  } else if (fallback) {
+    parts.push('<span class="id-chip">' + escapeHtml(fallback) + '</span>');
+  }
+  return parts.join('<span style="opacity:.45">·</span>');
+}
+
+function renderGameAvatarMeta() {
+  const myEl = document.getElementById('myAvatarSubline');
+  const oppEl = document.getElementById('oppAvatarSubline');
+  const myId = (supaProfile && supaProfile.game_id) || gameIds[myIdx] || '';
+  const myRp = supaProfile ? (supaProfile.rank_points || 0) : myRankPoints();
+  if (myEl) {
+    myEl.innerHTML = avatarMetaHtml(myId, myRp, true, '');
+    myEl.classList.toggle('show', !!myEl.innerHTML);
+  }
+  if (oppEl) {
+    const oppId = gameIds[1 - myIdx] || '';
+    oppEl.innerHTML = avatarMetaHtml(oppId, null, false, vsAI ? 'AI opponent' : '');
+    oppEl.classList.toggle('show', !!oppEl.innerHTML);
+  }
+}
+
 function renderGame() {
   // Opponent hand (face down)
   const oppEl = document.getElementById('oppHand');
@@ -7291,6 +7359,7 @@ function renderGame() {
   applyAvatarBorder('oppAvatarCard', cardBorders[1-myIdx]);
   document.getElementById('myAvatarName').textContent = (names[myIdx] || myName || t('me')) + ` (${t('me')})`;
   document.getElementById('oppAvatarName').textContent = oppDisplayName();
+  renderGameAvatarMeta();
   document.getElementById('myAvatarCard').classList.toggle('my-turn', isMyTurn());
   document.getElementById('oppAvatarCard').classList.toggle('my-turn', !isMyTurn());
   const iAmRevenger = isRevenge && revengerIdx === myIdx;
