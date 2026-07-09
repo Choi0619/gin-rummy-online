@@ -163,7 +163,7 @@ function emitToPlayer(room, idx, event, data) {
 io.on('connection', socket => {
   console.log('connect', socket.id);
 
-  socket.on('create-room', ({ name, char, targetScore, turnTimeSecs, gameMode, handSize, isPublic, gameId }) => {
+  socket.on('create-room', ({ name, char, targetScore, turnTimeSecs, gameMode, handSize, isPublic, gameId, cardBorder }) => {
     const code = makeCode();
     rooms.set(code, {
       code,
@@ -171,6 +171,7 @@ io.on('connection', socket => {
       names: [name || '플레이어1', ''],
       chars: [char || '🐱', ''],
       gameIds: [gameId || '', ''],
+      cardBorders: [cardBorder || 'bronze', 'bronze'],
       away: [false, false],
       aiControlled: [false, false],
       ready: [false, false],
@@ -217,7 +218,7 @@ io.on('connection', socket => {
     startGame(room);
   });
 
-  socket.on('join-room', ({ code, name, char, gameId }) => {
+  socket.on('join-room', ({ code, name, char, gameId, cardBorder }) => {
     const room = rooms.get(code.toUpperCase().trim());
     if (!room) { socket.emit('err', '방을 찾을 수 없습니다.'); return; }
 
@@ -254,10 +255,12 @@ io.on('connection', socket => {
 
     const oppIdx = 1 - slotIdx;
     if (!room.gameIds) room.gameIds = ['', ''];
+    if (!room.cardBorders) room.cardBorders = ['bronze', 'bronze'];
     room.players[slotIdx] = socket.id;
     room.names[slotIdx] = name || (slotIdx === 0 ? '플레이어1' : '플레이어2');
     room.chars[slotIdx] = char || (slotIdx === 0 ? '🐱' : '🐶');
     room.gameIds[slotIdx] = gameId || '';
+    room.cardBorders[slotIdx] = cardBorder || 'bronze';
     socket.join(code);
     socket.data.room = code;
     socket.data.idx = slotIdx;
@@ -267,10 +270,11 @@ io.on('connection', socket => {
       opponentName: room.names[oppIdx] || '',
       opponentChar: room.chars[oppIdx] || '',
       opponentGameId: room.gameIds[oppIdx] || '',
+      opponentCardBorder: room.cardBorders[oppIdx] || 'bronze',
       targetScore: room.targetScore,
       turnTimeSecs: room.turnTimeSecs, gameMode: room.gameMode, handSize: room.handSize, isPublic: room.isPublic,
     });
-    emitToPlayer(room, oppIdx, 'opponent-joined', { name: room.names[slotIdx], char: room.chars[slotIdx], gameId: room.gameIds[slotIdx] });
+    emitToPlayer(room, oppIdx, 'opponent-joined', { name: room.names[slotIdx], char: room.chars[slotIdx], gameId: room.gameIds[slotIdx], cardBorder: room.cardBorders[slotIdx] });
 
     // Sync game state if a round is in progress
     if (room.game && !room.game.over) {
@@ -294,6 +298,15 @@ io.on('connection', socket => {
     const idx = socket.data.idx;
     room.chars[idx] = char;
     io.to(room.code).emit('char-update', { idx, char });
+  });
+
+  socket.on('set-card-border', ({ border }) => {
+    const room = rooms.get(socket.data.room);
+    if (!room) return;
+    const idx = socket.data.idx;
+    if (!room.cardBorders) room.cardBorders = ['bronze', 'bronze'];
+    room.cardBorders[idx] = String(border || 'bronze').slice(0, 20);
+    io.to(room.code).emit('card-border-update', { idx, border: room.cardBorders[idx] });
   });
 
   socket.on('chat-message', ({ text }) => {
@@ -667,6 +680,7 @@ function startGame(room) {
       names: room.names,
       chars: room.chars,
       gameIds: room.gameIds || ['', ''],
+      cardBorders: room.cardBorders || ['bronze', 'bronze'],
       playerIndex: i,
       vsAI: !!room.vsAI,
       isRevenge: !!room.isRevenge,
