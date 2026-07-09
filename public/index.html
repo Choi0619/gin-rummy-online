@@ -12,7 +12,14 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { overflow-x: hidden; }
-html { -webkit-overflow-scrolling: touch; }
+html {
+  -webkit-overflow-scrolling: touch;
+  /* Reserve the vertical scrollbar gutter permanently so content near the
+     viewport-height threshold (e.g. Aurora's glow/turn-ring effects) doesn't
+     cause the scrollbar to flicker in/out and shift the layout width. */
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
 
 body {
   font-family: 'Segoe UI', sans-serif;
@@ -1825,10 +1832,10 @@ body.theme-aurora .avatar-card.my-turn::after {
 }
 .disguise-footer-country { font-size: 13px; color: #70757a; }
 .disguise-footer-links { display: flex; gap: 18px; font-size: 13px; color: #70757a; flex-wrap: wrap; }
-.disguise-ai-toggle { cursor: pointer; display: flex; align-items: center; gap: 5px; }
-.disguise-ai-toggle:hover { color: #202124; }
-.disguise-ai-dot { width: 7px; height: 7px; border-radius: 50%; background: #bdc1c6; display: inline-block; transition: background 0.2s; }
-.disguise-ai-dot.on { background: #34A853; box-shadow: 0 0 5px rgba(52,168,83,0.7); }
+.disguise-ai-dot { width: 6px; height: 6px; border-radius: 50%; background: #bdc1c6; display: inline-block; margin-left: 5px; vertical-align: middle; transition: background 0.2s; }
+.disguise-ai-dot.on { background: #34A853; box-shadow: 0 0 5px rgba(52,168,83,0.8); animation: disguiseDotPulse 1.2s ease-in-out infinite; }
+@keyframes disguiseDotPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+#disguiseLuckyBtn.ai-on { background: #e6f4ea; border-color: #34A853; color: #1e7e34; font-weight: 700; }
 .ctx-menu {
   display: none; position: fixed; z-index: 1500; min-width: 180px;
   background: linear-gradient(160deg, #1d3d26, #0f2417); border: 1px solid rgba(255,215,120,0.3);
@@ -2663,6 +2670,52 @@ body.theme-aurora .reaction-btn:hover { background: rgba(4,14,20,0.9); border-co
   </div>
 </div>
 
+<!-- ===== SPECTATOR SCREEN ===== -->
+<div id="spectateScreen" class="screen">
+  <div class="game-header">
+    <div class="title-sm">👁️ 관전 중 <span class="target-score-lbl" id="specTargetScoreLbl"></span></div>
+  </div>
+  <div class="player-bar">
+    <div class="avatar-card" id="spec0Card">
+      <div class="avatar-emoji" id="spec0Emoji">🐱</div>
+      <div class="avatar-info">
+        <div class="avatar-name" id="spec0Name">플레이어1</div>
+        <div style="font-size:13px;font-weight:800;color:#ffd76a" id="spec0Score">0점</div>
+      </div>
+    </div>
+    <div class="vs-label">VS</div>
+    <div class="avatar-card" id="spec1Card">
+      <div class="avatar-emoji" id="spec1Emoji">🐶</div>
+      <div class="avatar-info">
+        <div class="avatar-name" id="spec1Name">플레이어2</div>
+        <div style="font-size:13px;font-weight:800;color:#ffd76a" id="spec1Score">0점</div>
+      </div>
+    </div>
+  </div>
+  <div id="specStatusMsg" style="text-align:center;font-size:13px;color:rgba(255,255,255,0.5);margin:4px 0">불러오는 중...</div>
+  <div class="middle-zone" style="justify-content:center;gap:24px">
+    <div class="pile-group">
+      <div class="deck-pile"><div class="deck-icon">🂠</div><div id="specDeckCount">-</div></div>
+      <div style="font-size:11px;text-align:center;color:rgba(255,255,255,0.4);margin-top:4px">덱</div>
+    </div>
+    <div class="pile-group">
+      <div class="discard-slot" id="specDiscardSlot">비어있음</div>
+      <div style="font-size:11px;text-align:center;color:rgba(255,255,255,0.4);margin-top:4px">버린 패</div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:center;gap:40px;margin-top:16px">
+    <div style="text-align:center">
+      <div style="font-size:11px;color:rgba(255,255,255,0.4)" id="spec0HandLabel">플레이어1 패</div>
+      <div style="font-size:20px;font-weight:800" id="spec0HandCount">-</div>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:11px;color:rgba(255,255,255,0.4)" id="spec1HandLabel">플레이어2 패</div>
+      <div style="font-size:20px;font-weight:800" id="spec1HandCount">-</div>
+    </div>
+  </div>
+  <button class="btn btn-secondary" style="max-width:200px;margin:24px auto 0" onclick="leaveSpectate()">← 관전 종료</button>
+</div>
+
 <!-- ===== RESULT OVERLAY ===== -->
 <div class="overlay" id="resultOverlay">
   <div class="result-box" id="resBox">
@@ -2870,7 +2923,7 @@ body.theme-aurora .reaction-btn:hover { background: rgba(4,14,20,0.9); border-co
     </div>
     <div class="disguise-btn-row">
       <button class="disguise-btn">Google 검색</button>
-      <button class="disguise-btn">I'm Feeling Lucky</button>
+      <button class="disguise-btn" id="disguiseLuckyBtn" onclick="toggleFullAuto()" title="AI 자동 진행">I'm Feeling Lucky <span id="disguiseAiDot" class="disguise-ai-dot"></span></button>
     </div>
     <div class="disguise-lang-row">Google 제공: <span class="disguise-lang-link">한국어</span></div>
   </div>
@@ -2879,7 +2932,7 @@ body.theme-aurora .reaction-btn:hover { background: rgba(4,14,20,0.9); border-co
     <div class="disguise-footer-links">
       <span>정보</span><span>광고</span><span>비즈니스</span><span>검색의 원리</span>
       <span>개인정보처리방침</span><span>약관</span>
-      <span class="disguise-ai-toggle" id="disguiseAiToggle" onclick="event.stopPropagation();toggleFullAuto()" title="설정">설정 <span id="disguiseAiDot" class="disguise-ai-dot"></span></span>
+      <span>설정</span>
     </div>
   </div>
 </div>
@@ -5355,6 +5408,40 @@ let sortMode = 'meld';   // 'meld' | 'rank' | 'suit'
 let lastDrawnId = null;  // id of the card just drawn (for highlight)
 let vsAI = false;
 let myAiDifficulty = 'normal'; // 'easy' | 'normal' | 'hard' — set when creating an AI room
+let isSpectator = false;
+let specState = { names: ['',''], chars: ['🐱','🐶'], scores: [0,0], discardTop: null, deckCount: 0, turn: 0, hand0Count: 0, hand1Count: 0, targetScore: 100 };
+
+function renderSpectateView() {
+  document.getElementById('spec0Name').textContent = specState.names[0] || '플레이어1';
+  document.getElementById('spec1Name').textContent = specState.names[1] || '플레이어2';
+  document.getElementById('spec0Emoji').innerHTML = charHTML(specState.chars[0] || '🐱');
+  document.getElementById('spec1Emoji').innerHTML = charHTML(specState.chars[1] || '🐶');
+  document.getElementById('spec0HandLabel').textContent = (specState.names[0] || '플레이어1') + ' 패';
+  document.getElementById('spec1HandLabel').textContent = (specState.names[1] || '플레이어2') + ' 패';
+  document.getElementById('spec0Score').textContent = (specState.scores[0] ?? 0) + '점';
+  document.getElementById('spec1Score').textContent = (specState.scores[1] ?? 0) + '점';
+  document.getElementById('spec0Card').classList.toggle('my-turn', specState.turn === 0);
+  document.getElementById('spec1Card').classList.toggle('my-turn', specState.turn === 1);
+  document.getElementById('specTargetScoreLbl').textContent = specState.targetScore === null ? '♾️ 무제한' : `🎯 ${specState.targetScore}점 선승`;
+  document.getElementById('specDeckCount').textContent = specState.deckCount + '장';
+  document.getElementById('spec0HandCount').textContent = (specState.hand0Count || 0) + '장';
+  document.getElementById('spec1HandCount').textContent = (specState.hand1Count || 0) + '장';
+  const slot = document.getElementById('specDiscardSlot');
+  slot.innerHTML = '';
+  if (specState.discardTop) {
+    slot.appendChild(makeCard(specState.discardTop, {}));
+  } else {
+    slot.textContent = '비어있음';
+  }
+  const msg = document.getElementById('specStatusMsg');
+  if (msg && msg.textContent === '불러오는 중...') msg.textContent = (specState.turn === 0 ? specState.names[0] : specState.names[1]) + '님의 턴';
+}
+
+function leaveSpectate() {
+  isSpectator = false;
+  clearRoomPresence();
+  location.reload();
+}
 let isRevenge = false;
 let revengerIdx = null;
 let aiControlled = [false, false];
@@ -5952,6 +6039,29 @@ function initSocket() {
     if (gameEl) { gameEl.style.display = count > 0 ? '' : 'none'; if (gameNum) gameNum.textContent = count; }
   });
 
+  socket.on('joined-as-spectator', () => {
+    isSpectator = true;
+    showScreen('spectateScreen');
+    showChatWidget();
+    showToast('👁️ 관전 모드로 입장했습니다', 'info');
+    setTimeout(() => hideToast(), 2000);
+  });
+
+  socket.on('spectate-waiting', ({ names: ns, chars: cs }) => {
+    document.getElementById('spec0Name').textContent = ns[0] || '플레이어1';
+    document.getElementById('spec1Name').textContent = ns[1] || '플레이어2';
+    document.getElementById('spec0Emoji').innerHTML = charHTML(cs[0] || '🐱');
+    document.getElementById('spec1Emoji').innerHTML = charHTML(cs[1] || '🐶');
+    document.getElementById('specStatusMsg').textContent = '⏳ 게임이 곧 시작됩니다...';
+  });
+
+  socket.on('spectate-state', data => {
+    specState.names = data.names; specState.chars = data.chars; specState.scores = data.scores;
+    specState.discardTop = data.discardTop; specState.deckCount = data.deckCount; specState.turn = data.turn;
+    specState.hand0Count = data.hand0Count; specState.hand1Count = data.hand1Count; specState.targetScore = data.targetScore;
+    renderSpectateView();
+  });
+
   socket.on('reaction', ({ emoji, fromIdx }) => {
     const avatarId = fromIdx === myIdx ? 'myAvatarEmoji' : 'oppAvatarEmoji';
     showReactionFloat(emoji, avatarId);
@@ -5992,6 +6102,12 @@ function initSocket() {
   });
 
   socket.on('match-ended', ({ winnerIdx, scores: sc, names: ns, targetReached, wasRevenge, revengeSuccess }) => {
+    if (isSpectator) {
+      specState.scores = sc;
+      renderSpectateView();
+      document.getElementById('specStatusMsg').textContent = '🏁 매치 종료! ' + (winnerIdx === -1 ? '무승부' : (ns[winnerIdx] || '플레이어') + ' 승리');
+      return;
+    }
     hideToast();
     scores = sc;
     document.getElementById('resultOverlay').classList.remove('show');
@@ -6001,6 +6117,8 @@ function initSocket() {
       if (aiControlled[myIdx]) socket.emit('toggle-ai-takeover');
       const dot = document.getElementById('disguiseAiDot');
       if (dot) dot.classList.remove('on');
+      const btn = document.getElementById('disguiseLuckyBtn');
+      if (btn) btn.classList.remove('ai-on');
     }
     // Save to match history
     const matchResult = winnerIdx === -1 ? 'tie' : (winnerIdx === myIdx ? 'win' : 'lose');
@@ -6252,6 +6370,11 @@ function initSocket() {
   });
 
   socket.on('card-discarded', ({ card, byIdx, nextTurn, deckCount: dc }) => {
+    if (isSpectator) {
+      specState.discardTop = card; specState.deckCount = dc; specState.turn = nextTurn;
+      renderSpectateView();
+      return;
+    }
     if (byIdx !== myIdx) {
       oppCardCount--;
     } else {
@@ -6270,6 +6393,13 @@ function initSocket() {
   });
 
   socket.on('round-end', data => {
+    if (isSpectator) {
+      specState.scores = data.scores || specState.scores;
+      renderSpectateView();
+      const winName = data.winnerIdx === -1 ? '무승부' : (specState.names[data.winnerIdx] || '플레이어') + ' 라운드 승';
+      document.getElementById('specStatusMsg').textContent = '🎴 라운드 종료 — ' + winName;
+      return;
+    }
     lastRoundType = data.resultType || '';
     lastRoundDetail = {
       myDW: data.dw ? data.dw[myIdx] : null,
@@ -6819,6 +6949,8 @@ function toggleFullAuto() {
   }
   const dot = document.getElementById('disguiseAiDot');
   if (dot) dot.classList.toggle('on', fullAutoMode);
+  const btn = document.getElementById('disguiseLuckyBtn');
+  if (btn) btn.classList.toggle('ai-on', fullAutoMode);
 }
 
 document.addEventListener('keydown', e => {

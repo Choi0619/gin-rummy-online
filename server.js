@@ -248,7 +248,12 @@ io.on('connection', socket => {
           scores: room.scores,
           names: room.names,
           chars: room.chars,
+          hand0Count: g.hands[0].length,
+          hand1Count: g.hands[1].length,
+          targetScore: room.targetScore,
         });
+      } else {
+        socket.emit('spectate-waiting', { names: room.names, chars: room.chars });
       }
       socket.emit('joined-as-spectator', { specCount });
       return;
