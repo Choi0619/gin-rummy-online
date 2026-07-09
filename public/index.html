@@ -426,6 +426,24 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 .auth-user-badge .badge-rp { font-size: 11px; color: #ffd76a; font-weight: 600; }
 .auth-user-badge .badge-logout { font-size: 11px; color: rgba(255,255,255,0.55); cursor: pointer; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.18); white-space:nowrap; }
 .auth-user-badge .badge-logout:hover { color: #ef5350; border-color: #ef5350; }
+.lobby-status-dot {
+  position: absolute; bottom: 0; right: 0; width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid #12301c; cursor: pointer; z-index: 2;
+  transition: transform 0.15s;
+}
+.lobby-status-dot:hover { transform: scale(1.2); }
+.lobby-status-dot.online { background: #69f0ae; }
+.lobby-status-dot.away { background: #ffb74d; }
+.lobby-status-dot.gaming { background: #7c4dff; }
+.lobby-status-dot.offline { background: #666; }
+.status-menu {
+  display: none; position: absolute; top: 100%; left: 0; margin-top: 6px; z-index: 50;
+  background: linear-gradient(160deg, #1d3d26, #0f2417); border: 1px solid rgba(255,215,120,0.3);
+  border-radius: 10px; padding: 5px; min-width: 130px; box-shadow: 0 10px 26px rgba(0,0,0,0.5);
+}
+.status-menu.show { display: block; }
+.status-menu-item { padding: 8px 10px; border-radius: 7px; font-size: 13px; color: #fff; cursor: pointer; white-space: nowrap; }
+.status-menu-item:hover { background: rgba(255,255,255,0.1); }
 
 /* Reusable medallion frame for character avatars outside the game screen */
 .avatar-frame {
@@ -1483,6 +1501,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .dm-bubble.theirs { align-self: flex-start; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-bottom-left-radius: 4px; }
 .dm-bubble.emoji-only { background: none; border: none; box-shadow: none; font-size: 30px; padding: 2px 4px; }
 .dm-time { font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+.dm-date-sep { align-self: center; font-size: 11px; color: rgba(255,255,255,0.35); margin: 10px 0 4px; }
 .dm-emoji-bar { display: flex; gap: 4px; overflow-x: auto; padding: 2px 0; }
 .dm-emoji-bar button {
   flex-shrink: 0; font-size: 19px; background: rgba(255,255,255,0.06); border: none; border-radius: 8px;
@@ -2136,8 +2155,11 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <button class="btn-howto" onclick="showCollectionModal()" style="background:rgba(180,122,255,0.12);border-color:rgba(180,122,255,0.4);color:#c9a8ff">🎨 컬렉션</button>
     <button class="btn-settings" onclick="showSettings()" title="Settings">⚙️</button>
   </div>
-  <div id="lobbyUserBadge" class="auth-user-badge" style="display:none;max-width:420px;margin:16px auto 4px" onclick="showProfileModal()">
-    <span class="badge-char" id="lobbyUserChar"></span>
+  <div id="lobbyUserBadge" class="auth-user-badge" style="display:none;max-width:420px;margin:16px auto 4px;position:relative" onclick="showProfileModal()">
+    <span style="position:relative;display:inline-flex">
+      <span class="badge-char" id="lobbyUserChar"></span>
+      <span class="lobby-status-dot online" id="lobbyStatusDot" onclick="event.stopPropagation();toggleStatusMenu()"></span>
+    </span>
     <span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
       <span class="badge-name" id="lobbyUserName"></span>
       <span style="display:flex;align-items:center;gap:6px">
@@ -2146,6 +2168,10 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
       </span>
     </span>
     <span class="badge-logout" onclick="event.stopPropagation();doLogout()">로그아웃</span>
+    <div id="statusMenu" class="status-menu" onclick="event.stopPropagation()">
+      <div class="status-menu-item" onclick="chooseStatus('online')">🟢 온라인</div>
+      <div class="status-menu-item" onclick="chooseStatus('away')">🌙 자리비움</div>
+    </div>
   </div>
 
   <img class="logo-img" src="/logo.png" alt="진 러미 온라인" onerror="this.style.display='none';document.querySelector('.logo-fallback').style.display=''">
@@ -3500,6 +3526,7 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 let supaUser = null;   // current auth user
 let supaProfile = null; // current profile row
+let myAccessToken = null; // cached JWT for keepalive-fetch calls that must survive page unload
 
 async function initAuth() {
   // Check if this is a password reset redirect (URL has access_token + type=recovery)
@@ -3518,10 +3545,14 @@ async function initAuth() {
   const { data: { session } } = await supa.auth.getSession();
   if (session) {
     supaUser = session.user;
+    myAccessToken = session.access_token;
     await loadProfile();
   } else {
     showAuthOverlay();
   }
+  supa.auth.onAuthStateChange((event, sess) => {
+    if (sess) myAccessToken = sess.access_token;
+  });
 }
 
 function showPwResetModal() {
@@ -3944,7 +3975,23 @@ async function setMyStatus(status) {
   try {
     await supa.from('user_status').upsert({ user_id: supaUser.id, status, last_seen: new Date().toISOString() });
   } catch (e) { /* ignore */ }
+  const dot = document.getElementById('lobbyStatusDot');
+  if (dot) dot.className = 'lobby-status-dot ' + status;
 }
+
+function toggleStatusMenu() {
+  document.getElementById('statusMenu').classList.toggle('show');
+}
+function chooseStatus(status) {
+  setMyStatus(status);
+  document.getElementById('statusMenu').classList.remove('show');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#statusMenu') && !e.target.closest('#lobbyStatusDot')) {
+    const m = document.getElementById('statusMenu');
+    if (m) m.classList.remove('show');
+  }
+});
 
 async function setRoomPresence(code, isPublic) {
   if (!supaUser) return;
@@ -3977,7 +4024,7 @@ async function initFriendSystem() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'user_status' }, payload => {
       const row = payload.new;
       if (row && row.user_id) {
-        _statusMap[row.user_id] = { status: row.status, status_msg: row.status_msg || '', room_code: row.room_code || null, room_public: row.room_public !== false };
+        _statusMap[row.user_id] = { status: row.status, status_msg: row.status_msg || '', room_code: row.room_code || null, room_public: row.room_public !== false, last_seen: row.last_seen };
         if (document.getElementById('friendsOverlay').classList.contains('show')) renderFriendsList();
       }
     })
@@ -4009,10 +4056,52 @@ async function initFriendSystem() {
     })
     .subscribe();
 
-  window.addEventListener('beforeunload', () => {
-    // best-effort offline marker
-    if (supaUser) navigator.sendBeacon && setMyStatus('offline');
-  });
+  window.addEventListener('pagehide', sendOfflineBeacon);
+  window.addEventListener('beforeunload', sendOfflineBeacon);
+  startHeartbeat();
+}
+
+// Regular supabase-js calls are async and often get cancelled mid-flight when
+// the tab actually closes. A raw keepalive fetch is delivered reliably even
+// after the page starts unloading, so offline status sticks.
+function sendOfflineBeacon() {
+  if (!supaUser || !myAccessToken) return;
+  try {
+    fetch(SUPA_URL + '/rest/v1/user_status?user_id=eq.' + supaUser.id, {
+      method: 'PATCH',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + myAccessToken,
+      },
+      body: JSON.stringify({ status: 'offline', last_seen: new Date().toISOString() }),
+    });
+  } catch (e) { /* ignore */ }
+}
+
+// Periodic last_seen refresh while the tab is open + visible, so a friend's
+// status can be treated as stale (→ effectively offline) if the heartbeat
+// stops arriving — catches crashes/force-closes the unload events miss.
+let _heartbeatTimer = null;
+function startHeartbeat() {
+  clearInterval(_heartbeatTimer);
+  _heartbeatTimer = setInterval(() => {
+    if (supaUser && !document.hidden) {
+      supa.from('user_status').update({ last_seen: new Date().toISOString() }).eq('user_id', supaUser.id).then(() => {});
+    }
+  }, 25000);
+}
+
+// A status is only trustworthy if it was refreshed recently; otherwise treat as offline.
+function effectiveStatus(entry) {
+  if (!entry) return 'offline';
+  if (entry.status === 'offline') return 'offline';
+  if (entry.last_seen) {
+    const age = Date.now() - new Date(entry.last_seen).getTime();
+    if (age > 90000) return 'offline';
+  }
+  return entry.status;
 }
 
 async function loadFriends() {
@@ -4033,7 +4122,7 @@ async function loadFriends() {
     const { data: profs } = await supa.from('profiles').select('id,game_id,username,char,card_border').in('id', otherIds);
     (profs || []).forEach(p => { profMap[p.id] = p; });
     const { data: stats } = await supa.from('user_status').select('*').in('user_id', otherIds);
-    (stats || []).forEach(s => { _statusMap[s.user_id] = { status: s.status, status_msg: s.status_msg || '', room_code: s.room_code || null, room_public: s.room_public !== false }; });
+    (stats || []).forEach(s => { _statusMap[s.user_id] = { status: s.status, status_msg: s.status_msg || '', room_code: s.room_code || null, room_public: s.room_public !== false, last_seen: s.last_seen }; });
   }
 
   _friends = accepted.map(r => {
@@ -4087,12 +4176,12 @@ function renderFriendsList() {
   }
   const order = { online: 0, gaming: 1, away: 2, offline: 3 };
   const sorted = [..._friends].sort((a, b) => {
-    const sa = (_statusMap[a.id] || {}).status || 'offline';
-    const sb = (_statusMap[b.id] || {}).status || 'offline';
+    const sa = effectiveStatus(_statusMap[a.id]);
+    const sb = effectiveStatus(_statusMap[b.id]);
     return (order[sa] ?? 3) - (order[sb] ?? 3);
   });
   el.innerHTML = sorted.map(function(f) {
-    const st = (_statusMap[f.id] || {}).status || 'offline';
+    const st = effectiveStatus(_statusMap[f.id]);
     const msg = (_statusMap[f.id] || {}).status_msg || '';
     const online = st !== 'offline';
     const inviteBtn = (online && roomCode && !vsAI) ? '<button class="f-btn accept" onclick="inviteFriend(\'' + f.id + '\')">🎮 초대</button>' : '';
@@ -4264,8 +4353,8 @@ async function renderUserProfileBody(prof) {
   const rp = prof.rank_points || 0;
   const tier = getTierInfo(rp);
 
-  const { data: statusRow } = await supa.from('user_status').select('status,status_msg').eq('user_id', prof.id).maybeSingle();
-  const st = (statusRow && statusRow.status) || 'offline';
+  const { data: statusRow } = await supa.from('user_status').select('status,status_msg,last_seen').eq('user_id', prof.id).maybeSingle();
+  const st = effectiveStatus(statusRow);
   const statusMsg = (statusRow && statusRow.status_msg) || '';
 
   let actionHtml = '';
@@ -4348,7 +4437,7 @@ async function openDmDirect(target) {
   document.getElementById('dmFriendChar').innerHTML = charHTML(target.char || '🐱');
   applyAvatarBorder('dmFriendChar', target.cardBorder || 'bronze');
   document.getElementById('dmFriendName').textContent = target.name;
-  const st = (_statusMap[friendId] || {}).status || 'offline';
+  const st = effectiveStatus(_statusMap[friendId]);
   document.getElementById('dmFriendStatus').textContent = STATUS_LABELS[st] || st;
   _renderDmEmojiBar();
   document.getElementById('dmMessages').innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.3);font-size:12px;padding:20px 0">불러오는 중...</div>';
@@ -4359,6 +4448,7 @@ async function openDmDirect(target) {
     .order('created_at', { ascending: true }).limit(100);
   const box = document.getElementById('dmMessages');
   box.innerHTML = '';
+  _dmLastDate = null;
   (msgs || []).forEach(m => appendDmBubble(m, m.sender_id === supaUser.id));
   box.scrollTop = box.scrollHeight;
   // mark unread as read
@@ -4376,9 +4466,26 @@ function showDmNotifyToast(senderName, content, senderId) {
   _dmToastTimer = setTimeout(() => el.classList.remove('show'), 4500);
 }
 
+let _dmLastDate = null;
+function dmDateLabel(d) {
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return '오늘';
+  const yest = new Date(now); yest.setDate(now.getDate() - 1);
+  if (d.toDateString() === yest.toDateString()) return '어제';
+  return (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
+}
+
 function appendDmBubble(m, mine) {
   const box = document.getElementById('dmMessages');
   const d = new Date(m.created_at);
+  const dateKey = d.toDateString();
+  if (_dmLastDate !== dateKey) {
+    _dmLastDate = dateKey;
+    const sep = document.createElement('div');
+    sep.className = 'dm-date-sep';
+    sep.textContent = dmDateLabel(d);
+    box.appendChild(sep);
+  }
   const time = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
   const div = document.createElement('div');
   const isEmojiOnly = DM_QUICK_EMOJIS.includes(m.content) || /^(\p{Emoji_Presentation}|\p{Extended_Pictographic}){1,3}$/u.test(m.content);
