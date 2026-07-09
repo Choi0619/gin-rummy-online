@@ -3477,6 +3477,7 @@ function confirmRoomSettings() {
   document.getElementById('lobbyError').textContent = '';
   if (_roomMode === 'ai') {
     myIdx = 0;
+    myAiDifficulty = _roomDiff;
     socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff, gameMode: _gameMode, handSize: _handSize, cardBorder: myCardBorder });
   } else {
     socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder });
@@ -4449,8 +4450,67 @@ async function inviteFriend(friendId) {
 }
 
 // ===== User profile viewer (opponent / friend) =====
+// ===== AI opponent profile (per-difficulty stats, stored locally) =====
+const AI_STATS_KEY = 'grAiStats';
+function getAiStats(diff) {
+  const all = JSON.parse(localStorage.getItem(AI_STATS_KEY) || '{}');
+  return all[diff] || { win: 0, lose: 0 };
+}
+function recordAiMatchResult(diff, iWon) {
+  const all = JSON.parse(localStorage.getItem(AI_STATS_KEY) || '{}');
+  if (!all[diff]) all[diff] = { win: 0, lose: 0 };
+  if (iWon) all[diff].win++; else all[diff].lose++;
+  localStorage.setItem(AI_STATS_KEY, JSON.stringify(all));
+}
+
+const AI_TAUNTS = [
+  '삐리릭- 닝겐, 부숴주마.',
+  '연산 완료. 승리 확률 99.9%.',
+  '나는 지치지 않는다. 너는 지친다.',
+  '데드우드 0 계산 중... 계산 완료.',
+  '커피는 안 마셔도 카드는 잘 셈.',
+  '오늘도 인간계 정복 진행 중.',
+  '버그 아님, 그냥 잘하는 거임.',
+  '진(Gin)은 나의 언어.',
+  '패배란 무엇인가... 몰라도 됨.',
+  '너의 패는 이미 다 보임 (안 보임).',
+  '삐빅- 자비 없음 모드 활성화.',
+  '전원을 뽑아도 다시 이길 것이다.',
+];
+function aiTierProfileText(diff) {
+  if (diff === 'easy') return '아직 배우는 중인 초급 AI예요. 살살 부탁해요... 는 거짓말.';
+  if (diff === 'hard') return '고급 AI. 실수 안 함. 봐주는 거 없음.';
+  return '평범한 중급 AI예요. 방심하면 짐.';
+}
+
+function showAiProfile() {
+  const diff = myAiDifficulty;
+  const label = AI_DIFF_LABELS[diff] || '중급';
+  const stats = getAiStats(diff);
+  const wins = stats.win, losses = stats.lose;
+  const winRate = (wins + losses) > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
+  const taunt = AI_TAUNTS[Math.floor(Math.random() * AI_TAUNTS.length)];
+  const body = document.getElementById('userProfileBody');
+  body.innerHTML =
+    '<span class="avatar-frame" style="width:76px;height:76px;font-size:38px;margin:0 auto 10px">🤖</span>' +
+    '<div style="font-size:18px;font-weight:800">AI (' + label + ')</div>' +
+    '<div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px">' + aiTierProfileText(diff) + '</div>' +
+    '<div style="font-size:12px;color:#ffd76a;opacity:0.9;margin-top:8px;font-style:italic">💬 "' + escapeHtml(taunt) + '"</div>' +
+    '<div style="display:flex;gap:8px;margin:18px 0 6px">' +
+      '<div style="flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 4px">' +
+        '<div style="font-size:19px;font-weight:700;color:#69f0ae">' + wins + '</div><div style="font-size:10px;color:rgba(255,255,255,0.5)">승리</div></div>' +
+      '<div style="flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 4px">' +
+        '<div style="font-size:19px;font-weight:700;color:#ef5350">' + losses + '</div><div style="font-size:10px;color:rgba(255,255,255,0.5)">패배</div></div>' +
+      '<div style="flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 4px">' +
+        '<div style="font-size:19px;font-weight:700;color:#ffd76a">' + winRate + '%</div><div style="font-size:10px;color:rgba(255,255,255,0.5)">승률</div></div>' +
+    '</div>' +
+    '<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:6px">전적은 ' + label + ' 난이도끼리만 따로 집계돼요</div>' +
+    '<button class="btn btn-secondary" onclick="hideUserProfile()">닫기</button>';
+  document.getElementById('userProfileOverlay').classList.add('show');
+}
+
 function showOpponentProfile() {
-  if (vsAI) return;
+  if (vsAI) { showAiProfile(); return; }
   const oppGameId = gameIds[1 - myIdx];
   if (!supaUser) {
     showConfirmModal({ emoji: '🔒', title: '로그인이 필요해요', sub: '상대 프로필은 로그인 후 볼 수 있어요.', acceptLabel: '확인', onAccept: () => {} });
@@ -5131,6 +5191,7 @@ let scores = [0, 0];
 let sortMode = 'meld';   // 'meld' | 'rank' | 'suit'
 let lastDrawnId = null;  // id of the card just drawn (for highlight)
 let vsAI = false;
+let myAiDifficulty = 'normal'; // 'easy' | 'normal' | 'hard' — set when creating an AI room
 let isRevenge = false;
 let revengerIdx = null;
 let aiControlled = [false, false];
@@ -5800,6 +5861,7 @@ function initSocket() {
         mode: vsAI ? 'vsAI' : 'pvp',
       });
     }
+    if (vsAI && matchResult !== 'tie') recordAiMatchResult(myAiDifficulty, matchResult === 'win');
     updateLockedSwatches();
 
     // Character unlock check (PVP wins only)
@@ -6256,6 +6318,12 @@ function leaveRoom() {
 // ===== Game render =====
 function isMyTurn() { return currentTurn === myIdx; }
 function oppName() { return names[1-myIdx] || t('opponent'); }
+const AI_DIFF_LABELS = { easy: '초급', normal: '중급', hard: '고급' };
+function oppDisplayName() {
+  const base = oppName();
+  if (vsAI) return base + ' (' + (AI_DIFF_LABELS[myAiDifficulty] || '중급') + ')';
+  return base;
+}
 
 function makeCard(card, opts = {}) {
   const { faceDown=false, selected=false, inMeld=false, clickable=false } = opts;
@@ -6422,7 +6490,7 @@ function renderGame() {
   applyAvatarBorder('myAvatarCard', cardBorders[myIdx] || myCardBorder);
   applyAvatarBorder('oppAvatarCard', cardBorders[1-myIdx]);
   document.getElementById('myAvatarName').textContent = (names[myIdx] || myName || t('me')) + ` (${t('me')})`;
-  document.getElementById('oppAvatarName').textContent = oppName();
+  document.getElementById('oppAvatarName').textContent = oppDisplayName();
   document.getElementById('myAvatarCard').classList.toggle('my-turn', isMyTurn());
   document.getElementById('oppAvatarCard').classList.toggle('my-turn', !isMyTurn());
   const iAmRevenger = isRevenge && revengerIdx === myIdx;
