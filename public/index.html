@@ -693,14 +693,23 @@ body.theme-aurora .card {
 }
 body.theme-aurora .card:not(.face-down)::before {
   content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
-  background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.75) 42%, rgba(180,255,240,0.55) 50%, transparent 65%);
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.35) 45%, rgba(180,255,240,0.25) 52%, transparent 68%);
   background-size: 250% 250%;
+  mix-blend-mode: soft-light;
   animation: auroraCardSheen 4.5s ease-in-out infinite;
 }
 @keyframes auroraCardSheen {
   0%   { background-position: 120% 0%; }
   50%  { background-position: 0% 100%; }
   100% { background-position: 120% 0%; }
+}
+/* Soft ambient glow sitting behind each card, independent of the sheen sweep */
+body.theme-aurora .card:not(.face-down) {
+  animation: auroraBorder 6s linear infinite, auroraCardGlow 3.6s ease-in-out infinite;
+}
+@keyframes auroraCardGlow {
+  0%,100% { box-shadow: 0 2px 10px rgba(0,200,180,0.25), 0 0 10px rgba(0,200,180,0.18); }
+  50%      { box-shadow: 0 2px 10px rgba(0,200,180,0.25), 0 0 20px rgba(120,80,255,0.3); }
 }
 body.theme-aurora .card .red { color: #d81b60 !important; }
 body.theme-aurora .card .black { color: #0a2432 !important; }
@@ -1232,6 +1241,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .card-inner {
   display: flex; flex-direction: column; justify-content: space-between;
   width: 100%; height: 100%; overflow: hidden;
+  position: relative; z-index: 2;
 }
 .card.clickable { cursor: pointer; }
 .card.clickable:hover:not(.selected) {
@@ -1323,6 +1333,17 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .sort-btn { padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white; font-size: 12px; cursor: pointer; transition: all 0.15s; }
 .sort-btn:hover { background: rgba(255,255,255,0.18); }
 .sort-btn.active { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.5); font-weight: bold; }
+/* Aurora theme: crystalline sort pills with a glowing active state */
+body.theme-aurora .sort-btn {
+  background: rgba(0,220,190,0.1); border-color: rgba(0,220,190,0.35); color: #cdfff5;
+}
+body.theme-aurora .sort-btn:hover { background: rgba(0,220,190,0.2); }
+body.theme-aurora .sort-btn.active {
+  background: linear-gradient(135deg, rgba(0,230,190,0.35), rgba(120,80,255,0.3));
+  border-color: rgba(150,255,230,0.8);
+  box-shadow: 0 0 10px rgba(0,230,190,0.5);
+  color: #fff;
+}
 
 /* ===== Middle zone — felt table surface ===== */
 .middle-zone {
@@ -1840,6 +1861,12 @@ body.theme-aurora .avatar-card.my-turn::after {
 .util-btn:hover { background: rgba(255,255,255,0.18); }
 .util-btn.away-on { background: rgba(255,152,0,0.3); border-color: #ff9800; }
 .util-btn.danger:hover { background: rgba(239,83,80,0.3); border-color: #ef5350; }
+/* Aurora theme: default white-on-dark buttons were low contrast against the deep navy bg */
+body.theme-aurora .util-btn {
+  background: rgba(0,220,190,0.12); border-color: rgba(0,220,190,0.4); color: #d0fff5;
+}
+body.theme-aurora .util-btn:hover { background: rgba(0,220,190,0.24); border-color: rgba(0,255,210,0.6); }
+body.theme-aurora .util-btn.danger { background: rgba(239,83,80,0.16); border-color: rgba(239,83,80,0.5); color: #ffd0ce; }
 
 /* ===== Chat ===== */
 .chat-toggle-btn {
