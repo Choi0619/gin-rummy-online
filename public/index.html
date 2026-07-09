@@ -418,6 +418,39 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
   box-shadow: 0 0 0 3px rgba(255,215,120,0.12), 0 3px 10px rgba(0,0,0,0.4);
 }
 
+/* ===== Profile border collection — applies to every avatar display, not playing cards ===== */
+.avatar-frame.cb-bronze, .badge-char.cb-bronze, .slot-icon.cb-bronze, .f-char.cb-bronze
+  { border-color: #cd7f32 !important; box-shadow: 0 0 0 3px rgba(205,127,50,0.2), 0 3px 8px rgba(0,0,0,0.35) !important; }
+.avatar-frame.cb-silver, .badge-char.cb-silver, .slot-icon.cb-silver, .f-char.cb-silver
+  { border-color: #c0c0c0 !important; box-shadow: 0 0 0 3px rgba(192,192,192,0.25), 0 3px 8px rgba(0,0,0,0.35) !important; }
+.avatar-frame.cb-gold, .badge-char.cb-gold, .slot-icon.cb-gold, .f-char.cb-gold
+  { border-color: #ffd700 !important; box-shadow: 0 0 10px rgba(255,215,0,0.5) !important; }
+.avatar-frame.cb-platinum, .badge-char.cb-platinum, .slot-icon.cb-platinum, .f-char.cb-platinum
+  { border-color: #c4b5fd !important; box-shadow: 0 0 12px rgba(196,181,253,0.55) !important; }
+.avatar-frame.cb-diamond, .badge-char.cb-diamond, .slot-icon.cb-diamond, .f-char.cb-diamond
+  { border-color: #7dd3fc !important; box-shadow: 0 0 14px rgba(125,211,252,0.6) !important; }
+.avatar-frame.cb-challenger, .badge-char.cb-challenger, .slot-icon.cb-challenger, .f-char.cb-challenger
+  { border-color: #ff8c00 !important; box-shadow: 0 0 16px rgba(255,140,0,0.7) !important; animation: cbChallengerPulse 2s ease-in-out infinite; }
+.avatar-frame.cb-w5, .badge-char.cb-w5, .slot-icon.cb-w5, .f-char.cb-w5
+  { border-color: #90a4ae !important; box-shadow: 0 0 10px rgba(144,164,174,0.5) !important; }
+.avatar-frame.cb-w20, .badge-char.cb-w20, .slot-icon.cb-w20, .f-char.cb-w20
+  { border-color: #2ee879 !important; box-shadow: 0 0 12px rgba(46,232,121,0.55) !important; }
+.avatar-frame.cb-w50, .badge-char.cb-w50, .slot-icon.cb-w50, .f-char.cb-w50
+  { border-color: #ff3b5c !important; box-shadow: 0 0 14px rgba(255,59,92,0.6) !important; }
+.avatar-frame.cb-w100, .badge-char.cb-w100, .slot-icon.cb-w100, .f-char.cb-w100
+  { border-color: #ffd700 !important; box-shadow: 0 0 18px rgba(255,215,0,0.75) !important; animation: cbLegendShine 2.4s linear infinite; }
+/* In-game avatar emoji has no built-in border box, so use a non-layout-shifting outline ring instead */
+.avatar-emoji.cb-bronze     { outline: 2.5px solid #cd7f32; outline-offset: 4px; border-radius: 50%; }
+.avatar-emoji.cb-silver     { outline: 2.5px solid #c0c0c0; outline-offset: 4px; border-radius: 50%; }
+.avatar-emoji.cb-gold       { outline: 2.5px solid #ffd700; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+.avatar-emoji.cb-platinum   { outline: 2.5px solid #c4b5fd; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(196,181,253,0.5); }
+.avatar-emoji.cb-diamond    { outline: 2.5px solid #7dd3fc; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(125,211,252,0.55); }
+.avatar-emoji.cb-challenger { outline: 3px solid #ff8c00; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 14px rgba(255,140,0,0.65); animation: cbChallengerPulse 2s ease-in-out infinite; }
+.avatar-emoji.cb-w5         { outline: 2.5px solid #90a4ae; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(144,164,174,0.5); }
+.avatar-emoji.cb-w20        { outline: 2.5px solid #2ee879; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(46,232,121,0.5); }
+.avatar-emoji.cb-w50        { outline: 2.5px solid #ff3b5c; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(255,59,92,0.55); }
+.avatar-emoji.cb-w100       { outline: 3px solid #ffd700; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 14px rgba(255,215,0,0.7); animation: cbLegendShine 2.4s linear infinite; }
+
 /* ===== Profile modal ===== */
 .profile-overlay {
   position: fixed; inset: 0; z-index: 1100;
@@ -1532,16 +1565,52 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .dm-toast .dm-toast-body { font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 #autopilotOverlay {
-  display: none; position: fixed; inset: 0; z-index: 2500; cursor: pointer;
-  background: rgba(5,10,7,0.72); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-  flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-  animation: fadeIn 0.2s ease-out;
+  display: none; position: fixed; inset: 0; z-index: 2500;
+  background: #fff; color: #202124; font-family: arial, sans-serif;
+  flex-direction: column; animation: fadeIn 0.15s ease-out;
+  user-select: none;
 }
 #autopilotOverlay.show { display: flex; }
-.autopilot-icon { font-size: 52px; animation: autopilotFloat 2.2s ease-in-out infinite; }
-@keyframes autopilotFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-.autopilot-title { font-size: 18px; font-weight: 800; color: #69f0ae; letter-spacing: 0.5px; }
-.autopilot-hint { font-size: 12px; color: rgba(255,255,255,0.45); }
+.disguise-topnav {
+  display: flex; align-items: center; justify-content: flex-end; gap: 18px;
+  padding: 14px 20px; font-size: 13px; color: #202124;
+}
+.disguise-nav-link { cursor: default; }
+.disguise-nav-grid { font-size: 18px; opacity: 0.7; }
+.disguise-nav-avatar {
+  width: 28px; height: 28px; border-radius: 50%; background: #8ab4f8; color: #fff;
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+}
+.disguise-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding-bottom: 80px; }
+.disguise-logo {
+  font-size: 72px; font-weight: 400; letter-spacing: -2px;
+  background: linear-gradient(90deg, #4285F4 0 25%, #EA4335 25% 38%, #FBBC05 38% 51%, #4285F4 51% 63%, #34A853 63% 76%, #EA4335 76% 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-family: arial, sans-serif;
+}
+.disguise-search-row {
+  display: flex; align-items: center; gap: 10px; width: 92%; max-width: 560px;
+  border: 1px solid #dfe1e5; border-radius: 24px; padding: 10px 18px; box-shadow: 0 1px 6px rgba(32,33,36,0.12);
+}
+.disguise-search-icon, .disguise-mic { font-size: 15px; opacity: 0.6; }
+.disguise-search-input { flex: 1; border: none; outline: none; font-size: 15px; color: #202124; }
+.disguise-btn-row { display: flex; gap: 10px; }
+.disguise-btn {
+  background: #f8f9fa; border: 1px solid #f8f9fa; border-radius: 4px;
+  padding: 9px 16px; font-size: 13px; color: #3c4043; cursor: default;
+}
+.disguise-lang-row { font-size: 13px; color: #202124; }
+.disguise-lang-link { color: #1a0dab; cursor: default; }
+.disguise-footer {
+  background: #f2f2f2; border-top: 1px solid #dadce0; padding: 14px 24px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.disguise-footer-country { font-size: 13px; color: #70757a; }
+.disguise-footer-links { display: flex; gap: 18px; font-size: 13px; color: #70757a; flex-wrap: wrap; }
+.disguise-ai-toggle { cursor: pointer; display: flex; align-items: center; gap: 5px; }
+.disguise-ai-toggle:hover { color: #202124; }
+.disguise-ai-dot { width: 7px; height: 7px; border-radius: 50%; background: #bdc1c6; display: inline-block; transition: background 0.2s; }
+.disguise-ai-dot.on { background: #34A853; box-shadow: 0 0 5px rgba(52,168,83,0.7); }
 .ctx-menu {
   display: none; position: fixed; z-index: 1500; min-width: 180px;
   background: linear-gradient(160deg, #1d3d26, #0f2417); border: 1px solid rgba(255,215,120,0.3);
@@ -2289,7 +2358,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
     <button class="util-btn vs-ai-hide" onclick="requestEnd()" data-i18n="requestEndBtn">🛑 게임 종료 요청</button>
     <button class="util-btn danger" onclick="confirmSurrender()" data-i18n="surrenderBtn">🏳️ 항복</button>
     <button class="util-btn danger" onclick="confirmLeave()" data-i18n="leaveBtn">🚪 나가기</button>
-    <button class="util-btn vs-ai-hide" onclick="toggleFullAuto()" title="자동 진행 모드 (Ctrl+Shift+H)">🕶️ 자동 진행</button>
+    <button class="util-btn vs-ai-hide" onclick="toggleSecretMode()" title="비밀 모드 (Ctrl+Shift+H)">🕵️ 비밀 모드</button>
     <button class="util-btn" onclick="showFriendsModal()" title="친구">👥 친구<span id="friendReqBadgeGame" style="display:none;background:#ef5350;color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;margin-left:4px"></span></button>
     <button class="util-btn" onclick="showCollectionModal()" title="컬렉션/테마">🎨</button>
     <button class="util-btn" onclick="showSettings()" title="설정">⚙️</button>
@@ -2524,7 +2593,7 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
         </button>
       </div>
       <div class="howto-section" style="margin-bottom:0">
-        <h3>🖼️ 카드 테두리</h3>
+        <h3>🖼️ 프로필 테두리</h3>
         <div class="border-grid" id="borderGrid"></div>
         <div id="borderDesc" style="min-height:16px;text-align:center;font-size:12px;color:rgba(255,255,255,0.5);margin-top:4px"></div>
       </div>
@@ -2539,11 +2608,35 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 <!-- ===== DM 알림 토스트 ===== -->
 <div id="dmToast" class="dm-toast" onclick=""></div>
 
-<!-- ===== 완전 자동 진행(오피스) 모드 오버레이 ===== -->
-<div id="autopilotOverlay" onclick="toggleFullAuto()">
-  <div class="autopilot-icon">🤖</div>
-  <div class="autopilot-title">자동 진행 모드</div>
-  <div class="autopilot-hint" id="autopilotHint">Ctrl+Shift+H 를 누르거나 화면을 클릭하면 해제돼요</div>
+<!-- ===== 비밀 모드: 평범한 검색 사이트로 위장 (Ctrl+Shift+H로 전환) ===== -->
+<div id="autopilotOverlay">
+  <div class="disguise-topnav">
+    <span class="disguise-nav-link">Gmail</span>
+    <span class="disguise-nav-link">이미지</span>
+    <span class="disguise-nav-grid">⚏</span>
+    <span class="disguise-nav-avatar">G</span>
+  </div>
+  <div class="disguise-body">
+    <div class="disguise-logo">Google</div>
+    <div class="disguise-search-row">
+      <div class="disguise-search-icon">🔍</div>
+      <input class="disguise-search-input" id="disguiseSearchInput" type="text" placeholder="Google 검색 또는 URL 입력" autocomplete="off">
+      <div class="disguise-mic">🎤</div>
+    </div>
+    <div class="disguise-btn-row">
+      <button class="disguise-btn">Google 검색</button>
+      <button class="disguise-btn">I'm Feeling Lucky</button>
+    </div>
+    <div class="disguise-lang-row">Google 제공: <span class="disguise-lang-link">한국어</span></div>
+  </div>
+  <div class="disguise-footer">
+    <div class="disguise-footer-country">대한민국</div>
+    <div class="disguise-footer-links">
+      <span>정보</span><span>광고</span><span>비즈니스</span><span>검색의 원리</span>
+      <span>개인정보처리방침</span><span>약관</span>
+      <span class="disguise-ai-toggle" id="disguiseAiToggle" onclick="event.stopPropagation();toggleFullAuto()" title="설정">설정 <span id="disguiseAiDot" class="disguise-ai-dot"></span></span>
+    </div>
+  </div>
 </div>
 
 <!-- ===== 친구 우클릭 컨텍스트 메뉴 ===== -->
@@ -3306,20 +3399,31 @@ function renderBorderGrid() {
   }).join('');
 }
 
+// Applies a chosen profile-border skin (bronze/silver/.../legend) to any avatar
+// element by id, replacing whatever cb-* class it currently has.
+function applyAvatarBorder(elId, borderId) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.className = el.className.replace(/\bcb-[a-z0-9]+\b/g, '').trim();
+  if (borderId && borderId !== 'none') el.classList.add('cb-' + borderId);
+}
+
 function selectCardBorder(id) {
   const b = CARD_BORDERS.find(x => x.id === id);
   if (!b || !b.unlock()) return;
   myCardBorder = id;
   localStorage.setItem('grCardBorder', id);
   if (supaUser) supa.from('profiles').update({ card_border: id }).eq('id', supaUser.id).then(() => {});
+  applyAvatarBorder('lobbyUserChar', id);
+  applyAvatarBorder('profileAvatar', id);
   if (typeof socket !== 'undefined' && socket && roomCode) {
     cardBorders[myIdx] = id;
     socket.emit('set-card-border', { border: id });
-    renderGame();
+    applyAvatarBorder('myAvatarEmoji', id);
   }
   renderBorderGrid();
   const desc = document.getElementById('borderDesc');
-  if (desc) desc.textContent = '✅ ' + b.name + ' 테두리로 변경됐어요!';
+  if (desc) desc.textContent = '✅ ' + b.name + ' 프로필 테두리로 변경됐어요!';
 }
 
 function showLockedBorderMsg(id) {
@@ -3613,6 +3717,7 @@ async function loadProfile() {
   const rp = data.rank_points || 0;
   const tierInfo = getTierInfo(rp);
   document.getElementById('lobbyUserChar').textContent = data.char || myChar;
+  applyAvatarBorder('lobbyUserChar', myCardBorder);
   document.getElementById('lobbyUserName').textContent = savedNick;
   document.getElementById('lobbyUserIdText').textContent = gameId;
   document.getElementById('lobbyUserRP').textContent = `${tierInfo.emoji} ${rp} RP`;
@@ -3630,6 +3735,7 @@ function showProfileModal() {
   const rp = supaProfile.rank_points || 0;
   const tier = getTierInfo(rp);
   document.getElementById('profileAvatar').textContent = supaProfile.char || '🐱';
+  applyAvatarBorder('profileAvatar', myCardBorder);
   document.getElementById('profileNicknameInput').value = supaProfile.username || supaProfile.game_id || '';
   document.getElementById('profileIdValue').textContent = supaProfile.game_id || '';
   document.getElementById('profileWins').textContent = supaProfile.pvp_wins || 0;
@@ -3887,7 +3993,7 @@ async function loadFriends() {
 
   let profMap = {};
   if (otherIds.length) {
-    const { data: profs } = await supa.from('profiles').select('id,game_id,username,char').in('id', otherIds);
+    const { data: profs } = await supa.from('profiles').select('id,game_id,username,char,card_border').in('id', otherIds);
     (profs || []).forEach(p => { profMap[p.id] = p; });
     const { data: stats } = await supa.from('user_status').select('*').in('user_id', otherIds);
     (stats || []).forEach(s => { _statusMap[s.user_id] = { status: s.status, status_msg: s.status_msg || '', room_code: s.room_code || null, room_public: s.room_public !== false }; });
@@ -3896,11 +4002,11 @@ async function loadFriends() {
   _friends = accepted.map(r => {
     const oid = r.requester_id === supaUser.id ? r.receiver_id : r.requester_id;
     const p = profMap[oid] || {};
-    return { fid: r.id, id: oid, name: p.username || p.game_id || '???', gameId: p.game_id || '', char: p.char || '🐱' };
+    return { fid: r.id, id: oid, name: p.username || p.game_id || '???', gameId: p.game_id || '', char: p.char || '🐱', cardBorder: p.card_border || 'bronze' };
   });
   _friendReqs = incoming.map(r => {
     const p = profMap[r.requester_id] || {};
-    return { fid: r.id, id: r.requester_id, name: p.username || p.game_id || '???', gameId: p.game_id || '', char: p.char || '🐱' };
+    return { fid: r.id, id: r.requester_id, name: p.username || p.game_id || '???', gameId: p.game_id || '', char: p.char || '🐱', cardBorder: p.card_border || 'bronze' };
   });
 }
 
@@ -3954,7 +4060,7 @@ function renderFriendsList() {
     const online = st !== 'offline';
     const inviteBtn = (online && roomCode && !vsAI) ? '<button class="f-btn accept" onclick="inviteFriend(\'' + f.id + '\')">🎮 초대</button>' : '';
     return '<div class="friend-row" oncontextmenu="showFriendCtxMenu(event,\'' + f.id + '\');return false;">' +
-      '<span class="f-char" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' + f.char + '<span class="f-dot ' + st + '"></span></span>' +
+      '<span class="f-char cb-' + (f.cardBorder || 'bronze') + '" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' + f.char + '<span class="f-dot ' + st + '"></span></span>' +
       '<div class="f-info" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' +
         '<div class="f-name">' + escapeHtml(f.name) + '</div>' +
         '<div class="f-sub">' + (STATUS_LABELS[st] || st) + '</div>' +
@@ -4131,7 +4237,7 @@ async function renderUserProfileBody(prof) {
       .or('and(requester_id.eq.' + supaUser.id + ',receiver_id.eq.' + prof.id + '),and(requester_id.eq.' + prof.id + ',receiver_id.eq.' + supaUser.id + ')')
       .maybeSingle();
     if (rel && rel.status === 'accepted') {
-      _profileDmTarget = { id: prof.id, name: prof.username || prof.game_id, char: prof.char || '🐱' };
+      _profileDmTarget = { id: prof.id, name: prof.username || prof.game_id, char: prof.char || '🐱', cardBorder: prof.card_border || 'bronze' };
       actionHtml = '<button class="btn btn-primary" onclick="openDmFromProfile()">💬 메시지 보내기</button>';
     } else if (rel && rel.status === 'pending' && rel.requester_id === supaUser.id) {
       actionHtml = '<button class="btn btn-secondary" disabled>⏳ 친구 요청 대기 중</button>';
@@ -4143,7 +4249,7 @@ async function renderUserProfileBody(prof) {
   }
 
   body.innerHTML =
-    '<span class="avatar-frame" style="width:76px;height:76px;font-size:38px;margin:0 auto 10px">' + (prof.char || '🐱') + '</span>' +
+    '<span class="avatar-frame cb-' + (prof.card_border || 'bronze') + '" style="width:76px;height:76px;font-size:38px;margin:0 auto 10px">' + (prof.char || '🐱') + '</span>' +
     '<div style="font-size:18px;font-weight:800">' + escapeHtml(prof.username || prof.game_id || '???') + '</div>' +
     '<div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px">' + escapeHtml(prof.game_id || '') + '</div>' +
     '<div style="font-size:12px;color:' + (st !== 'offline' ? '#69f0ae' : 'rgba(255,255,255,0.4)') + ';margin-top:6px">' + (STATUS_LABELS[st] || st) + '</div>' +
@@ -4203,6 +4309,7 @@ async function openDmDirect(target) {
   const friendId = target.id;
   _dmTarget = target;
   document.getElementById('dmFriendChar').textContent = target.char || '🐱';
+  applyAvatarBorder('dmFriendChar', target.cardBorder || 'bronze');
   document.getElementById('dmFriendName').textContent = target.name;
   const st = (_statusMap[friendId] || {}).status || 'offline';
   document.getElementById('dmFriendStatus').textContent = STATUS_LABELS[st] || st;
@@ -5182,6 +5289,11 @@ function initSocket() {
     renderGame();
   });
 
+  socket.on('secret-mode-update', ({ idx, active }) => {
+    secretMode[idx] = active;
+    renderGame();
+  });
+
   socket.on('ai-takeover-update', ({ idx, enabled, auto }) => {
     aiControlled[idx] = enabled;
     renderGame();
@@ -5367,8 +5479,8 @@ function initSocket() {
       clearTimeout(_fullAutoTimer);
       fullAutoMode = false;
       if (aiControlled[myIdx]) socket.emit('toggle-ai-takeover');
-      const hint = document.getElementById('autopilotHint');
-      if (hint) hint.textContent = '✅ 매치가 종료됐어요! 화면을 클릭하거나 단축키를 눌러 확인하세요.';
+      const dot = document.getElementById('disguiseAiDot');
+      if (dot) dot.classList.remove('on');
     }
     // Save to match history
     const matchResult = winnerIdx === -1 ? 'tie' : (winnerIdx === myIdx ? 'win' : 'lose');
@@ -5529,6 +5641,11 @@ function initSocket() {
   socket.on('game-started', data => {
     matchTurns = 0;
     lastRoundType = '';
+    secretMode = [false, false];
+    fullAutoMode = false;
+    clearTimeout(_fullAutoTimer);
+    const overlay = document.getElementById('autopilotOverlay');
+    if (overlay) overlay.classList.remove('show');
     myIdx = data.playerIndex;
     vsAI = !!data.vsAI;
     myHand = data.hand;
@@ -5743,6 +5860,7 @@ function showWaiting(code, isPublic) {
   document.getElementById('slotName0').textContent = myIdx === 0 ? `${myName} (${t('me')})` : names[0];
   document.getElementById('slotName1').textContent = myIdx === 1 ? `${myName} (${t('me')})` : t('waitingForOpponent');
   document.getElementById('slotIcon0').textContent = myIdx === 0 ? myChar : (chars[0] || CHAR_LIST[0]);
+  applyAvatarBorder('slotIcon0', myIdx === 0 ? myCardBorder : cardBorders[0]);
   document.getElementById('slot0').className = 'player-slot connected';
   document.getElementById('slot1').className = 'player-slot';
   const readyBtn = document.getElementById('readyBtn');
@@ -5753,6 +5871,7 @@ function showWaiting(code, isPublic) {
   } else {
     // Joiner: show Ready button, enable immediately
     document.getElementById('slotIcon1').textContent = myChar;
+    applyAvatarBorder('slotIcon1', myCardBorder);
     readyBtn.textContent = '✅ 준비 완료';
     readyBtn.disabled = false;
   }
@@ -5780,6 +5899,7 @@ function onOpponentJoined(name, char) {
   if (char) chars[1-myIdx] = char;
   document.getElementById('slotName' + oppSlotIdx).textContent = name;
   document.getElementById('slotIcon' + oppSlotIdx).textContent = char || '🐶';
+  applyAvatarBorder('slotIcon' + oppSlotIdx, cardBorders[1-myIdx]);
   document.getElementById('slotStatus' + oppSlotIdx).textContent = t('connectedLbl');
   document.getElementById('slot' + oppSlotIdx).className = 'player-slot connected';
   // Enable host's Start button once opponent arrives
@@ -5842,11 +5962,9 @@ function isMyTurn() { return currentTurn === myIdx; }
 function oppName() { return names[1-myIdx] || t('opponent'); }
 
 function makeCard(card, opts = {}) {
-  const { faceDown=false, selected=false, inMeld=false, clickable=false, mine=false, ownerIdx=null } = opts;
+  const { faceDown=false, selected=false, inMeld=false, clickable=false } = opts;
   const el = document.createElement('div');
-  const effectiveBorder = mine ? myCardBorder : (ownerIdx !== null ? cardBorders[ownerIdx] : null);
-  const borderCls = (effectiveBorder && effectiveBorder !== 'none') ? ' cb-' + effectiveBorder : '';
-  el.className = 'card' + borderCls + (faceDown?' face-down':'') + (selected?' selected':'') + (inMeld?' in-meld':'') + (clickable?' clickable':'');
+  el.className = 'card' + (faceDown?' face-down':'') + (selected?' selected':'') + (inMeld?' in-meld':'') + (clickable?' clickable':'');
   if (!faceDown) {
     const sym = SUITS_SYM[card.suit];
     const cls = IS_RED[card.suit] ? 'red-suit' : 'black-suit';
@@ -5911,11 +6029,19 @@ function updateGameModeUI() {
   }
 }
 
+function statusPillText(idx) {
+  const secret = secretMode[idx], ai = aiControlled[idx];
+  if (secret && ai) return '🕵️🤖 비밀 모드 · AI 플레이 중';
+  if (secret) return '🕵️ 비밀 모드';
+  if (ai) return '🤖 AI 대리 플레이중';
+  return '⏸ 자리비움';
+}
+
 function renderGame() {
   // Opponent hand (face down)
   const oppEl = document.getElementById('oppHand');
   oppEl.innerHTML = '';
-  for (let i = 0; i < oppCardCount; i++) oppEl.appendChild(makeCard(null, { faceDown: true, ownerIdx: 1 - myIdx }));
+  for (let i = 0; i < oppCardCount; i++) oppEl.appendChild(makeCard(null, { faceDown: true }));
   document.getElementById('oppCardCount').textContent = `(${oppCardCount}${t('cardsSuffix')})`;
 
   // Analyze my hand
@@ -5951,7 +6077,7 @@ function renderGame() {
     const isSel = selected && selected.id === card.id;
     const inM = meldIds.has(card.id);
     const canClick = !aiControlled[myIdx] && isMyTurn() && currentPhase === 'discard';
-    const el = makeCard(card, { selected: isSel, inMeld: inM, clickable: canClick, mine: true });
+    const el = makeCard(card, { selected: isSel, inMeld: inM, clickable: canClick });
     if (card.id === lastDrawnId && !isSel) el.classList.add('just-drawn');
     if (canClick) el.onclick = () => toggleSelect(card);
     myEl.appendChild(el);
@@ -5995,6 +6121,8 @@ function renderGame() {
   // Avatar bar
   document.getElementById('myAvatarEmoji').firstChild.textContent = chars[myIdx] || CHAR_LIST[0];
   document.getElementById('oppAvatarEmoji').firstChild.textContent = chars[1-myIdx] || CHAR_LIST[1];
+  applyAvatarBorder('myAvatarEmoji', cardBorders[myIdx] || myCardBorder);
+  applyAvatarBorder('oppAvatarEmoji', cardBorders[1-myIdx]);
   document.getElementById('myAvatarName').textContent = (names[myIdx] || myName || t('me')) + ` (${t('me')})`;
   document.getElementById('oppAvatarName').textContent = oppName();
   document.getElementById('myAvatarCard').classList.toggle('my-turn', isMyTurn());
@@ -6004,12 +6132,12 @@ function renderGame() {
   document.getElementById('myAvatarCard').classList.toggle('revenge-fire', isRevenge && !iAmRevenger);
   document.getElementById('oppAvatarCard').classList.toggle('revenge-fire-intense', isRevenge && !iAmRevenger);
   document.getElementById('oppAvatarCard').classList.toggle('revenge-fire', iAmRevenger);
-  document.getElementById('myStatusPill').classList.toggle('show', away[myIdx] || aiControlled[myIdx]);
-  document.getElementById('oppStatusPill').classList.toggle('show', away[1-myIdx] || aiControlled[1-myIdx]);
-  document.getElementById('myStatusPill').classList.toggle('ai-mode', aiControlled[myIdx]);
-  document.getElementById('oppStatusPill').classList.toggle('ai-mode', aiControlled[1-myIdx]);
-  document.getElementById('myStatusPill').textContent = aiControlled[myIdx] ? '🤖 AI 대리 플레이중' : '⏸ 자리비움';
-  document.getElementById('oppStatusPill').textContent = aiControlled[1-myIdx] ? '🤖 AI 대리 플레이중' : '⏸ 자리비움';
+  document.getElementById('myStatusPill').classList.toggle('show', away[myIdx] || aiControlled[myIdx] || secretMode[myIdx]);
+  document.getElementById('oppStatusPill').classList.toggle('show', away[1-myIdx] || aiControlled[1-myIdx] || secretMode[1-myIdx]);
+  document.getElementById('myStatusPill').classList.toggle('ai-mode', aiControlled[myIdx] || secretMode[myIdx]);
+  document.getElementById('oppStatusPill').classList.toggle('ai-mode', aiControlled[1-myIdx] || secretMode[1-myIdx]);
+  document.getElementById('myStatusPill').textContent = statusPillText(myIdx);
+  document.getElementById('oppStatusPill').textContent = statusPillText(1-myIdx);
   document.getElementById('awayBtn').classList.toggle('away-on', away[myIdx]);
   document.getElementById('awayBtn').textContent = away[myIdx] ? '▶ 복귀하기' : '⏸ 자리비움';
   document.getElementById('aiTakeoverBtn').style.display = (away[myIdx] && !vsAI) ? '' : 'none';
@@ -6129,34 +6257,45 @@ function toggleAITakeover() {
 
 // ===== Full auto (office / away) mode: blurs the screen and lets AI play the
 // entire match — every turn, every round — until the match itself ends. =====
+// ===== Secret mode: disguises the screen as a boring search page. Inside it,
+// a small corner toggle puts the match on full AI autopilot (plays every turn
+// and auto-continues every round) until the match itself ends. =====
+let secretMode = [false, false];
 let fullAutoMode = false;
 let _fullAutoTimer = null;
 
-function toggleFullAuto() {
+function toggleSecretMode() {
   if (!document.getElementById('gameScreen').classList.contains('active')) return;
-  if (vsAI) {
-    showToast('🤖 AI 대결에서는 자동 진행 모드가 필요 없어요.', 'alert');
-    setTimeout(() => hideToast(), 2000);
-    return;
-  }
-  fullAutoMode = !fullAutoMode;
+  if (vsAI) return;
+  secretMode[myIdx] = !secretMode[myIdx];
+  socket.emit('set-secret-mode', { active: secretMode[myIdx] });
   const overlay = document.getElementById('autopilotOverlay');
-  const hint = document.getElementById('autopilotHint');
+  if (secretMode[myIdx]) {
+    overlay.classList.add('show');
+  } else {
+    overlay.classList.remove('show');
+    // Leaving secret mode always stops autopilot too — no separate click needed.
+    if (fullAutoMode) toggleFullAuto();
+  }
+  renderGame();
+}
+
+function toggleFullAuto() {
+  fullAutoMode = !fullAutoMode;
   if (fullAutoMode) {
     if (!aiControlled[myIdx]) socket.emit('toggle-ai-takeover');
-    if (hint) hint.textContent = 'Ctrl+Shift+H 를 누르거나 화면을 클릭하면 해제돼요';
-    overlay.classList.add('show');
   } else {
     clearTimeout(_fullAutoTimer);
     if (aiControlled[myIdx]) socket.emit('toggle-ai-takeover');
-    overlay.classList.remove('show');
   }
+  const dot = document.getElementById('disguiseAiDot');
+  if (dot) dot.classList.toggle('on', fullAutoMode);
 }
 
 document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.shiftKey && (e.key === 'H' || e.key === 'h')) {
     e.preventDefault();
-    toggleFullAuto();
+    toggleSecretMode();
   }
 });
 

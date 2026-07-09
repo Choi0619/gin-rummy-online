@@ -351,6 +351,15 @@ io.on('connection', socket => {
     if (room.game && !room.game.over && room.game.turn === idx) startTurnTimer(room);
   });
 
+  socket.on('set-secret-mode', ({ active }) => {
+    const room = rooms.get(socket.data.room);
+    if (!room) return;
+    const idx = socket.data.idx;
+    if (!room.secretMode) room.secretMode = [false, false];
+    room.secretMode[idx] = !!active;
+    io.to(room.code).emit('secret-mode-update', { idx, active: room.secretMode[idx] });
+  });
+
   socket.on('toggle-ai-takeover', () => {
     const room = rooms.get(socket.data.room);
     if (!room || !room.game || room.game.over || room.vsAI) return;
