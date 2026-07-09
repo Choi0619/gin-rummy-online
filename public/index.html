@@ -3574,6 +3574,9 @@ function renderBorderGrid() {
     }
     return '<div class="' + cls + '" style="background:' + b.swatch + '" onclick="' + clickHandler + '" title="' + b.name + '">' + inner + '</div>';
   }).join('');
+  const desc = document.getElementById('borderDesc');
+  const current = CARD_BORDERS.find(x => x.id === myCardBorder);
+  if (desc && current) desc.textContent = '🛡️ 현재 장착 중: ' + current.name + ' 프로필 테두리';
 }
 
 // Applies a chosen profile-border skin (bronze/silver/.../legend) to any avatar
