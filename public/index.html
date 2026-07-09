@@ -483,9 +483,9 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 .avatar-frame.cb-w20, .badge-char.cb-w20, .slot-icon.cb-w20, .f-char.cb-w20,
 .avatar-card.cb-w20, .auth-user-badge.cb-w20, .friend-row.cb-w20, .dm-header.cb-w20
   { border-color: #2ee879 !important; box-shadow: 0 0 12px rgba(46,232,121,0.55) !important; }
-.avatar-card.cb-gold, .auth-user-badge.cb-gold::before, .friend-row.cb-gold::before, .dm-header.cb-gold::before
+.avatar-card.cb-gold::before, .auth-user-badge.cb-gold::before, .friend-row.cb-gold::before, .dm-header.cb-gold::before
   { content: '⭐'; position: absolute; top: -8px; left: 14px; font-size: 12px; z-index: 2; }
-.avatar-card.cb-w20, .auth-user-badge.cb-w20::before, .friend-row.cb-w20::before, .dm-header.cb-w20::before
+.avatar-card.cb-w20::before, .auth-user-badge.cb-w20::before, .friend-row.cb-w20::before, .dm-header.cb-w20::before
   { content: '🟢'; position: absolute; top: -8px; left: 14px; font-size: 11px; z-index: 2; }
 /* --- rarity 3: rare, gem + brighter glow --- */
 .avatar-frame.cb-platinum, .badge-char.cb-platinum, .slot-icon.cb-platinum, .f-char.cb-platinum,
@@ -497,11 +497,11 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 .avatar-frame.cb-w50, .badge-char.cb-w50, .slot-icon.cb-w50, .f-char.cb-w50,
 .avatar-card.cb-w50, .auth-user-badge.cb-w50, .friend-row.cb-w50, .dm-header.cb-w50
   { border-color: #ff3b5c !important; box-shadow: 0 0 14px rgba(255,59,92,0.6) !important; }
-.avatar-card.cb-platinum, .auth-user-badge.cb-platinum::before, .friend-row.cb-platinum::before, .dm-header.cb-platinum::before
+.avatar-card.cb-platinum::before, .auth-user-badge.cb-platinum::before, .friend-row.cb-platinum::before, .dm-header.cb-platinum::before
   { content: '💠'; position: absolute; top: -8px; left: 14px; font-size: 13px; z-index: 2; }
-.avatar-card.cb-diamond, .auth-user-badge.cb-diamond::before, .friend-row.cb-diamond::before, .dm-header.cb-diamond::before
+.avatar-card.cb-diamond::before, .auth-user-badge.cb-diamond::before, .friend-row.cb-diamond::before, .dm-header.cb-diamond::before
   { content: '💎'; position: absolute; top: -8px; left: 14px; font-size: 13px; z-index: 2; }
-.avatar-card.cb-w50, .auth-user-badge.cb-w50::before, .friend-row.cb-w50::before, .dm-header.cb-w50::before
+.avatar-card.cb-w50::before, .auth-user-badge.cb-w50::before, .friend-row.cb-w50::before, .dm-header.cb-w50::before
   { content: '🔴'; position: absolute; top: -8px; left: 14px; font-size: 12px; z-index: 2; }
 /* --- rarity 4: legendary, gem + corner flourishes + shimmer across the whole badge --- */
 .avatar-frame.cb-challenger, .badge-char.cb-challenger, .slot-icon.cb-challenger, .f-char.cb-challenger,
@@ -510,12 +510,12 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
 .avatar-frame.cb-w100, .badge-char.cb-w100, .slot-icon.cb-w100, .f-char.cb-w100,
 .avatar-card.cb-w100, .auth-user-badge.cb-w100, .friend-row.cb-w100, .dm-header.cb-w100
   { border-color: #ffd700 !important; box-shadow: 0 0 18px rgba(255,215,0,0.75) !important; animation: cbLegendShine 2.4s linear infinite; }
-.avatar-card.cb-challenger, .auth-user-badge.cb-challenger::before, .friend-row.cb-challenger::before, .dm-header.cb-challenger::before
+.avatar-card.cb-challenger::before, .auth-user-badge.cb-challenger::before, .friend-row.cb-challenger::before, .dm-header.cb-challenger::before
   { content: '🏆'; position: absolute; top: -9px; left: 14px; font-size: 14px; z-index: 2; filter: drop-shadow(0 0 3px rgba(255,140,0,0.8)); }
-.avatar-card.cb-w100, .auth-user-badge.cb-w100::before, .friend-row.cb-w100::before, .dm-header.cb-w100::before
+.avatar-card.cb-w100::before, .auth-user-badge.cb-w100::before, .friend-row.cb-w100::before, .dm-header.cb-w100::before
   { content: '🌟'; position: absolute; top: -9px; left: 14px; font-size: 14px; z-index: 2; filter: drop-shadow(0 0 3px rgba(255,215,0,0.8)); }
-.avatar-card.cb-challenger, .auth-user-badge.cb-challenger::after, .friend-row.cb-challenger::after, .dm-header.cb-challenger::after,
-.avatar-card.cb-w100, .auth-user-badge.cb-w100::after, .friend-row.cb-w100::after, .dm-header.cb-w100::after
+.avatar-card.cb-challenger::after, .auth-user-badge.cb-challenger::after, .friend-row.cb-challenger::after, .dm-header.cb-challenger::after,
+.avatar-card.cb-w100::after, .auth-user-badge.cb-w100::after, .friend-row.cb-w100::after, .dm-header.cb-w100::after
   { content: '✦'; position: absolute; bottom: -8px; right: 14px; font-size: 12px; z-index: 2; opacity: 0.85; }
 /* In-game avatar emoji has no built-in border box, so use a non-layout-shifting outline ring instead */
 .avatar-emoji.cb-green      { outline: 2.5px solid #00e676; outline-offset: 4px; border-radius: 50%; box-shadow: 0 0 8px rgba(0,230,118,0.5); }
@@ -1900,6 +1900,140 @@ body.theme-aurora .reaction-btn {
 }
 body.theme-aurora .reaction-btn:hover { background: rgba(4,14,20,0.9); border-color: rgba(0,255,210,0.8); }
 
+
+/* Aurora in-game polish: readable controls, centered avatars, and a brighter star-crystal card face. */
+body.theme-aurora #gameScreen {
+  background: radial-gradient(circle at 50% 18%, rgba(0,210,190,0.18), transparent 34%), var(--bg-grad);
+}
+body.theme-aurora .game-header {
+  background: linear-gradient(180deg, rgba(2,14,24,0.82), rgba(2,10,18,0.52));
+  border-bottom-color: rgba(91,255,224,0.16);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.22);
+}
+body.theme-aurora .player-bar {
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 16px 8px;
+}
+body.theme-aurora .avatar-card {
+  position: relative;
+  inset: auto;
+  flex: 0 1 230px;
+  background: linear-gradient(135deg, rgba(5,24,34,0.88), rgba(9,16,35,0.76));
+  border-color: rgba(111,255,222,0.38);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08);
+  color: #ecfffb;
+}
+body.theme-aurora .avatar-card.my-turn {
+  background: linear-gradient(135deg, rgba(5,34,32,0.95), rgba(18,18,48,0.86));
+}
+body.theme-aurora .avatar-card.my-turn::after {
+  inset: -3px;
+  border-radius: 17px;
+  box-shadow: 0 0 14px rgba(0,255,210,0.45), 0 0 24px rgba(122,92,255,0.28);
+}
+body.theme-aurora .avatar-turn-lbl { color: #9fffe8; }
+body.theme-aurora .vs-label { color: rgba(165,255,235,0.55); text-shadow: 0 0 10px rgba(0,255,210,0.28); }
+
+body.theme-aurora .hand-zone,
+body.theme-aurora .middle-zone {
+  background: linear-gradient(180deg, rgba(3,17,28,0.78), rgba(2,8,18,0.82));
+  border: 1px solid rgba(100,255,226,0.16);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 16px 34px rgba(0,0,0,0.28), 0 0 24px rgba(0,220,190,0.08);
+}
+body.theme-aurora .middle-zone { animation: auroraPanelGlow 6s ease-in-out infinite; }
+@keyframes auroraPanelGlow {
+  0%,100% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 16px 34px rgba(0,0,0,0.28), 0 0 18px rgba(0,220,190,0.10); }
+  50% { box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 18px 38px rgba(0,0,0,0.30), 0 0 28px rgba(122,92,255,0.16); }
+}
+
+body.theme-aurora .card:not(.face-down) {
+  color: #061b2a;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255,255,255,0.98) 0 6%, transparent 18%),
+    radial-gradient(circle at 78% 22%, rgba(159,245,255,0.42), transparent 24%),
+    radial-gradient(circle at 30% 78%, rgba(195,170,255,0.32), transparent 28%),
+    linear-gradient(145deg, #ffffff 0%, #eefcff 46%, #d7f6ff 100%);
+  border-color: rgba(134,236,255,0.9);
+  box-shadow: 0 7px 18px rgba(0,18,34,0.35), 0 0 0 1px rgba(255,255,255,0.55) inset, 0 0 16px rgba(100,230,255,0.28);
+  animation: auroraCardGlowSoft 4.8s ease-in-out infinite;
+}
+body.theme-aurora .card:not(.face-down)::before {
+  z-index: 1;
+  opacity: 0.72;
+  background:
+    linear-gradient(115deg, transparent 24%, rgba(255,255,255,0.75) 43%, rgba(123,255,230,0.26) 51%, transparent 68%),
+    radial-gradient(1.5px 1.5px at 22% 28%, rgba(0,205,255,0.9), transparent 65%),
+    radial-gradient(1.4px 1.4px at 70% 18%, rgba(155,110,255,0.85), transparent 65%),
+    radial-gradient(1.2px 1.2px at 76% 72%, rgba(0,235,190,0.72), transparent 65%);
+  background-size: 260% 260%, 100% 100%, 100% 100%, 100% 100%;
+  mix-blend-mode: screen;
+}
+body.theme-aurora .card:not(.face-down) .card-inner::after {
+  z-index: -1;
+  opacity: 0.75;
+  background-image:
+    radial-gradient(1.2px 1.2px at 16% 22%, rgba(0,185,255,0.85), transparent),
+    radial-gradient(1px 1px at 48% 14%, rgba(255,255,255,0.95), transparent),
+    radial-gradient(1.4px 1.4px at 73% 58%, rgba(150,95,255,0.7), transparent),
+    radial-gradient(1px 1px at 30% 82%, rgba(0,220,190,0.72), transparent);
+}
+body.theme-aurora .card .red { color: #e32152 !important; text-shadow: 0 0 4px rgba(255,255,255,0.55); }
+body.theme-aurora .card .black { color: #051a28 !important; text-shadow: 0 0 4px rgba(255,255,255,0.45); }
+body.theme-aurora .card.in-meld,
+body.theme-aurora .card.meld {
+  background: linear-gradient(145deg, #f3fffb 0%, #d9fff3 52%, #c7ffed 100%) !important;
+  border-color: #00f0b8 !important;
+  box-shadow: 0 8px 18px rgba(0,30,24,0.36), 0 0 18px rgba(0,255,190,0.46) !important;
+}
+body.theme-aurora .card.selected {
+  border-color: #b9fff3 !important;
+  box-shadow: 0 16px 34px rgba(0,255,210,0.45), 0 0 0 7px rgba(122,92,255,0.16), 0 0 26px rgba(255,255,255,0.35) !important;
+}
+@keyframes auroraCardGlowSoft {
+  0%,100% { filter: saturate(1.02) brightness(1); }
+  50% { filter: saturate(1.12) brightness(1.035); }
+}
+
+body.theme-aurora .util-row { gap: 8px; padding-bottom: 10px; }
+body.theme-aurora .util-btn {
+  min-height: 32px;
+  border-radius: 11px;
+  padding: 7px 13px;
+  background: linear-gradient(135deg, rgba(7,32,42,0.96), rgba(14,18,42,0.92));
+  border: 1px solid rgba(139,255,232,0.46);
+  color: #eafffb;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.55);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 0 12px rgba(0,230,190,0.18);
+}
+body.theme-aurora .util-btn:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, rgba(10,48,56,0.98), rgba(24,22,62,0.95));
+  border-color: rgba(170,255,241,0.82);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 0 18px rgba(0,255,210,0.34);
+}
+body.theme-aurora .util-btn.danger {
+  background: linear-gradient(135deg, rgba(54,14,28,0.96), rgba(28,10,30,0.94));
+  border-color: rgba(255,126,165,0.62);
+  color: #ffe8ef;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 0 12px rgba(255,74,126,0.20);
+}
+body.theme-aurora .util-btn.danger:hover {
+  border-color: rgba(255,166,195,0.9);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 0 18px rgba(255,74,126,0.34);
+}
+body.theme-aurora .reaction-btn {
+  background: linear-gradient(135deg, rgba(7,32,42,0.95), rgba(14,18,42,0.9));
+  border-color: rgba(139,255,232,0.48);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 0 12px rgba(0,230,190,0.20);
+}
+body.theme-aurora .reaction-btn:hover {
+  background: linear-gradient(135deg, rgba(10,48,56,0.98), rgba(24,22,62,0.95));
+  border-color: rgba(170,255,241,0.84);
+}
 /* ===== Chat ===== */
 .chat-toggle-btn {
   position: fixed; bottom: 20px; right: 20px; z-index: 240;
@@ -1957,6 +2091,13 @@ body.theme-aurora .reaction-btn:hover { background: rgba(4,14,20,0.9); border-co
   font-size: 13px; line-height: 1.4; word-break: break-word; color: white;
 }
 .chat-msg.mine .chat-bubble { background: rgba(33,150,243,0.35); border-radius: 12px 12px 3px 12px; }
+.chat-msg.spectator { align-self: flex-start; }
+.chat-msg.spectator .chat-name { color: #83ffe7; font-weight: 800; }
+.chat-msg.spectator .chat-bubble {
+  background: linear-gradient(135deg, rgba(0,230,190,0.22), rgba(146,91,255,0.18));
+  border: 1px solid rgba(131,255,231,0.24);
+  box-shadow: 0 0 12px rgba(0,230,190,0.12);
+}
 .chat-msg.system .chat-bubble { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.55); font-size: 11px; border-radius: 10px; }
 .chat-bubble.emoji-only { background: transparent !important; padding: 2px; font-size: 30px; line-height: 1; animation: emojiPop 0.3s cubic-bezier(.34,1.56,.64,1); }
 @keyframes emojiPop { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -2671,6 +2812,25 @@ body.theme-aurora .reaction-btn:hover { background: rgba(4,14,20,0.9); border-co
 </div>
 
 <!-- ===== SPECTATOR SCREEN ===== -->
+<style>
+  .spectate-hand-zone {
+    width: min(1120px, calc(100vw - 32px));
+    margin: 16px auto 0;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.18);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 16px 40px rgba(0,0,0,0.24);
+  }
+  .spectate-hand-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    margin-bottom: 10px; font-size: 12px; font-weight: 800; color: rgba(255,255,255,0.72);
+  }
+  .spectate-hand {
+    display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; min-height: 108px;
+  }
+  .spectate-hand .card { cursor: default; }
+</style>
 <div id="spectateScreen" class="screen">
   <div class="game-header">
     <div class="title-sm">👁️ 관전 중 <span class="target-score-lbl" id="specTargetScoreLbl"></span></div>
@@ -2703,15 +2863,26 @@ body.theme-aurora .reaction-btn:hover { background: rgba(4,14,20,0.9); border-co
       <div style="font-size:11px;text-align:center;color:rgba(255,255,255,0.4);margin-top:4px">버린 패</div>
     </div>
   </div>
-  <div style="display:flex;justify-content:center;gap:40px;margin-top:16px">
-    <div style="text-align:center">
-      <div style="font-size:11px;color:rgba(255,255,255,0.4)" id="spec0HandLabel">플레이어1 패</div>
-      <div style="font-size:20px;font-weight:800" id="spec0HandCount">-</div>
+  <div class="spectate-hand-zone">
+    <div class="spectate-hand-head">
+      <span id="spec0HandLabel">플레이어1 패</span>
+      <span id="spec0HandCount">-</span>
     </div>
-    <div style="text-align:center">
-      <div style="font-size:11px;color:rgba(255,255,255,0.4)" id="spec1HandLabel">플레이어2 패</div>
-      <div style="font-size:20px;font-weight:800" id="spec1HandCount">-</div>
+    <div class="spectate-hand" id="spec0Hand"></div>
+  </div>
+  <div class="spectate-hand-zone">
+    <div class="spectate-hand-head">
+      <span id="spec1HandLabel">플레이어2 패</span>
+      <span id="spec1HandCount">-</span>
     </div>
+    <div class="spectate-hand" id="spec1Hand"></div>
+  </div>
+  <div id="reactionBarSpectate" style="display:none;justify-content:center;gap:8px;padding:14px 0 0">
+    <button class="reaction-btn" onclick="sendReaction('👏')">👏</button>
+    <button class="reaction-btn" onclick="sendReaction('😂')">😂</button>
+    <button class="reaction-btn" onclick="sendReaction('😭')">😭</button>
+    <button class="reaction-btn" onclick="sendReaction('🔥')">🔥</button>
+    <button class="reaction-btn" onclick="sendReaction('👍')">👍</button>
   </div>
   <button class="btn btn-secondary" style="max-width:200px;margin:24px auto 0" onclick="leaveSpectate()">← 관전 종료</button>
 </div>
@@ -4557,7 +4728,7 @@ function showFriendCtxMenu(evt, friendId) {
   items.push({ label: '💬 메시지 보내기', action: () => openDm(friendId) });
   if (inGame) {
     items.push({ sep: true });
-    items.push({ label: '👁️ 관전하기', action: () => joinRoomByCode(st.room_code) });
+    items.push({ label: '👁️ 관전하기', action: () => spectateRoomByCode(st.room_code) });
     items.push({
       label: st.room_public ? '🤝 같이 하기' : '📨 초대 요청 보내기',
       action: () => {
@@ -5409,7 +5580,14 @@ let lastDrawnId = null;  // id of the card just drawn (for highlight)
 let vsAI = false;
 let myAiDifficulty = 'normal'; // 'easy' | 'normal' | 'hard' — set when creating an AI room
 let isSpectator = false;
-let specState = { names: ['',''], chars: ['🐱','🐶'], scores: [0,0], discardTop: null, deckCount: 0, turn: 0, hand0Count: 0, hand1Count: 0, targetScore: 100 };
+let specState = { names: ['',''], chars: ['🐱','🐶'], scores: [0,0], discardTop: null, deckCount: 0, turn: 0, phase: '', hands: [[], []], hand0Count: 0, hand1Count: 0, targetScore: 100, cardBorders: ['green', 'green'] };
+
+function renderSpectateHand(elId, cards) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.innerHTML = '';
+  (cards || []).forEach(card => el.appendChild(makeCard(card, {})));
+}
 
 function renderSpectateView() {
   document.getElementById('spec0Name').textContent = specState.names[0] || '플레이어1';
@@ -5422,10 +5600,14 @@ function renderSpectateView() {
   document.getElementById('spec1Score').textContent = (specState.scores[1] ?? 0) + '점';
   document.getElementById('spec0Card').classList.toggle('my-turn', specState.turn === 0);
   document.getElementById('spec1Card').classList.toggle('my-turn', specState.turn === 1);
+  document.getElementById('spec0Card').className = 'avatar-card cb-' + (specState.cardBorders[0] || 'green') + (specState.turn === 0 ? ' my-turn' : '');
+  document.getElementById('spec1Card').className = 'avatar-card cb-' + (specState.cardBorders[1] || 'green') + (specState.turn === 1 ? ' my-turn' : '');
   document.getElementById('specTargetScoreLbl').textContent = specState.targetScore === null ? '♾️ 무제한' : `🎯 ${specState.targetScore}점 선승`;
   document.getElementById('specDeckCount').textContent = specState.deckCount + '장';
   document.getElementById('spec0HandCount').textContent = (specState.hand0Count || 0) + '장';
   document.getElementById('spec1HandCount').textContent = (specState.hand1Count || 0) + '장';
+  renderSpectateHand('spec0Hand', specState.hands[0]);
+  renderSpectateHand('spec1Hand', specState.hands[1]);
   const slot = document.getElementById('specDiscardSlot');
   slot.innerHTML = '';
   if (specState.discardTop) {
@@ -5439,6 +5621,7 @@ function renderSpectateView() {
 
 function leaveSpectate() {
   isSpectator = false;
+  if (socket) socket.emit('leave-game');
   clearRoomPresence();
   location.reload();
 }
@@ -5495,11 +5678,11 @@ function scrollChatToBottom() {
   list.scrollTop = list.scrollHeight;
 }
 
-function appendChatMessage({ idx, name, text, ts, system }) {
+function appendChatMessage({ idx, name, text, ts, system, spectator }) {
   const list = document.getElementById('chatMessages');
-  const mine = !system && idx === myIdx;
+  const mine = !system && !spectator && idx === myIdx;
   const row = document.createElement('div');
-  row.className = 'chat-msg' + (system ? ' system' : (mine ? ' mine' : ''));
+  row.className = 'chat-msg' + (system ? ' system' : (spectator ? ' spectator' : (mine ? ' mine' : '')));
   if (!system) {
     const nameEl = document.createElement('div');
     nameEl.className = 'chat-name';
@@ -5532,7 +5715,7 @@ function appendChatMessage({ idx, name, text, ts, system }) {
 }
 
 function showChatWidget() {
-  if (vsAI) { hideChatWidget(); return; }
+  if (vsAI && !isSpectator) { hideChatWidget(); return; }
   document.getElementById('chatToggleBtn').style.display = 'flex';
 }
 
@@ -5619,7 +5802,7 @@ function playDealAnimation(cardCount, onDone) {
 // ===== Reaction emojis =====
 let _reactionCooldown = false;
 function sendReaction(emoji) {
-  if (_reactionCooldown || vsAI) return;
+  if (_reactionCooldown || (vsAI && !isSpectator) || !socket) return;
   socket.emit('reaction', { emoji });
   _reactionCooldown = true;
   setTimeout(() => { _reactionCooldown = false; }, 2000);
@@ -6039,10 +6222,13 @@ function initSocket() {
     if (gameEl) { gameEl.style.display = count > 0 ? '' : 'none'; if (gameNum) gameNum.textContent = count; }
   });
 
-  socket.on('joined-as-spectator', () => {
+  socket.on('joined-as-spectator', ({ code }) => {
     isSpectator = true;
+    if (code) roomCode = code;
     showScreen('spectateScreen');
     showChatWidget();
+    const rb = document.getElementById('reactionBarSpectate');
+    if (rb) rb.style.display = 'flex';
     showToast('👁️ 관전 모드로 입장했습니다', 'info');
     setTimeout(() => hideToast(), 2000);
   });
@@ -6056,14 +6242,25 @@ function initSocket() {
   });
 
   socket.on('spectate-state', data => {
-    specState.names = data.names; specState.chars = data.chars; specState.scores = data.scores;
-    specState.discardTop = data.discardTop; specState.deckCount = data.deckCount; specState.turn = data.turn;
-    specState.hand0Count = data.hand0Count; specState.hand1Count = data.hand1Count; specState.targetScore = data.targetScore;
+    specState.names = data.names || specState.names; specState.chars = data.chars || specState.chars; specState.scores = data.scores || specState.scores;
+    specState.discardTop = data.discardTop; specState.deckCount = data.deckCount || 0; specState.turn = data.turn || 0; specState.phase = data.phase || '';
+    specState.hands = data.hands || [[], []];
+    specState.hand0Count = data.hand0Count ?? (specState.hands[0] || []).length;
+    specState.hand1Count = data.hand1Count ?? (specState.hands[1] || []).length;
+    specState.targetScore = data.targetScore; specState.cardBorders = data.cardBorders || ['green', 'green'];
     renderSpectateView();
   });
 
-  socket.on('reaction', ({ emoji, fromIdx }) => {
-    const avatarId = fromIdx === myIdx ? 'myAvatarEmoji' : 'oppAvatarEmoji';
+  socket.on('reaction', ({ emoji, fromIdx, spectator, name }) => {
+    if (spectator) {
+      const anchorId = isSpectator ? 'specStatusMsg' : 'chatToggleBtn';
+      showReactionFloat(emoji, anchorId);
+      if (name) appendChatMessage({ system: true, text: name + ': ' + emoji });
+      return;
+    }
+    const avatarId = isSpectator
+      ? (fromIdx === 0 ? 'spec0Emoji' : 'spec1Emoji')
+      : (fromIdx === myIdx ? 'myAvatarEmoji' : 'oppAvatarEmoji');
     showReactionFloat(emoji, avatarId);
   });
 
@@ -6478,6 +6675,19 @@ function joinRoomByCode(code) {
   hideRoomBrowser();
   document.getElementById('joinCode').value = code;
   joinRoom();
+}
+
+function spectateRoomByCode(code) {
+  if (!code) return;
+  hideRoomBrowser();
+  if (!socket) initSocket();
+  socket.emit('spectate-room', {
+    code,
+    name: myName || (supaProfile && supaProfile.nickname) || '관전자',
+    char: myChar,
+    gameId: (supaProfile && supaProfile.game_id) || '',
+    cardBorder: myCardBorder,
+  });
 }
 function _renderRoomsList(list) {
   const el = document.getElementById('roomBrowserList');

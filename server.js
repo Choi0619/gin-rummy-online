@@ -159,6 +159,69 @@ function emitToPlayer(room, idx, event, data) {
   if (room.players[idx]) io.to(room.players[idx]).emit(event, data);
 }
 
+function buildSpectateState(room) {
+  const g = room && room.game;
+  if (!g) return null;
+  return {
+    discardTop: g.discardPile[g.discardPile.length - 1] || null,
+    deckCount: g.deck.length,
+    turn: g.turn,
+    phase: g.phase,
+    scores: room.scores,
+    names: room.names,
+    chars: room.chars,
+    gameIds: room.gameIds || ['', ''],
+    cardBorders: room.cardBorders || ['green', 'green'],
+    hands: [g.hands[0], g.hands[1]],
+    hand0Count: g.hands[0].length,
+    hand1Count: g.hands[1].length,
+    targetScore: room.targetScore,
+    gameMode: g.gameMode,
+    oklahomaCap: g.oklahomaCap,
+    handSize: g.handSize,
+    over: !!g.over,
+  };
+}
+
+function emitSpectateState(room) {
+  if (!room || !room.game || !room.spectators || room.spectators.size === 0) return;
+  const state = buildSpectateState(room);
+  if (!state) return;
+  for (const sid of room.spectators) io.to(sid).emit('spectate-state', state);
+}
+
+function spectatorName(socket, room) {
+  const info = room && room.spectatorInfo && room.spectatorInfo.get(socket.id);
+  return (info && (info.gameId || info.name)) || socket.data.spectatorName || '관전자';
+}
+
+function joinAsSpectator(socket, room, payload = {}) {
+  if (!room.spectators) room.spectators = new Set();
+  if (!room.spectatorInfo) room.spectatorInfo = new Map();
+  const displayName = String(payload.name || payload.gameId || '관전자').slice(0, 30);
+  const gameId = String(payload.gameId || '').slice(0, 30);
+  room.spectators.add(socket.id);
+  room.spectatorInfo.set(socket.id, {
+    name: displayName,
+    gameId,
+    char: payload.char || '👁️',
+    cardBorder: payload.cardBorder || 'green',
+  });
+  socket.join(room.code);
+  socket.data.room = room.code;
+  socket.data.idx = -1;
+  socket.data.spectator = true;
+  socket.data.spectatorName = gameId || displayName;
+  const specCount = room.spectators.size;
+  io.to(room.code).emit('spectator-update', { count: specCount });
+  if (room.game) {
+    socket.emit('spectate-state', buildSpectateState(room));
+  } else {
+    socket.emit('spectate-waiting', { names: room.names, chars: room.chars });
+  }
+  socket.emit('joined-as-spectator', { specCount, code: room.code });
+}
+
 // ===== Socket =====
 io.on('connection', socket => {
   console.log('connect', socket.id);
@@ -229,33 +292,7 @@ io.on('connection', socket => {
     else if (room.players.length < 2 || !room.players[1]) slotIdx = 1;
 
     if (slotIdx === -1) {
-      // Room full → join as spectator
-      if (!room.spectators) room.spectators = new Set();
-      room.spectators.add(socket.id);
-      socket.join(code);
-      socket.data.room = code;
-      socket.data.idx = -1; // spectator
-      socket.data.spectator = true;
-      const specCount = room.spectators.size;
-      io.to(code).emit('spectator-update', { count: specCount });
-      // Send current game state to spectator if game in progress
-      if (room.game && !room.game.over) {
-        const g = room.game;
-        socket.emit('spectate-state', {
-          discardTop: g.discardPile[g.discardPile.length - 1] || null,
-          deckCount: g.deck.length,
-          turn: g.turn,
-          scores: room.scores,
-          names: room.names,
-          chars: room.chars,
-          hand0Count: g.hands[0].length,
-          hand1Count: g.hands[1].length,
-          targetScore: room.targetScore,
-        });
-      } else {
-        socket.emit('spectate-waiting', { names: room.names, chars: room.chars });
-      }
-      socket.emit('joined-as-spectator', { specCount });
+      joinAsSpectator(socket, room, { name, char, gameId, cardBorder });
       return;
     }
 
@@ -302,6 +339,7 @@ io.on('connection', socket => {
     const room = rooms.get(socket.data.room);
     if (!room) return;
     const idx = socket.data.idx;
+    if (idx < 0) return;
     room.chars[idx] = char;
     io.to(room.code).emit('char-update', { idx, char });
   });
@@ -310,6 +348,7 @@ io.on('connection', socket => {
     const room = rooms.get(socket.data.room);
     if (!room) return;
     const idx = socket.data.idx;
+    if (idx < 0) return;
     if (!room.cardBorders) room.cardBorders = ['green', 'green'];
     room.cardBorders[idx] = String(border || 'green').slice(0, 20);
     io.to(room.code).emit('card-border-update', { idx, border: room.cardBorders[idx] });
@@ -321,13 +360,23 @@ io.on('connection', socket => {
     const idx = socket.data.idx;
     const clean = String(text || '').slice(0, 200).trim();
     if (!clean) return;
-    io.to(room.code).emit('chat-message', { idx, name: room.names[idx], text: clean, ts: Date.now() });
+    const spectator = !!socket.data.spectator || idx === -1;
+    const name = spectator ? `관전자 ${spectatorName(socket, room)}` : room.names[idx];
+    io.to(room.code).emit('chat-message', { idx, name, text: clean, ts: Date.now(), spectator });
+  });
+
+  socket.on('spectate-room', ({ code, name, char, gameId, cardBorder }) => {
+    const room = rooms.get(String(code || '').toUpperCase().trim());
+    if (!room) { socket.emit('err', '방을 찾을 수 없습니다.'); return; }
+    if (!room.game) { socket.emit('err', '아직 게임이 시작되지 않은 방입니다.'); return; }
+    joinAsSpectator(socket, room, { name, char, gameId, cardBorder });
   });
 
   socket.on('toggle-status', () => {
     const room = rooms.get(socket.data.room);
     if (!room) return;
     const idx = socket.data.idx;
+    if (idx < 0) return;
     room.away[idx] = !room.away[idx];
     io.to(room.code).emit('status-update', { idx, away: room.away[idx] });
 
@@ -361,6 +410,7 @@ io.on('connection', socket => {
     const room = rooms.get(socket.data.room);
     if (!room) return;
     const idx = socket.data.idx;
+    if (idx < 0) return;
     if (!room.secretMode) room.secretMode = [false, false];
     room.secretMode[idx] = !!active;
     io.to(room.code).emit('secret-mode-update', { idx, active: room.secretMode[idx] });
@@ -402,6 +452,7 @@ io.on('connection', socket => {
       names: room.names,
       surrenderBy: idx,
     });
+    emitSpectateState(room);
     room.rematch = [false, false];
     setTimeout(() => checkMatchEnd(room), 1500);
   }
@@ -432,6 +483,10 @@ io.on('connection', socket => {
     const room = rooms.get(socket.data.room);
     if (!room || !room.game) return;
     const idx = socket.data.idx;
+    if (socket.data.spectator || idx === -1) {
+      socket.emit('spectate-state', buildSpectateState(room));
+      return;
+    }
     const g = room.game;
     socket.emit('sync-state', {
       hand: g.hands[idx],
@@ -448,6 +503,16 @@ io.on('connection', socket => {
   socket.on('leave-game', () => {
     const room = rooms.get(socket.data.room);
     if (!room) return;
+    if (socket.data.spectator) {
+      if (room.spectators) room.spectators.delete(socket.id);
+      if (room.spectatorInfo) room.spectatorInfo.delete(socket.id);
+      socket.leave(room.code);
+      io.to(room.code).emit('spectator-update', { count: room.spectators ? room.spectators.size : 0 });
+      socket.data.room = null;
+      socket.data.spectator = false;
+      socket.emit('left-spectate');
+      return;
+    }
     const idx = socket.data.idx;
     room.leaving = true;
     clearTurnTimers(room);
@@ -543,7 +608,7 @@ io.on('connection', socket => {
 
   socket.on('action', ({ type, cardId }) => {
     const room = rooms.get(socket.data.room);
-    if (!room || !room.game || room.game.over) return;
+    if (!room || !room.game || room.game.over || socket.data.spectator) return;
     if (type === 'take-upcard' || type === 'pass-upcard') {
       handleUpcardDecision(room, socket.data.idx, type, socket);
     } else {
@@ -578,12 +643,18 @@ io.on('connection', socket => {
     if (!room) return;
     const allowed = ['👏','😂','😭','🔥','👍'];
     if (!allowed.includes(emoji)) return;
-    io.to(room.code).emit('reaction', { emoji, fromIdx: socket.data.idx });
+    const spectator = !!socket.data.spectator || socket.data.idx === -1;
+    io.to(room.code).emit('reaction', {
+      emoji,
+      fromIdx: spectator ? -1 : socket.data.idx,
+      spectator,
+      name: spectator ? `관전자 ${spectatorName(socket, room)}` : room.names[socket.data.idx],
+    });
   });
 
   socket.on('play-again', () => {
     const room = rooms.get(socket.data.room);
-    if (!room) return;
+    if (!room || socket.data.spectator) return;
     if (room.vsAI) { room.game = null; startGame(room); return; }
     const idx = socket.data.idx;
     if (!room.rematch) room.rematch = [false, false];
@@ -605,6 +676,7 @@ io.on('connection', socket => {
       const room = rooms.get(code);
       if (room && room.spectators) {
         room.spectators.delete(socket.id);
+        if (room.spectatorInfo) room.spectatorInfo.delete(socket.id);
         io.to(code).emit('spectator-update', { count: room.spectators.size });
       }
       return;
@@ -706,6 +778,7 @@ function startGame(room) {
       handSize,
     });
   });
+  emitSpectateState(room);
   startTurnTimer(room);
   aiTakeTurn(room, firstIdx);
 }
@@ -779,6 +852,7 @@ function handleUpcardDecision(room, idx, type, socket) {
     }
   }
 
+  emitSpectateState(room);
   if (socket) socket.emit('turn-timer-reset');
   if (room.game && !room.game.over) startTurnTimer(room);
 }
@@ -884,6 +958,7 @@ function autoPlayOnTimeout(room) {
     io.to(room.code).emit('card-discarded', {
       card: toDiscard, byIdx: idx, nextTurn: oppIdx, deckCount: g.deck.length,
     });
+    emitSpectateState(room);
 
     if (room.vsAI && oppIdx === 1) {
       room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, 1), 900 + Math.random() * 700);
@@ -969,6 +1044,7 @@ function handleAction(room, idx, type, cardId, socket) {
     }
   }
 
+  emitSpectateState(room);
   socket.emit('turn-timer-reset');
   if (room.game && !room.game.over) startTurnTimer(room);
 }
@@ -1000,6 +1076,7 @@ function resolveBigGin(room, knockerIdx) {
     scores: room.scores,
     names: room.names,
   });
+  emitSpectateState(room);
   room.rematch = [false, false];
   setTimeout(() => checkMatchEnd(room), 1500);
 }
@@ -1050,6 +1127,7 @@ function resolveRound(room, knockerIdx, isGin) {
     names: room.names,
     discardTop: g.discardPile[g.discardPile.length-1],
   });
+  emitSpectateState(room);
   room.rematch = [false, false];
   setTimeout(() => checkMatchEnd(room), 1500);
 }
@@ -1093,6 +1171,7 @@ function aiPlayTurnFor(room, idx) {
         newDiscardTop: drewFrom === 'discard' ? newTop : undefined,
       });
     }
+    emitSpectateState(room);
   }
 
   // Big Gin check
@@ -1141,6 +1220,7 @@ function aiPlayTurnFor(room, idx) {
         card: discardCard, byIdx: idx, nextTurn: oppIdx, deckCount: g.deck.length,
       });
     }
+    emitSpectateState(room);
     if (room.aiControlled && room.aiControlled[oppIdx]) {
       room.aiMoveTimer = setTimeout(() => aiPlayTurnFor(room, oppIdx), 900 + Math.random() * 700);
     } else {
@@ -1154,6 +1234,7 @@ function handleDeckEmpty(room) {
   clearTurnTimers(room);
   if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
   io.to(room.code).emit('deck-empty');
+  emitSpectateState(room);
   room.rematch = [false, false];
 }
 
