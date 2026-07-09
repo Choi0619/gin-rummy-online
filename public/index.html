@@ -777,7 +777,7 @@ body.theme-aurora .logo-title { animation: auroraText 6s linear infinite; }
 .aurora-sparkle {
   position: fixed; pointer-events: none; z-index: 250;
   animation: auroraSparklePop 3.2s ease-out forwards;
-  filter: drop-shadow(0 0 6px rgba(150,255,230,0.8));
+  filter: drop-shadow(0 0 6px var(--glow, rgba(150,255,230,0.8)));
 }
 @keyframes auroraSparklePop {
   0%   { opacity: 0; transform: scale(0.4) rotate(-15deg); }
@@ -857,7 +857,8 @@ body.theme-aurora .logo-title { animation: auroraText 6s linear infinite; }
   flex-direction: column;
   gap: 10px;
 }
-/* Aurora theme: the whole lobby card gets a slow-drifting nebula border glow */
+/* Aurora theme: only the thin border ring cycles color — the card interior
+   stays the normal translucent panel, no wash/tint across the whole card. */
 body.theme-aurora .lobby-card {
   border-color: transparent;
   background:
@@ -871,8 +872,8 @@ body.theme-aurora .lobby-card {
   100% { background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), conic-gradient(from 360deg, #00e6b8, #7a5cff, #00c8ff, #ff6ec7, #00e6b8); }
 }
 @keyframes nebulaBorderBreathe {
-  0%,100% { box-shadow: 0 20px 50px rgba(0,0,0,0.45), 0 0 22px rgba(120,80,255,0.35); }
-  50%      { box-shadow: 0 20px 50px rgba(0,0,0,0.45), 0 0 40px rgba(0,220,180,0.55); }
+  0%,100% { box-shadow: 0 20px 50px rgba(0,0,0,0.45), 0 0 6px rgba(120,80,255,0.25); }
+  50%      { box-shadow: 0 20px 50px rgba(0,0,0,0.45), 0 0 12px rgba(0,220,180,0.4); }
 }
 .lobby-card h2 { font-size: 18px; margin-bottom: 4px; }
 .lobby-section {
@@ -3413,13 +3414,25 @@ function spawnAuroraShootingStar() {
   setTimeout(() => m.remove(), 2000);
 }
 
+// A real 4-point "twinkle" star shape (SVG), not an emoji glyph.
+const AURORA_STAR_COLORS = [['#9dffee','#7a5cff'], ['#a8e0ff','#00c8ff'], ['#ffd0f0','#ff6ec7'], ['#eafff5','#00e6b8']];
+function auroraStarSvg(size, c1, c2, id) {
+  return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0%" stop-color="' + c1 + '"/><stop offset="100%" stop-color="' + c2 + '"/>' +
+    '</linearGradient></defs>' +
+    '<path d="M12 0 C12 6.5 14 9.5 24 12 C14 14.5 12 17.5 12 24 C12 17.5 10 14.5 0 12 C10 9.5 12 6.5 12 0 Z" fill="url(#' + id + ')"/>' +
+  '</svg>';
+}
 function spawnAuroraSparkle() {
   const el = document.createElement('div');
   el.className = 'aurora-sparkle';
-  el.textContent = ['✨','💫','⭐'][Math.floor(Math.random() * 3)];
+  const size = 12 + Math.random() * 14;
+  const [c1, c2] = AURORA_STAR_COLORS[Math.floor(Math.random() * AURORA_STAR_COLORS.length)];
+  el.innerHTML = auroraStarSvg(size, c1, c2, 'sp' + Date.now() + Math.random());
   el.style.left = (5 + Math.random() * 90) + 'vw';
   el.style.top = (5 + Math.random() * 70) + 'vh';
-  el.style.fontSize = (14 + Math.random() * 16) + 'px';
+  el.style.setProperty('--glow', c2);
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 3200);
 }
