@@ -19,7 +19,16 @@ html {
      cause the scrollbar to flicker in/out and shift the layout width. */
   overflow-y: scroll;
   scrollbar-gutter: stable;
+  background: #0a0e1a;
+  /* Reserved gutter defaults to the OS scrollbar track color (often light),
+     which shows up as a thin pale strip on the right against a dark theme.
+     Theme the scrollbar itself so the gutter blends in instead. */
+  scrollbar-color: rgba(255,255,255,0.28) rgba(6,10,20,0.6);
 }
+html::-webkit-scrollbar { width: 11px; }
+html::-webkit-scrollbar-track { background: rgba(6,10,20,0.6); }
+html::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
+html::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); background-clip: padding-box; }
 
 body {
   font-family: 'Segoe UI', sans-serif;
@@ -1052,50 +1061,62 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 }
 @keyframes revengeLblPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
 
-/* Defender: subtle glow */
-.avatar-card.revenge-fire {
-  animation: avatarRevengeFireDefend 2s ease-in-out infinite;
+/* Dedicated effect layers keep profile-border gems and flourishes untouched. */
+.avatar-card.revenge-fire,
+.avatar-card.revenge-fire-intense { isolation: isolate; overflow: visible; }
+.revenge-flame-layer {
+  position: absolute; inset: -9px; border-radius: 21px;
+  pointer-events: none; z-index: -1; opacity: 0; transform-origin: 50% 80%;
+  transition: opacity 0.2s ease;
 }
-@keyframes avatarRevengeFireDefend {
-  0%,100% { box-shadow: 0 0 5px rgba(180,80,0,0.3); border-color: rgba(200,90,0,0.3); }
-  50% { box-shadow: 0 0 14px rgba(220,100,0,0.5), 0 0 28px rgba(200,80,0,0.15); border-color: rgba(220,120,20,0.5); }
+.revenge-flame-layer::before,
+.revenge-flame-layer::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+.revenge-fire > .revenge-flame-layer { opacity: 0.68; }
+.revenge-fire-intense > .revenge-flame-layer { opacity: 1; }
+.revenge-fire > .revenge-flame-layer::before {
+  inset: 1px; padding: 4px;
+  background: conic-gradient(from 20deg, rgba(255,73,0,0.35), rgba(255,177,40,0.78), rgba(255,65,0,0.34), rgba(255,207,70,0.72), rgba(255,73,0,0.35));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  filter: blur(2px) drop-shadow(0 0 8px rgba(255,91,0,0.52));
+  animation: revengeEmberBreathe 1.9s ease-in-out infinite;
 }
-/* Revenger: raging fire — layered yellow/orange/red like real flames */
-.avatar-card.revenge-fire-intense {
-  animation: avatarRevengeFireIntense 0.7s ease-in-out infinite;
-  border-color: #ff6a00 !important;
+.revenge-fire-intense > .revenge-flame-layer::before {
+  inset: 0; padding: 5px;
+  background: conic-gradient(from var(--fire-angle, 15deg), #ff4a00, #ffd04e, #ff6100, #ffb31f, #ff3d00, #ffe06a, #ff4a00);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  filter: drop-shadow(0 0 7px rgba(255,70,0,0.95)) drop-shadow(0 0 16px rgba(255,130,0,0.58));
+  animation: revengeFireRing 1.6s linear infinite, revengeFirePulse 0.72s ease-in-out infinite alternate;
 }
-@keyframes avatarRevengeFireIntense {
-  0%   {
-    box-shadow: 0 0 8px 2px rgba(255,200,0,0.9), 0 0 22px 4px rgba(255,100,0,0.7), 0 0 45px 8px rgba(255,30,0,0.4), 0 0 70px 12px rgba(200,0,0,0.2);
-    border-color: #ffcc00 !important;
-    background: rgba(255,120,0,0.12);
-  }
-  20%  {
-    box-shadow: 0 0 14px 4px rgba(255,230,0,1),   0 0 36px 8px rgba(255,130,0,0.85), 0 0 70px 14px rgba(255,50,0,0.55), 0 0 110px 20px rgba(200,10,0,0.3);
-    border-color: #ff9900 !important;
-    background: rgba(255,160,0,0.18);
-  }
-  40%  {
-    box-shadow: 0 0 20px 6px rgba(255,180,0,1),   0 0 50px 12px rgba(255,80,0,0.9),  0 0 90px 18px rgba(255,20,0,0.65), 0 0 140px 28px rgba(180,0,0,0.35);
-    border-color: #ff4400 !important;
-    background: rgba(255,80,0,0.22);
-  }
-  60%  {
-    box-shadow: 0 0 16px 5px rgba(255,210,0,0.95), 0 0 42px 10px rgba(255,110,0,0.8), 0 0 80px 16px rgba(255,40,0,0.6), 0 0 120px 22px rgba(190,5,0,0.3);
-    border-color: #ff7700 !important;
-    background: rgba(255,130,0,0.16);
-  }
-  80%  {
-    box-shadow: 0 0 10px 3px rgba(255,220,0,0.8),  0 0 28px 6px rgba(255,120,0,0.7),  0 0 55px 10px rgba(255,50,0,0.45), 0 0 85px 16px rgba(200,10,0,0.22);
-    border-color: #ffaa00 !important;
-    background: rgba(255,100,0,0.10);
-  }
-  100% {
-    box-shadow: 0 0 8px 2px rgba(255,200,0,0.9), 0 0 22px 4px rgba(255,100,0,0.7), 0 0 45px 8px rgba(255,30,0,0.4), 0 0 70px 12px rgba(200,0,0,0.2);
-    border-color: #ffcc00 !important;
-    background: rgba(255,120,0,0.12);
-  }
+.revenge-fire-intense > .revenge-flame-layer::after {
+  inset: auto 8% calc(100% - 5px); height: 15px; border-radius: 0;
+  background:
+    radial-gradient(ellipse at 10% 100%, #ffe27a 0 15%, #ff7200 38%, transparent 68%),
+    radial-gradient(ellipse at 34% 100%, #fff0a1 0 12%, #ff8a00 36%, transparent 67%),
+    radial-gradient(ellipse at 60% 100%, #ffdf64 0 14%, #ff5a00 40%, transparent 70%),
+    radial-gradient(ellipse at 86% 100%, #fff09c 0 12%, #ff7a00 38%, transparent 68%);
+  filter: drop-shadow(0 -2px 5px rgba(255,88,0,0.85));
+  clip-path: polygon(0 100%,5% 68%,10% 10%,16% 76%,25% 100%,30% 64%,35% 0,42% 74%,52% 100%,56% 60%,61% 16%,68% 76%,78% 100%,82% 66%,87% 8%,93% 72%,100% 100%);
+  animation: revengeFlameDance 0.58s ease-in-out infinite alternate;
+}
+@keyframes revengeEmberBreathe {
+  0%,100% { opacity: 0.62; filter: blur(2px) brightness(0.9) drop-shadow(0 0 7px rgba(255,91,0,0.45)); }
+  50% { opacity: 0.92; filter: blur(2.5px) brightness(1.14) drop-shadow(0 0 11px rgba(255,123,0,0.62)); }
+}
+@keyframes revengeFlameDance {
+  0% { transform: translate(-1px,2px) scaleY(0.86) skewX(-1.5deg); opacity: 0.76; }
+  100% { transform: translate(1px,-2px) scaleY(1.08) skewX(1.5deg); opacity: 1; }
+}
+@property --fire-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 15deg;
+}
+@keyframes revengeFireRing { to { --fire-angle: 375deg; } }
+@keyframes revengeFirePulse {
+  0% { filter: drop-shadow(0 0 6px rgba(255,70,0,0.82)) drop-shadow(0 0 13px rgba(255,130,0,0.48)); }
+  100% { filter: drop-shadow(0 0 9px rgba(255,91,0,1)) drop-shadow(0 0 19px rgba(255,160,0,0.68)); }
 }
 
 /* ===== Game screen ===== */
@@ -1650,13 +1671,29 @@ body.theme-aurora .sort-btn.active {
 .dm-emoji-bar button:hover { background: rgba(255,255,255,0.14); transform: scale(1.15); }
 
 .deal-card-anim {
-  position: fixed; z-index: 500; pointer-events: none;
-  font-size: 36px; will-change: transform, opacity;
-  animation: dealCardFly 0.45s cubic-bezier(.22,.68,0,1.2) forwards;
+  position: fixed; z-index: 500; pointer-events: none; will-change: transform, opacity, filter;
+  transform-origin: 50% 50%;
+  animation: dealCardFly 0.36s cubic-bezier(.2,.72,.18,1) forwards;
+  filter: drop-shadow(0 10px 13px rgba(0,0,0,0.48));
 }
 @keyframes dealCardFly {
-  0%   { transform: translate(0,0) scale(0.6) rotate(-8deg); opacity: 0.9; }
-  100% { transform: translate(var(--tx), var(--ty)) scale(1) rotate(0deg); opacity: 0; }
+  0%   { transform: translate(0,0) scale(0.78) rotate(var(--start-rot, -8deg)); opacity: 0.9; filter: drop-shadow(0 7px 10px rgba(0,0,0,0.4)) brightness(0.9); }
+  55%  { transform: translate(var(--mx), var(--my)) scale(0.94) rotate(var(--mid-rot, 4deg)); opacity: 1; filter: drop-shadow(0 18px 16px rgba(0,0,0,0.52)) brightness(1.1); }
+  100% { transform: translate(var(--tx), var(--ty)) scale(1) rotate(var(--rot, 0deg)); opacity: 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25)) brightness(1); }
+}
+#gameScreen.is-dealing .game-area { pointer-events: none; }
+#gameScreen.is-dealing #oppHand .card:not(.deal-revealed),
+#gameScreen.is-dealing #myHand .card:not(.deal-revealed) { opacity: 0; }
+#gameScreen.is-dealing #oppHand .card.deal-revealed,
+#gameScreen.is-dealing #myHand .card.deal-revealed { animation: dealtCardSettle 0.22s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes dealtCardSettle {
+  0% { opacity: 0; transform: translateY(-7px) scale(0.94); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deal-card-anim { display: none; }
+  #gameScreen.is-dealing #oppHand .card,
+  #gameScreen.is-dealing #myHand .card { opacity: 1; animation: none; }
 }
 .confetti-piece {
   position: absolute; top: -30px; font-size: 22px; will-change: transform, opacity;
@@ -1730,22 +1767,21 @@ body.theme-aurora .sort-btn.active {
   display: flex; align-items: center; gap: 10px;
   transition: all 0.2s; position: relative;
 }
-/* Turn indicator is a separate ::after ring layer so it's never hidden behind a
-   profile border skin's own (!important) border-color/box-shadow. */
 .avatar-card.my-turn { background: rgba(105,240,174,0.08); }
-.avatar-card.my-turn::after {
-  content: ''; position: absolute; inset: -4px; border-radius: 18px;
+.turn-halo-layer {
+  display: none; position: absolute; inset: -4px; border-radius: 18px;
   border: 3px solid #69f0ae; box-shadow: 0 0 16px rgba(105,240,174,0.6);
   pointer-events: none; z-index: 6;
   animation: turnRingPulse 1.3s ease-in-out infinite;
 }
+.avatar-card.my-turn > .turn-halo-layer { display: block; }
 @keyframes turnRingPulse {
   0%,100% { opacity: 0.7; transform: scale(1); }
   50%      { opacity: 1; transform: scale(1.02); }
 }
 @keyframes turnRingSpin { to { transform: rotate(360deg); } }
 /* Rare themes get a fancier animated turn ring: rotating conic-gradient hue ring */
-body.theme-rainbow .avatar-card.my-turn::after {
+body.theme-rainbow .avatar-card.my-turn > .turn-halo-layer {
   border: 3px solid transparent;
   background: conic-gradient(from 0deg, #ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff,#ff4e4e) border-box;
   -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
@@ -1753,7 +1789,7 @@ body.theme-rainbow .avatar-card.my-turn::after {
   box-shadow: 0 0 20px rgba(180,120,255,0.55);
   animation: turnRingPulse 1.3s ease-in-out infinite, turnRingSpin 3s linear infinite;
 }
-body.theme-aurora .avatar-card.my-turn::after {
+body.theme-aurora .avatar-card.my-turn > .turn-halo-layer {
   border: 3px solid transparent;
   background: conic-gradient(from 0deg, #00e6b8,#7a5cff,#00c8ff,#00e6b8) border-box;
   -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
@@ -1761,7 +1797,7 @@ body.theme-aurora .avatar-card.my-turn::after {
   box-shadow: 0 0 24px rgba(120,80,255,0.6);
   animation: turnRingPulse 1.6s ease-in-out infinite, turnRingSpin 4s linear infinite reverse;
 }
-.avatar-card.my-turn.revenge-fire-intense::after { border-color: #69f0ae; box-shadow: 0 0 18px rgba(105,240,174,0.6); }
+.avatar-card.my-turn.revenge-fire-intense > .turn-halo-layer { box-shadow: 0 0 18px rgba(105,240,174,0.7); }
 .avatar-emoji { font-size: 40px; line-height: 1; position: relative; flex-shrink: 0; }
 .avatar-emoji .face-overlay { position: absolute; bottom: -4px; right: -10px; font-size: 17px; }
 .avatar-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
@@ -1933,7 +1969,7 @@ body.theme-aurora .avatar-card {
 body.theme-aurora .avatar-card.my-turn {
   background: linear-gradient(135deg, rgba(5,34,32,0.95), rgba(18,18,48,0.86));
 }
-body.theme-aurora .avatar-card.my-turn::after {
+body.theme-aurora .avatar-card.my-turn > .turn-halo-layer {
   inset: -3px;
   border-radius: 17px;
   box-shadow: 0 0 14px rgba(0,255,210,0.45), 0 0 24px rgba(122,92,255,0.28);
@@ -2056,7 +2092,9 @@ body.screen-gameScreen.theme-aurora #gameScreen.active {
     radial-gradient(circle at 16% 52%, rgba(124,86,255,0.18), transparent 34%),
     radial-gradient(circle at 82% 40%, rgba(0,210,185,0.14), transparent 36%),
     linear-gradient(180deg, #001924 0%, #062c2c 28%, #07142f 58%, #020912 100%);
-  scrollbar-gutter: stable;
+  scrollbar-gutter: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 body.screen-gameScreen.theme-aurora #gameScreen.active::-webkit-scrollbar { width: 0; height: 0; }
 body.theme-aurora .game-area {
@@ -2101,23 +2139,21 @@ body.theme-aurora .avatar-card.my-turn {
     linear-gradient(135deg, rgba(3,26,34,0.98), rgba(12,18,43,0.94)),
     radial-gradient(circle at 12% 10%, rgba(126,255,225,0.22), transparent 44%);
 }
-body.theme-aurora .avatar-card.my-turn::after {
-  content: '';
+body.theme-aurora .avatar-card.my-turn > .turn-halo-layer {
+  display: block;
   position: absolute;
   inset: -9px;
   border-radius: 22px;
-  border: 1px solid rgba(126,255,228,0.28);
+  border: 2px solid rgba(126,255,228,0.55);
   background:
-    conic-gradient(from var(--turn-angle, 0deg), transparent 0 18%, rgba(98,255,224,0.42) 22%, transparent 31%, transparent 58%, rgba(170,122,255,0.36) 64%, transparent 74%),
-    radial-gradient(circle at 50% 50%, rgba(0,255,210,0.08), transparent 72%);
-  filter: blur(3px);
-  opacity: 0.85;
+    conic-gradient(from var(--turn-angle, 0deg), transparent 0 14%, rgba(120,255,230,0.85) 20%, transparent 30%, transparent 56%, rgba(190,140,255,0.75) 63%, transparent 76%),
+    radial-gradient(circle at 50% 50%, rgba(0,255,210,0.14), transparent 72%);
+  filter: blur(2px);
+  opacity: 1;
   pointer-events: none;
   z-index: -2;
+  box-shadow: 0 0 22px rgba(0,255,210,0.35);
   animation: auroraTurnHalo 3.8s linear infinite;
-}
-body.theme-aurora .avatar-card.my-turn::before {
-  z-index: 3;
 }
 @property --turn-angle {
   syntax: '<angle>';
@@ -2262,6 +2298,18 @@ body.theme-aurora .util-btn.danger:hover {
 @keyframes auroraButtonGlitter {
   0%,100% { background-position: 130% 0, 0 0, 0 0; opacity: 0.45; }
   48% { background-position: -70% 0, 0 0, 0 0; opacity: 0.82; }
+}
+/* Reaction emoji buttons were still washed out at rest — bring them up to
+   near-hover contrast so they read clearly against the aurora backdrop. */
+body.theme-aurora .reaction-btn {
+  background: linear-gradient(180deg, rgba(24,82,92,0.95), rgba(8,34,48,0.95));
+  border: 1px solid rgba(176,255,241,0.7);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 6px 14px rgba(0,0,0,0.26), 0 0 14px rgba(0,240,210,0.24);
+}
+body.theme-aurora .reaction-btn:hover {
+  background: linear-gradient(180deg, rgba(21,78,86,0.98), rgba(10,35,50,0.98));
+  border-color: rgba(199,255,246,0.92);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 8px 18px rgba(0,0,0,0.3), 0 0 20px rgba(0,255,220,0.32);
 }
 
 body.theme-aurora .hand-zone,
@@ -3044,6 +3092,8 @@ body.theme-aurora .card.just-drawn {
 
   <div class="player-bar">
     <div class="avatar-card hoverable" id="oppAvatarCard" onclick="showOpponentProfile()">
+      <span class="revenge-flame-layer" aria-hidden="true"></span>
+      <span class="turn-halo-layer" aria-hidden="true"></span>
       <div class="avatar-emoji" id="oppAvatarEmoji">🐶<span class="face-overlay" id="oppFaceOverlay"></span></div>
       <div class="avatar-info">
         <div class="avatar-name" id="oppAvatarName" data-i18n="opponent">상대방</div>
@@ -3055,6 +3105,8 @@ body.theme-aurora .card.just-drawn {
     </div>
     <div class="vs-label">VS</div>
     <div class="avatar-card hoverable" id="myAvatarCard" onclick="showProfileModal()">
+      <span class="revenge-flame-layer" aria-hidden="true"></span>
+      <span class="turn-halo-layer" aria-hidden="true"></span>
       <div class="avatar-emoji" id="myAvatarEmoji">🐱<span class="face-overlay" id="myFaceOverlay"></span></div>
       <div class="avatar-info">
         <div class="avatar-name" id="myAvatarName" data-i18n="me">나</div>
@@ -3173,6 +3225,7 @@ body.theme-aurora .card.just-drawn {
   </div>
   <div class="player-bar">
     <div class="avatar-card" id="spec0Card">
+      <span class="turn-halo-layer" aria-hidden="true"></span>
       <div class="avatar-emoji" id="spec0Emoji">🐱</div>
       <div class="avatar-info">
         <div class="avatar-name" id="spec0Name">플레이어1</div>
@@ -3181,6 +3234,7 @@ body.theme-aurora .card.just-drawn {
     </div>
     <div class="vs-label">VS</div>
     <div class="avatar-card" id="spec1Card">
+      <span class="turn-halo-layer" aria-hidden="true"></span>
       <div class="avatar-emoji" id="spec1Emoji">🐶</div>
       <div class="avatar-info">
         <div class="avatar-name" id="spec1Name">플레이어2</div>
@@ -6108,31 +6162,85 @@ function hideToast() {
 }
 
 // ===== Card dealing animation =====
-function playDealAnimation(cardCount, onDone) {
-  const handZone = document.getElementById('myHandZone');
-  if (!handZone) { if (onDone) onDone(); return; }
-  const rect = handZone.getBoundingClientRect();
-  const destX = rect.left + rect.width / 2;
-  const destY = rect.top + rect.height / 2;
-  const srcX = window.innerWidth / 2;
-  const srcY = window.innerHeight / 2;
+let dealAnimationRun = 0;
+function playDealAnimation(myCount, oppCount, onDone) {
+  const runId = ++dealAnimationRun;
+  const gameScreen = document.getElementById('gameScreen');
+  const myHandEl = document.getElementById('myHand');
+  const oppHandEl = document.getElementById('oppHand');
+  const deckEl = document.getElementById('deckPile');
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!gameScreen || !myHandEl || !oppHandEl || !deckEl || reduceMotion) {
+    if (gameScreen) gameScreen.classList.remove('is-dealing');
+    if (onDone) onDone();
+    return;
+  }
 
-  let done = 0;
-  for (let i = 0; i < cardCount; i++) {
+  document.querySelectorAll('.deal-card-anim').forEach(el => el.remove());
+  [...myHandEl.children, ...oppHandEl.children].forEach(el => el.classList.remove('deal-revealed'));
+  gameScreen.classList.add('is-dealing');
+
+  const srcRect = deckEl.getBoundingClientRect();
+  const srcX = srcRect.left + srcRect.width / 2;
+  const srcY = srcRect.top + srcRect.height / 2;
+  const cardW = srcRect.width || 56;
+  const cardH = srcRect.height || 80;
+  const dealOrder = [];
+  const rounds = Math.max(myCount, oppCount);
+  for (let i = 0; i < rounds; i++) {
+    if (i < oppCount) dealOrder.push({ hand: oppHandEl, index: i, side: -1 });
+    if (i < myCount) dealOrder.push({ hand: myHandEl, index: i, side: 1 });
+  }
+
+  if (!dealOrder.length) {
+    gameScreen.classList.remove('is-dealing');
+    if (onDone) onDone();
+    return;
+  }
+
+  flashPile('deck');
+  const interval = 48;
+  const flightMs = 360;
+  dealOrder.forEach((deal, orderIndex) => {
     setTimeout(() => {
-      const el = document.createElement('div');
-      el.className = 'deal-card-anim';
-      el.textContent = '🂠';
-      el.style.left = srcX + 'px';
-      el.style.top = srcY + 'px';
+      if (runId !== dealAnimationRun) return;
+      const target = deal.hand.children[deal.index];
+      const handRect = deal.hand.getBoundingClientRect();
+      const targetRect = target ? target.getBoundingClientRect() : handRect;
+      const destX = targetRect.left + targetRect.width / 2;
+      const destY = targetRect.top + targetRect.height / 2;
+      const el = makeCard(null, { faceDown: true });
+      el.classList.add('deal-card-anim');
+      el.dataset.dealRun = String(runId);
+      el.style.left = (srcX - cardW / 2) + 'px';
+      el.style.top = (srcY - cardH / 2) + 'px';
+      el.style.width = cardW + 'px';
+      el.style.height = cardH + 'px';
       el.style.setProperty('--tx', (destX - srcX) + 'px');
       el.style.setProperty('--ty', (destY - srcY) + 'px');
+      el.style.setProperty('--mx', ((destX - srcX) * 0.58) + 'px');
+      el.style.setProperty('--my', ((destY - srcY) * 0.58 - 28) + 'px');
+      el.style.setProperty('--start-rot', (deal.side * -7 + (Math.random() * 4 - 2)) + 'deg');
+      el.style.setProperty('--mid-rot', (deal.side * 4) + 'deg');
+      el.style.setProperty('--rot', (Math.random() * 5 - 2.5) + 'deg');
       document.body.appendChild(el);
-      setTimeout(() => el.remove(), 500);
-      done++;
-      if (done === cardCount && onDone) setTimeout(onDone, 120);
-    }, i * 80);
-  }
+
+      setTimeout(() => {
+        if (runId !== dealAnimationRun) return;
+        if (target && target.isConnected) target.classList.add('deal-revealed');
+        el.remove();
+      }, flightMs - 20);
+    }, orderIndex * interval);
+  });
+
+  const totalMs = (dealOrder.length - 1) * interval + flightMs + 40;
+  setTimeout(() => {
+    if (runId !== dealAnimationRun) return;
+    gameScreen.classList.remove('is-dealing');
+    [...myHandEl.children, ...oppHandEl.children].forEach(el => el.classList.remove('deal-revealed'));
+    document.querySelectorAll(`.deal-card-anim[data-deal-run="${runId}"]`).forEach(el => el.remove());
+    if (onDone) onDone();
+  }, totalMs);
 }
 
 // ===== Reaction emojis =====
@@ -6853,8 +6961,8 @@ function initSocket() {
     document.getElementById('reactionBar').style.display = vsAI ? 'none' : 'flex';
     showGame();
     if (supaUser && !vsAI) setMyStatus('gaming');
-    playDealAnimation(data.hand ? data.hand.length : 10, null);
     renderGame();
+    playDealAnimation(data.hand ? data.hand.length : 10, oppCardCount || 10, null);
     if (currentPhase === 'upcard-offer') {
       setStatus(isMyTurn()
         ? `🎴 첫 카드 ${discardTop ? discardTop.rank+SUITS_SYM[discardTop.suit] : ''} 를 가져가시겠어요, 패스하시겠어요?`
