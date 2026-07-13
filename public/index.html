@@ -17,18 +17,22 @@ html {
   /* Reserve the vertical scrollbar gutter permanently so content near the
      viewport-height threshold (e.g. Aurora's glow/turn-ring effects) doesn't
      cause the scrollbar to flicker in/out and shift the layout width. */
-  overflow-y: scroll;
-  scrollbar-gutter: stable;
+  overflow-y: auto;
+  scrollbar-gutter: auto;
   background: #0a0e1a;
   /* Reserved gutter defaults to the OS scrollbar track color (often light),
      which shows up as a thin pale strip on the right against a dark theme.
      Theme the scrollbar itself so the gutter blends in instead. */
   scrollbar-color: rgba(255,255,255,0.28) rgba(6,10,20,0.6);
 }
-html::-webkit-scrollbar { width: 11px; }
-html::-webkit-scrollbar-track { background: rgba(6,10,20,0.6); }
-html::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
-html::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); background-clip: padding-box; }
+html, body, #lobbyScreen.active, #gameScreen.active {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#lobbyScreen.active::-webkit-scrollbar,
+#gameScreen.active::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none; }
 
 body {
   font-family: 'Segoe UI', sans-serif;
@@ -1673,15 +1677,17 @@ body.theme-aurora .sort-btn.active {
 .deal-card-anim {
   position: fixed; z-index: 500; pointer-events: none; will-change: transform, opacity, filter;
   transform-origin: 50% 50%;
-  animation: dealCardFly 0.36s cubic-bezier(.2,.72,.18,1) forwards;
-  filter: drop-shadow(0 10px 13px rgba(0,0,0,0.48));
+  animation: dealCardFly 0.52s cubic-bezier(.18,.76,.16,1) forwards;
+  filter: drop-shadow(0 14px 16px rgba(0,0,0,0.56)) drop-shadow(0 0 9px rgba(114,255,231,0.32));
 }
 @keyframes dealCardFly {
-  0%   { transform: translate(0,0) scale(0.78) rotate(var(--start-rot, -8deg)); opacity: 0.9; filter: drop-shadow(0 7px 10px rgba(0,0,0,0.4)) brightness(0.9); }
-  55%  { transform: translate(var(--mx), var(--my)) scale(0.94) rotate(var(--mid-rot, 4deg)); opacity: 1; filter: drop-shadow(0 18px 16px rgba(0,0,0,0.52)) brightness(1.1); }
-  100% { transform: translate(var(--tx), var(--ty)) scale(1) rotate(var(--rot, 0deg)); opacity: 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25)) brightness(1); }
+  0%   { transform: translate(0,0) scale(0.82) rotate(var(--start-rot, -8deg)); opacity: 1; filter: brightness(0.92); }
+  58%  { transform: translate(var(--mx), var(--my)) scale(1.02) rotate(var(--mid-rot, 4deg)); opacity: 1; filter: brightness(1.18); }
+  88%  { opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(1) rotate(var(--rot, 0deg)); opacity: 0; filter: brightness(1); }
 }
 #gameScreen.is-dealing .game-area { pointer-events: none; }
+#gameScreen.is-dealing #deckPile { animation: dealingDeckPulse 0.34s ease-in-out infinite alternate; }
 #gameScreen.is-dealing #oppHand .card:not(.deal-revealed),
 #gameScreen.is-dealing #myHand .card:not(.deal-revealed) { opacity: 0; }
 #gameScreen.is-dealing #oppHand .card.deal-revealed,
@@ -1689,6 +1695,10 @@ body.theme-aurora .sort-btn.active {
 @keyframes dealtCardSettle {
   0% { opacity: 0; transform: translateY(-7px) scale(0.94); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes dealingDeckPulse {
+  from { transform: translateY(0) rotate(-0.6deg); filter: brightness(1); box-shadow: 0 0 12px rgba(66,160,255,0.45); }
+  to { transform: translateY(-3px) rotate(0.6deg); filter: brightness(1.25); box-shadow: 0 0 24px rgba(98,210,255,0.82); }
 }
 @media (prefers-reduced-motion: reduce) {
   .deal-card-anim { display: none; }
@@ -1755,8 +1765,16 @@ body.theme-aurora .sort-btn.active {
 
 /* Flying card ghost: travels from the source pile to the hand */
 .fly-ghost {
-  position: fixed; z-index: 260; pointer-events: none; border-radius: 8px;
-  transition: transform 0.42s cubic-bezier(.22,.61,.36,1), opacity 0.42s ease 0.2s;
+  position: fixed; z-index: 520; pointer-events: none; border-radius: 8px;
+  will-change: transform, opacity, filter;
+  box-shadow: 0 14px 24px rgba(0,0,0,0.52), 0 0 16px rgba(126,255,230,0.38);
+}
+.card-flight-target { opacity: 0 !important; }
+.card-flight-landed { animation: cardFlightLanded 0.28s cubic-bezier(.2,.84,.2,1.2) both; }
+@keyframes cardFlightLanded {
+  0% { opacity: 0; transform: translateY(-7px) scale(0.9); filter: brightness(1.5); }
+  65% { opacity: 1; transform: translateY(2px) scale(1.04); filter: brightness(1.18); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
 }
 
 /* ===== Player avatar bar ===== */
@@ -2142,18 +2160,20 @@ body.theme-aurora .avatar-card.my-turn {
 body.theme-aurora .avatar-card.my-turn > .turn-halo-layer {
   display: block;
   position: absolute;
-  inset: -9px;
-  border-radius: 22px;
-  border: 2px solid rgba(126,255,228,0.55);
+  inset: -10px;
+  padding: 3px;
+  border-radius: 23px;
+  border: 0;
   background:
-    conic-gradient(from var(--turn-angle, 0deg), transparent 0 14%, rgba(120,255,230,0.85) 20%, transparent 30%, transparent 56%, rgba(190,140,255,0.75) 63%, transparent 76%),
-    radial-gradient(circle at 50% 50%, rgba(0,255,210,0.14), transparent 72%);
-  filter: blur(2px);
+    conic-gradient(from var(--turn-angle, 0deg), #72ffe5 0 12%, #ffffff 16%, #38e8ff 24%, transparent 31% 43%, #b99aff 50%, #ffffff 56%, #65ffdf 66%, transparent 73% 86%, #72ffe5 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  filter: drop-shadow(0 0 5px rgba(87,255,225,0.98)) drop-shadow(0 0 14px rgba(65,231,255,0.72)) drop-shadow(0 0 24px rgba(157,113,255,0.5));
   opacity: 1;
   pointer-events: none;
-  z-index: -2;
-  box-shadow: 0 0 22px rgba(0,255,210,0.35);
-  animation: auroraTurnHalo 3.8s linear infinite;
+  z-index: 7;
+  animation: auroraTurnHalo 2.6s linear infinite, auroraTurnPulse 1.15s ease-in-out infinite;
 }
 @property --turn-angle {
   syntax: '<angle>';
@@ -2162,6 +2182,10 @@ body.theme-aurora .avatar-card.my-turn > .turn-halo-layer {
 }
 @keyframes auroraTurnHalo {
   to { --turn-angle: 360deg; }
+}
+@keyframes auroraTurnPulse {
+  0%,100% { opacity: 0.78; filter: drop-shadow(0 0 5px rgba(87,255,225,0.88)) drop-shadow(0 0 12px rgba(65,231,255,0.62)) drop-shadow(0 0 21px rgba(157,113,255,0.42)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 8px rgba(220,255,249,1)) drop-shadow(0 0 19px rgba(65,231,255,0.88)) drop-shadow(0 0 31px rgba(157,113,255,0.66)); }
 }
 body.theme-aurora .avatar-emoji {
   width: 48px;
@@ -2200,8 +2224,15 @@ body.theme-aurora .avatar-subline .id-chip {
   color: #9fffe8;
 }
 body.theme-aurora .avatar-turn-lbl {
-  color: #96ffe8;
-  text-shadow: 0 0 8px rgba(0,255,210,0.35);
+  width: fit-content;
+  margin-top: 1px;
+  padding: 2px 7px;
+  border: 1px solid rgba(144,255,232,0.78);
+  border-radius: 7px;
+  background: rgba(0,82,73,0.82);
+  color: #d9fff7;
+  text-shadow: 0 0 9px rgba(0,255,210,0.72);
+  box-shadow: 0 0 10px rgba(0,255,210,0.28);
 }
 body.theme-aurora .vs-label {
   flex: 0 0 auto;
@@ -2310,6 +2341,41 @@ body.theme-aurora .reaction-btn:hover {
   background: linear-gradient(180deg, rgba(21,78,86,0.98), rgba(10,35,50,0.98));
   border-color: rgba(199,255,246,0.92);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 8px 18px rgba(0,0,0,0.3), 0 0 20px rgba(0,255,220,0.32);
+}
+
+/* Final in-game contrast pass: each tool remains readable before hover. */
+body.theme-aurora #gameScreen .util-btn {
+  opacity: 1 !important;
+  color: #f8fffd !important;
+  border-width: 1.5px !important;
+  background: linear-gradient(180deg, #17606a 0%, #0a303e 100%) !important;
+  border-color: #8dffe9 !important;
+  text-shadow: 0 1px 2px #001a20, 0 0 8px rgba(133,255,231,0.55) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 12px rgba(0,0,0,0.34), 0 0 13px rgba(0,255,214,0.34) !important;
+  filter: none !important;
+}
+body.theme-aurora #gameScreen .util-btn.util-surrender,
+body.theme-aurora #gameScreen .util-btn.util-leave {
+  background: linear-gradient(180deg, #8b2947 0%, #4d142d 100%) !important;
+  border-color: #ffb4ca !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 4px 12px rgba(0,0,0,0.36), 0 0 14px rgba(255,74,126,0.38) !important;
+}
+body.theme-aurora #gameScreen .util-btn.util-friends {
+  background: linear-gradient(180deg, #176c60 0%, #0a3c3d 100%) !important;
+}
+body.theme-aurora #gameScreen .util-btn.util-collection {
+  background: linear-gradient(180deg, #654898 0%, #30265f 100%) !important;
+  border-color: #d9c5ff !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 12px rgba(0,0,0,0.34), 0 0 14px rgba(173,126,255,0.4) !important;
+}
+body.theme-aurora #gameScreen .util-btn.util-settings {
+  background: linear-gradient(180deg, #52657b 0%, #26394d 100%) !important;
+  border-color: #d5e9ff !important;
+}
+body.theme-aurora #gameScreen .util-btn:hover {
+  transform: translateY(-2px) !important;
+  filter: brightness(1.2) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.36), 0 7px 17px rgba(0,0,0,0.38), 0 0 22px rgba(112,255,230,0.58) !important;
 }
 
 body.theme-aurora .hand-zone,
@@ -3130,11 +3196,11 @@ body.theme-aurora .card.just-drawn {
     <button class="util-btn vs-ai-hide" id="awayBtn" onclick="toggleAway()" data-i18n="away">⏸ 자리비움</button>
     <button class="util-btn vs-ai-hide" id="aiTakeoverBtn" onclick="toggleAITakeover()" style="display:none" data-i18n="aiTakeoverBtn">🤖 AI 대신 플레이</button>
     <button class="util-btn vs-ai-hide" onclick="requestEnd()" data-i18n="requestEndBtn">🛑 게임 종료 요청</button>
-    <button class="util-btn danger" onclick="confirmSurrender()" data-i18n="surrenderBtn">🏳️ 항복</button>
-    <button class="util-btn danger" onclick="confirmLeave()" data-i18n="leaveBtn">🚪 나가기</button>
-    <button class="util-btn" onclick="showFriendsModal()" title="친구">👥 친구<span id="friendReqBadgeGame" style="display:none;background:#ef5350;color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;margin-left:4px"></span></button>
-    <button class="util-btn" onclick="showCollectionModal()" title="컬렉션/테마">🎨</button>
-    <button class="util-btn" onclick="showSettings()" title="설정">⚙️</button>
+    <button class="util-btn danger util-surrender" onclick="confirmSurrender()" data-i18n="surrenderBtn">🏳️ 항복</button>
+    <button class="util-btn danger util-leave" onclick="confirmLeave()" data-i18n="leaveBtn">🚪 나가기</button>
+    <button class="util-btn util-friends" onclick="showFriendsModal()" title="친구">👥 친구<span id="friendReqBadgeGame" style="display:none;background:#ef5350;color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;margin-left:4px"></span></button>
+    <button class="util-btn util-collection" onclick="showCollectionModal()" title="컬렉션/테마">🎨 테마</button>
+    <button class="util-btn util-settings" onclick="showSettings()" title="설정">⚙️ 설정</button>
   </div>
 
   <div class="game-area">
@@ -6019,6 +6085,7 @@ let isRevenge = false;
 let revengerIdx = null;
 let aiControlled = [false, false];
 let lastDiscardTopId = null;
+let pendingLocalDiscardId = null;
 let streaks = [0, 0]; // win streaks indexed by absolute player index (0/1), synced via round-end data
 let targetScore = 100; // null = unlimited
 let gameMode = 'classic'; // 'classic' | 'straight' | 'oklahoma'
@@ -6199,8 +6266,8 @@ function playDealAnimation(myCount, oppCount, onDone) {
   }
 
   flashPile('deck');
-  const interval = 48;
-  const flightMs = 360;
+  const interval = 72;
+  const flightMs = 520;
   dealOrder.forEach((deal, orderIndex) => {
     setTimeout(() => {
       if (runId !== dealAnimationRun) return;
@@ -6219,7 +6286,7 @@ function playDealAnimation(myCount, oppCount, onDone) {
       el.style.setProperty('--tx', (destX - srcX) + 'px');
       el.style.setProperty('--ty', (destY - srcY) + 'px');
       el.style.setProperty('--mx', ((destX - srcX) * 0.58) + 'px');
-      el.style.setProperty('--my', ((destY - srcY) * 0.58 - 28) + 'px');
+      el.style.setProperty('--my', ((destY - srcY) * 0.58 - 42) + 'px');
       el.style.setProperty('--start-rot', (deal.side * -7 + (Math.random() * 4 - 2)) + 'deg');
       el.style.setProperty('--mid-rot', (deal.side * 4) + 'deg');
       el.style.setProperty('--rot', (Math.random() * 5 - 2.5) + 'deg');
@@ -6601,6 +6668,7 @@ function initSocket() {
     if (data.gameMode) { gameMode = data.gameMode; oklahomaCap = data.oklahomaCap ?? null; handSize = data.handSize || 10; }
     selected = null;
     lastDrawnId = null;
+    pendingLocalDiscardId = null;
     renderGame();
     updateGameModeUI();
     setStatus(isMyTurn()
@@ -6935,6 +7003,7 @@ function initSocket() {
     currentPhase = data.phase || 'draw';
     selected = null;
     lastDrawnId = null;
+    pendingLocalDiscardId = null;
     names = data.names;
     gameIds = data.gameIds || gameIds;
     cardBorders = data.cardBorders || cardBorders;
@@ -6986,8 +7055,8 @@ function initSocket() {
 
   socket.on('you-drew', ({ card, deckCount: dc, newDiscardTop, turn }) => {
     const from = newDiscardTop !== undefined ? 'discard' : 'deck';
+    const sourceRect = getPileSourceRect(from);
     flashPile(from);
-    flyCardGhost(from, 'myHand', card);
     myHand.push(card);
     lastDrawnId = card.id;
     deckCount = dc;
@@ -6995,18 +7064,20 @@ function initSocket() {
     if (turn !== undefined) currentTurn = turn;
     currentPhase = 'discard';
     renderGame();
+    flyCardGhost(from, 'myHand', card, sourceRect);
     setStatus(`✨ ${from === 'deck' ? '덱' : '버린 패'}에서 ${card.rank}${SUITS_SYM[card.suit]} 뽑음! 버릴 카드를 선택하세요.`, '노란 테두리 = 방금 뽑은 카드 · 초록 테두리 = 멜드');
   });
 
   socket.on('opp-drew', ({ from, deckCount: dc, newDiscardTop, turn }) => {
+    const sourceRect = getPileSourceRect(from);
     flashPile(from);
-    flyCardGhost(from, 'oppHand', null);
     oppCardCount++;
     deckCount = dc;
     if (newDiscardTop !== undefined) discardTop = newDiscardTop;
     if (turn !== undefined) currentTurn = turn;
     currentPhase = 'discard'; // opponent drew → now in their discard phase
     renderGame();
+    flyCardGhost(from, 'oppHand', null, sourceRect);
     setStatus(`${oppName()} 이(가) ${from === 'deck' ? '🂠 덱' : '♻️ 버린 패'}에서 뽑았습니다...`);
   });
 
@@ -7016,6 +7087,13 @@ function initSocket() {
       renderSpectateView();
       return;
     }
+    const wasLocalOptimisticDiscard = byIdx === myIdx && pendingLocalDiscardId === card.id;
+    const sourceCard = byIdx === myIdx
+      ? findHandCard(document.getElementById('myHand'), card.id)
+      : document.querySelector('#oppHand .card:last-child');
+    const sourceRect = !wasLocalOptimisticDiscard && sourceCard
+      ? rectSnapshot(sourceCard.getBoundingClientRect())
+      : null;
     if (byIdx !== myIdx) {
       oppCardCount--;
     } else {
@@ -7029,6 +7107,8 @@ function initSocket() {
     selected = null;
     matchTurns++;
     renderGame();
+    if (sourceRect) flyCardToDiscard(card, sourceRect);
+    if (wasLocalOptimisticDiscard) pendingLocalDiscardId = null;
     if (isMyTurn()) setStatus(`${oppName()} 이(가) ${card.rank}${SUITS_SYM[card.suit]} 버렸습니다. 내 턴!`);
     else setStatus(`내가 ${card.rank}${SUITS_SYM[card.suit]} 버렸습니다. ${oppName()} 턴...`);
   });
@@ -7276,6 +7356,7 @@ function makeCard(card, opts = {}) {
   const { faceDown=false, selected=false, inMeld=false, clickable=false } = opts;
   const el = document.createElement('div');
   el.className = 'card' + (faceDown?' face-down':'') + (selected?' selected':'') + (inMeld?' in-meld':'') + (clickable?' clickable':'');
+  if (card && card.id !== undefined) el.dataset.cardId = String(card.id);
   if (!faceDown) {
     const sym = SUITS_SYM[card.suit];
     const cls = IS_RED[card.suit] ? 'red-suit' : 'black-suit';
@@ -7299,30 +7380,93 @@ function flashPile(from) {
   setTimeout(() => el.classList.remove('pile-flash'), 700);
 }
 
-function flyCardGhost(from, toContainerId, card) {
-  const srcEl = document.getElementById(from === 'deck' ? 'deckPile' : 'discardSlot');
-  const toEl = document.getElementById(toContainerId);
-  if (!srcEl || !toEl) return;
-  const srcRect = srcEl.getBoundingClientRect();
-  const toRect = toEl.getBoundingClientRect();
+function rectSnapshot(rect) {
+  return rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null;
+}
 
-  const ghost = card ? makeCard(card, {}) : makeCard(null, { faceDown: true });
+function getPileSourceRect(from) {
+  const pile = document.getElementById(from === 'deck' ? 'deckPile' : 'discardSlot');
+  if (!pile) return null;
+  const visibleCard = pile.querySelector('.card') || pile;
+  return rectSnapshot(visibleCard.getBoundingClientRect());
+}
+
+function findHandCard(container, cardId) {
+  if (!container || cardId === undefined || cardId === null) return null;
+  return [...container.querySelectorAll('.card')].find(el => el.dataset.cardId === String(cardId)) || null;
+}
+
+function runCardFlight(ghost, srcRect, targetRect, target, direction = 1) {
+  if (!ghost || !srcRect || !targetRect) return;
+  const dx = targetRect.left + targetRect.width / 2 - (srcRect.left + srcRect.width / 2);
+  const dy = targetRect.top + targetRect.height / 2 - (srcRect.top + srcRect.height / 2);
+  const scaleX = targetRect.width / Math.max(srcRect.width, 1);
+  const scaleY = targetRect.height / Math.max(srcRect.height, 1);
+  const arc = Math.max(38, Math.min(78, Math.abs(dy) * 0.2));
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    ghost.remove();
+    if (target && target.isConnected) {
+      target.classList.remove('card-flight-target');
+      target.classList.add('card-flight-landed');
+      setTimeout(() => target.classList.remove('card-flight-landed'), 320);
+    }
+  };
+
+  const frames = [
+    { transform: `translate(0,0) scale(0.92) rotate(${direction * -9}deg)`, opacity: 1, filter: 'brightness(0.94)' },
+    { offset: 0.52, transform: `translate(${dx * 0.52}px, ${dy * 0.52 - arc}px) scale(1.04) rotate(${direction * 5}deg)`, opacity: 1, filter: 'brightness(1.28)' },
+    { offset: 0.86, transform: `translate(${dx * 0.9}px, ${dy * 0.9 - 8}px) scale(${scaleX * 1.03},${scaleY * 1.03}) rotate(${direction * -2}deg)`, opacity: 1, filter: 'brightness(1.12)' },
+    { transform: `translate(${dx}px,${dy}px) scale(${scaleX},${scaleY}) rotate(0deg)`, opacity: 0.18, filter: 'brightness(1)' },
+  ];
+  if (ghost.animate) {
+    const animation = ghost.animate(frames, { duration: 620, easing: 'cubic-bezier(.18,.76,.16,1)', fill: 'forwards' });
+    animation.onfinish = finish;
+    animation.oncancel = finish;
+    setTimeout(finish, 720);
+  } else {
+    ghost.style.transition = 'transform .62s cubic-bezier(.18,.76,.16,1), opacity .12s linear .5s';
+    requestAnimationFrame(() => {
+      ghost.style.transform = frames[frames.length - 1].transform;
+      ghost.style.opacity = '0';
+    });
+    setTimeout(finish, 640);
+  }
+}
+
+function makeFlightGhost(card, faceDown, srcRect) {
+  const ghost = makeCard(card, { faceDown });
   ghost.classList.add('fly-ghost');
   ghost.style.left = srcRect.left + 'px';
   ghost.style.top = srcRect.top + 'px';
   ghost.style.width = srcRect.width + 'px';
   ghost.style.height = srcRect.height + 'px';
-  ghost.style.opacity = '1';
   document.body.appendChild(ghost);
+  return ghost;
+}
 
-  const targetX = toRect.left + toRect.width * 0.5 - srcRect.left - srcRect.width / 2;
-  const targetY = toRect.top + toRect.height * 0.5 - srcRect.top - srcRect.height / 2;
+function flyCardGhost(from, toContainerId, card, sourceRect) {
+  const toEl = document.getElementById(toContainerId);
+  const srcRect = sourceRect || getPileSourceRect(from);
+  if (!srcRect || !toEl) return;
+  const target = card ? findHandCard(toEl, card.id) : toEl.querySelector('.card:last-child');
+  const targetRect = rectSnapshot((target || toEl).getBoundingClientRect());
+  if (target) target.classList.add('card-flight-target');
+  const ghost = makeFlightGhost(card, !card, srcRect);
+  runCardFlight(ghost, srcRect, targetRect, target, toContainerId === 'oppHand' ? -1 : 1);
+}
 
-  requestAnimationFrame(() => {
-    ghost.style.transform = `translate(${targetX}px, ${targetY}px) scale(0.85) rotate(8deg)`;
-    ghost.style.opacity = '0';
-  });
-  setTimeout(() => ghost.remove(), 450);
+function flyCardToDiscard(card, sourceRect) {
+  const slot = document.getElementById('discardSlot');
+  const target = slot && slot.querySelector('.card');
+  if (!card || !sourceRect || !slot || !target) return;
+  target.classList.remove('discard-pop');
+  target.classList.add('card-flight-target');
+  const targetRect = rectSnapshot(target.getBoundingClientRect());
+  const ghost = makeFlightGhost(card, false, sourceRect);
+  runCardFlight(ghost, sourceRect, targetRect, target, sourceRect.left < targetRect.left ? 1 : -1);
 }
 
 function updateGameModeUI() {
@@ -7561,12 +7705,17 @@ function actDiscard() {
   if (aiControlled[myIdx] || !selected || currentPhase !== 'discard') return;
   const cardId = selected.id;
   const discarded = selected;
+  const sourceCard = findHandCard(document.getElementById('myHand'), cardId);
+  const sourceRect = sourceCard ? rectSnapshot(sourceCard.getBoundingClientRect()) : null;
+  pendingLocalDiscardId = cardId;
   myHand = myHand.filter(c => c.id !== cardId);
   discardTop = discarded;
   selected = null;
   lastDrawnId = null;
+  lastDiscardTopId = cardId;
   currentPhase = 'draw'; // optimistic: prevent double-discard before server confirms
   renderGame();          // immediately reflect card removal in UI
+  if (sourceRect) flyCardToDiscard(discarded, sourceRect);
   socket.emit('action', { type: 'discard', cardId });
 }
 function actKnock() {
