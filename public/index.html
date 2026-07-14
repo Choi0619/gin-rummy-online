@@ -4184,7 +4184,7 @@ function openRoomSettings(mode) {
   _roomMode = mode;
   _roomDiff = 'normal';
   _roomScore = 100;
-  _roomTimer = 20;
+  _roomTimer = mode === 'ai' ? null : 20; // AI matches default to unlimited turn time; PVP keeps 20s
   _gameMode = 'classic';
   _handSize = 10;
   document.getElementById('roomSettingsTitle').textContent = mode === 'ai' ? '🤖 AI 대결 설정' : '✨ 방 설정';

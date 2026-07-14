@@ -270,7 +270,8 @@ io.on('connection', socket => {
       endRequest: null,
       vsAI: true,
       targetScore: normalizeTargetScore(targetScore),
-      turnTimeSecs: normalizeTurnTime(turnTimeSecs !== undefined ? turnTimeSecs : 20),
+      // AI matches default to unlimited turn time (no rush against a bot); PVP keeps the 20s default.
+      turnTimeSecs: turnTimeSecs !== undefined ? normalizeTurnTime(turnTimeSecs) : null,
       aiDifficulty: ['easy','normal','hard'].includes(aiDifficulty) ? aiDifficulty : 'normal',
       gameMode: normalizeGameMode(gameMode),
       handSize: normalizeHandSize(handSize),
