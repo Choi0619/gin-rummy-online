@@ -1461,6 +1461,39 @@ body.theme-aurora .sort-btn.active {
 .dw-row { font-size: 12px; color: rgba(255,255,255,0.65); display: flex; gap: 10px; flex-wrap: wrap; }
 .dw-badge { padding: 2px 9px; border-radius: 10px; font-weight: bold; background: rgba(0,0,0,0.3); }
 .dw-good { color: #69f0ae; } .dw-warn { color: #ffcc02; } .dw-bad { color: #ff5252; }
+/* Knock is imminent (deadwood <= 5) — a subtle tense pulse to build anticipation */
+.dw-badge.dw-critical { animation: dwCriticalPulse 0.85s ease-in-out infinite; }
+@keyframes dwCriticalPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(255,204,2,0.5); transform: scale(1); }
+  50% { box-shadow: 0 0 8px 2px rgba(255,204,2,0.7); transform: scale(1.08); }
+}
+/* Meld just completed — quick bounce + shine sweep on the newly-melded cards */
+.card.meld-pop { animation: meldPopBounce 0.5s cubic-bezier(.34,1.56,.64,1); }
+@keyframes meldPopBounce {
+  0%   { transform: translateY(0) scale(1); }
+  35%  { transform: translateY(-9px) scale(1.09); }
+  65%  { transform: translateY(2px) scale(0.98); }
+  100% { transform: translateY(0) scale(1); }
+}
+.card.meld-pop::after {
+  content: ''; position: absolute; inset: -2px; border-radius: 10px; pointer-events: none;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.85) 48%, transparent 66%);
+  background-size: 250% 250%;
+  animation: meldPopShine 0.5s ease-out;
+}
+@keyframes meldPopShine {
+  0% { background-position: 120% 0; opacity: 1; }
+  100% { background-position: -30% 0; opacity: 0; }
+}
+/* Opponent drawing a card — brief glow on the pile they drew from, visible on my screen too */
+.deck-pile.opp-draw-flash, .discard-slot.opp-draw-flash {
+  animation: oppDrawFlash 0.6s ease-out;
+}
+@keyframes oppDrawFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(255,167,38,0.85); }
+  40%  { box-shadow: 0 0 0 7px rgba(255,167,38,0.3); }
+  100% { box-shadow: 0 0 0 12px rgba(255,167,38,0); }
+}
 .hint-txt { font-size: 11px; color: rgba(255,255,255,0.4); }
 .action-row { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 4px; }
 .act-btn {
@@ -4759,6 +4792,44 @@ async function loadProfile() {
   const nameInput = document.getElementById('myName');
   if (nameInput) nameInput.value = savedNick;
   initFriendSystem();
+  checkDailyReward();
+}
+
+// ===== Daily check-in reward =====
+const DAILY_REWARD_BASE = 10;   // RP for a normal day
+const DAILY_REWARD_STEP = 5;    // extra RP per consecutive day, capped below
+const DAILY_REWARD_CAP = 50;    // max RP for a single day's reward
+function _todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+async function checkDailyReward() {
+  if (!supaUser || !supaProfile) return;
+  const today = _todayStr();
+  if (supaProfile.last_checkin_date === today) return; // already claimed today
+  const yesterday = new Date(Date.now() - 86400000);
+  const yStr = yesterday.getFullYear() + '-' + String(yesterday.getMonth()+1).padStart(2,'0') + '-' + String(yesterday.getDate()).padStart(2,'0');
+  const streak = supaProfile.last_checkin_date === yStr ? (supaProfile.checkin_streak || 0) + 1 : 1;
+  const reward = Math.min(DAILY_REWARD_CAP, DAILY_REWARD_BASE + (streak - 1) * DAILY_REWARD_STEP);
+  const newRP = (supaProfile.rank_points || 0) + reward;
+  const { data, error } = await supa.from('profiles').update({
+    rank_points: newRP,
+    last_checkin_date: today,
+    checkin_streak: streak,
+  }).eq('id', supaUser.id).select().single();
+  if (error || !data) return; // e.g. columns not migrated yet — fail silently
+  supaProfile = data;
+  localStorage.setItem(RANK_KEY, String(data.rank_points));
+  renderLobbyRank();
+  const rp = data.rank_points || 0;
+  document.getElementById('lobbyUserRP').textContent = `${getTierInfo(rp).emoji} ${rp} RP`;
+  showConfirmModal({
+    emoji: '📅',
+    title: `출석 보상! (${streak}일 연속)`,
+    sub: `오늘도 접속해주셔서 <b style="color:#ffd76a">+${reward} RP</b>를 드려요! 연속 출석할수록 보상이 커져요.`,
+    acceptLabel: '🎁 받기',
+    onAccept: () => {},
+  });
 }
 
 
@@ -5694,6 +5765,7 @@ async function saveMatchToDb({ opponentName, opponentChar, myScore, oppScore, re
       opp_deadwood: detail.oppDW ?? null,
       target_score: ts ?? null,
       game_mode: gameMode || 'classic',
+      rounds: matchRoundLog.length ? matchRoundLog : null,
     });
   } catch (e) { /* non-fatal */ }
 }
@@ -5933,10 +6005,25 @@ function showMatchDetail(idx) {
       '<span style="font-size:12px;color:rgba(255,255,255,0.5)">종료 방식</span>' +
       '<span style="font-size:14px;font-weight:700">' + resultTypeTxt + '</span></div>';
   }
-  if (dwKnown) {
+  if (dwKnown && !(h.rounds && h.rounds.length)) {
     html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:10px">' +
       '<span style="font-size:12px;color:rgba(255,255,255,0.5)">마지막 라운드 데드우드</span>' +
       '<span style="font-size:14px;font-weight:700">나 ' + h.my_deadwood + ' · 상대 ' + h.opp_deadwood + '</span></div>';
+  }
+  if (h.rounds && h.rounds.length) {
+    html += '<div style="margin:14px 0 6px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em">라운드별 흐름 (' + h.rounds.length + '라운드)</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto">' +
+      h.rounds.map(function(r, i) {
+        const label = RESULT_TYPE_LABELS[r.resultType] || r.resultType || '?';
+        const ptsColor = r.iWonRound ? '#69f0ae' : '#ef5350';
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:9px;font-size:12px">' +
+          '<span style="color:rgba(255,255,255,0.45);min-width:44px">R' + (i+1) + '</span>' +
+          '<span style="flex:1;font-weight:600">' + label + '</span>' +
+          '<span style="color:rgba(255,255,255,0.55);margin-right:8px">DW 나' + (r.myDW ?? '-') + ' · 상대' + (r.oppDW ?? '-') + '</span>' +
+          '<span style="font-weight:700;color:' + ptsColor + '">' + (r.iWonRound ? '+' : '-') + (r.pts || 0) + '</span>' +
+          '</div>';
+      }).join('') +
+      '</div>';
   }
   if (h.target_score !== null && h.target_score !== undefined) {
     html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:10px">' +
@@ -6033,6 +6120,7 @@ let away = [false, false];
 let scores = [0, 0];
 let sortMode = 'meld';   // 'meld' | 'rank' | 'suit'
 let lastDrawnId = null;  // id of the card just drawn (for highlight)
+let prevMeldIds = new Set(); // card ids that were in-meld on the previous render, to detect newly-completed melds
 let vsAI = false;
 let myAiDifficulty = 'normal'; // 'easy' | 'normal' | 'hard' — set when creating an AI room
 let isSpectator = false;
@@ -6096,6 +6184,7 @@ let myRoomIsPublic = true;
 let matchTurns = 0;       // discard count this match (for RP calculation)
 let lastRoundType = '';   // resultType of the most recent round
 let lastRoundDetail = null; // { myDW, oppDW, pts, knockerIdx } of the most recent round
+let matchRoundLog = [];   // per-round summaries this match, for the post-match replay/detail view
 
 // ===== Chat =====
 let chatOpen = false;
@@ -6989,6 +7078,10 @@ function initSocket() {
   socket.on('game-started', data => {
     matchTurns = 0;
     lastRoundType = '';
+    prevMeldIds = null; // fresh hand this round — don't treat its starting melds as "just completed"
+    // game-started fires at the start of every round within a match, not just the first —
+    // only wipe the round log when scores are both 0 (i.e. this is genuinely a new match).
+    if (!data.scores || (data.scores[0] === 0 && data.scores[1] === 0)) matchRoundLog = [];
     secretMode = [false, false];
     fullAutoMode = false;
     clearTimeout(_fullAutoTimer);
@@ -7070,7 +7163,13 @@ function initSocket() {
 
   socket.on('opp-drew', ({ from, deckCount: dc, newDiscardTop, turn }) => {
     const sourceRect = getPileSourceRect(from);
-    flashPile(from);
+    // Distinct orange flash (vs. the green flashPile() used for my own draws) so an
+    // opponent's draw reads as "their move" at a glance, even without watching the status text.
+    const pileEl = document.getElementById(from === 'deck' ? 'deckPile' : 'discardSlot');
+    if (pileEl) {
+      pileEl.classList.remove('opp-draw-flash'); void pileEl.offsetWidth; pileEl.classList.add('opp-draw-flash');
+      setTimeout(() => pileEl.classList.remove('opp-draw-flash'), 650);
+    }
     oppCardCount++;
     deckCount = dc;
     if (newDiscardTop !== undefined) discardTop = newDiscardTop;
@@ -7128,6 +7227,15 @@ function initSocket() {
       pts: data.pts || 0,
       knockerIdx: data.knockerIdx,
     };
+    matchRoundLog.push({
+      resultType: data.resultType || '',
+      iWonRound: data.winnerIdx === myIdx,
+      pts: data.pts || 0,
+      myDW: data.dw ? data.dw[myIdx] : null,
+      oppDW: data.dw ? data.dw[1-myIdx] : null,
+      myMelds: data.melds ? (data.melds[myIdx] || []).length : 0,
+      oppMelds: data.melds ? (data.melds[1-myIdx] || []).length : 0,
+    });
     showResult(data);
     if (fullAutoMode) {
       clearTimeout(_fullAutoTimer);
@@ -7563,9 +7671,11 @@ function renderGame() {
     const canClick = !aiControlled[myIdx] && isMyTurn() && currentPhase === 'discard';
     const el = makeCard(card, { selected: isSel, inMeld: inM, clickable: canClick });
     if (card.id === lastDrawnId && !isSel) el.classList.add('just-drawn');
+    if (inM && prevMeldIds && !prevMeldIds.has(card.id)) el.classList.add('meld-pop');
     if (canClick) el.onclick = () => toggleSelect(card);
     myEl.appendChild(el);
   });
+  prevMeldIds = meldIds;
 
   // Discard pile
   const slot = document.getElementById('discardSlot');
@@ -7635,7 +7745,7 @@ function renderGame() {
   const dwEl = document.getElementById('myDwBadge');
   const prevDW = parseInt(dwEl.dataset.dw ?? '-1');
   dwEl.textContent = dw + '점';
-  dwEl.className = 'dw-badge ' + (dw === 0 ? 'dw-good' : dw <= 10 ? 'dw-warn' : 'dw-bad');
+  dwEl.className = 'dw-badge ' + (dw === 0 ? 'dw-good' : dw <= 10 ? 'dw-warn' : 'dw-bad') + (dw > 0 && dw <= 5 ? ' dw-critical' : '');
   if (prevDW !== -1 && prevDW !== dw) { dwEl.classList.remove('pop'); void dwEl.offsetWidth; dwEl.classList.add('pop'); }
   dwEl.dataset.dw = dw;
 
