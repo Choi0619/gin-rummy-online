@@ -1788,6 +1788,19 @@ body.theme-aurora .sort-btn.active {
   70% { transform: scale(1.1) translateY(0) rotate(4deg); opacity: 1; }
   100% { transform: scale(1) rotate(0deg); }
 }
+/* Simple in-place pop for a newly-drawn card — replaces the old fixed-position
+   "ghost" that flew from the pile to the hand. That approach needed a getBoundingClientRect
+   snapshot + a synchronous full-hand re-render + a separately-timed animation to all land
+   correctly, and any hiccup in that chain (a re-render firing mid-flight, a dropped frame)
+   made it look like the card just vanished for half a second and popped in. This animates
+   the real card in its real final position — nothing to get out of sync.
+*/
+.card.draw-pop { animation: drawPop 0.32s cubic-bezier(.34,1.56,.64,1); }
+@keyframes drawPop {
+  0% { transform: scale(0.5) translateY(14px); opacity: 0.2; }
+  60% { transform: scale(1.07) translateY(-3px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); }
+}
 
 /* Pile glow when a card is drawn from it (deck or discard) */
 .deck-pile.pile-flash, .discard-slot.pile-flash {
@@ -1797,20 +1810,6 @@ body.theme-aurora .sort-btn.active {
   0%   { box-shadow: 0 0 0 0 rgba(105,240,174,0.9); }
   35%  { box-shadow: 0 0 0 9px rgba(105,240,174,0.25); }
   100% { box-shadow: 0 0 0 14px rgba(105,240,174,0); }
-}
-
-/* Flying card ghost: travels from the source pile to the hand */
-.fly-ghost {
-  position: fixed; z-index: 520; pointer-events: none; border-radius: 8px;
-  will-change: transform, opacity, filter;
-  box-shadow: 0 14px 24px rgba(0,0,0,0.52), 0 0 16px rgba(126,255,230,0.38);
-}
-.card-flight-target { opacity: 0 !important; }
-.card-flight-landed { animation: cardFlightLanded 0.28s cubic-bezier(.2,.84,.2,1.2) both; }
-@keyframes cardFlightLanded {
-  0% { opacity: 0; transform: translateY(-7px) scale(0.9); filter: brightness(1.5); }
-  65% { opacity: 1; transform: translateY(2px) scale(1.04); filter: brightness(1.18); }
-  100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
 }
 
 /* ===== Player avatar bar ===== */
@@ -6123,6 +6122,7 @@ let away = [false, false];
 let scores = [0, 0];
 let sortMode = 'meld';   // 'meld' | 'rank' | 'suit'
 let lastDrawnId = null;  // id of the card just drawn (for highlight)
+let oppJustDrew = false; // opponent's hand grew since the last render — pop the newest face-down card once
 let prevMeldIds = new Set(); // card ids that were in-meld on the previous render, to detect newly-completed melds
 let vsAI = false;
 let myAiDifficulty = 'normal'; // 'easy' | 'normal' | 'hard' — set when creating an AI room
@@ -7151,7 +7151,6 @@ function initSocket() {
 
   socket.on('you-drew', ({ card, deckCount: dc, newDiscardTop, turn }) => {
     const from = newDiscardTop !== undefined ? 'discard' : 'deck';
-    const sourceRect = getPileSourceRect(from);
     flashPile(from);
     myHand.push(card);
     lastDrawnId = card.id;
@@ -7160,14 +7159,10 @@ function initSocket() {
     if (turn !== undefined) currentTurn = turn;
     currentPhase = 'discard';
     renderGame();
-    // Let the (potentially heavy) renderGame() reflow settle into its own paint
-    // before kicking off the flight animation, so its first frame isn't dropped.
-    requestAnimationFrame(() => flyCardGhost(from, 'myHand', card, sourceRect));
     setStatus(`✨ ${from === 'deck' ? '덱' : '버린 패'}에서 ${card.rank}${SUITS_SYM[card.suit]} 뽑음! 버릴 카드를 선택하세요.`, '노란 테두리 = 방금 뽑은 카드 · 초록 테두리 = 멜드');
   });
 
   socket.on('opp-drew', ({ from, deckCount: dc, newDiscardTop, turn }) => {
-    const sourceRect = getPileSourceRect(from);
     // Distinct orange flash (vs. the green flashPile() used for my own draws) so an
     // opponent's draw reads as "their move" at a glance, even without watching the status text.
     const pileEl = document.getElementById(from === 'deck' ? 'deckPile' : 'discardSlot');
@@ -7176,12 +7171,12 @@ function initSocket() {
       setTimeout(() => pileEl.classList.remove('opp-draw-flash'), 650);
     }
     oppCardCount++;
+    oppJustDrew = true;
     deckCount = dc;
     if (newDiscardTop !== undefined) discardTop = newDiscardTop;
     if (turn !== undefined) currentTurn = turn;
     currentPhase = 'discard'; // opponent drew → now in their discard phase
     renderGame();
-    requestAnimationFrame(() => flyCardGhost(from, 'oppHand', null, sourceRect));
     setStatus(`${oppName()} 이(가) ${from === 'deck' ? '🂠 덱' : '♻️ 버린 패'}에서 뽑았습니다...`);
   });
 
@@ -7192,12 +7187,6 @@ function initSocket() {
       return;
     }
     const wasLocalOptimisticDiscard = byIdx === myIdx && pendingLocalDiscardId === card.id;
-    const sourceCard = byIdx === myIdx
-      ? findHandCard(document.getElementById('myHand'), card.id)
-      : document.querySelector('#oppHand .card:last-child');
-    const sourceRect = !wasLocalOptimisticDiscard && sourceCard
-      ? rectSnapshot(sourceCard.getBoundingClientRect())
-      : null;
     if (byIdx !== myIdx) {
       oppCardCount--;
     } else {
@@ -7211,7 +7200,6 @@ function initSocket() {
     selected = null;
     matchTurns++;
     renderGame();
-    if (sourceRect) requestAnimationFrame(() => flyCardToDiscard(card, sourceRect));
     if (wasLocalOptimisticDiscard) pendingLocalDiscardId = null;
     if (isMyTurn()) setStatus(`${oppName()} 이(가) ${card.rank}${SUITS_SYM[card.suit]} 버렸습니다. 내 턴!`);
     else setStatus(`내가 ${card.rank}${SUITS_SYM[card.suit]} 버렸습니다. ${oppName()} 턴...`);
@@ -7493,95 +7481,6 @@ function flashPile(from) {
   setTimeout(() => el.classList.remove('pile-flash'), 700);
 }
 
-function rectSnapshot(rect) {
-  return rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null;
-}
-
-function getPileSourceRect(from) {
-  const pile = document.getElementById(from === 'deck' ? 'deckPile' : 'discardSlot');
-  if (!pile) return null;
-  const visibleCard = pile.querySelector('.card') || pile;
-  return rectSnapshot(visibleCard.getBoundingClientRect());
-}
-
-function findHandCard(container, cardId) {
-  if (!container || cardId === undefined || cardId === null) return null;
-  return [...container.querySelectorAll('.card')].find(el => el.dataset.cardId === String(cardId)) || null;
-}
-
-function runCardFlight(ghost, srcRect, targetRect, target, direction = 1) {
-  if (!ghost || !srcRect || !targetRect) return;
-  const dx = targetRect.left + targetRect.width / 2 - (srcRect.left + srcRect.width / 2);
-  const dy = targetRect.top + targetRect.height / 2 - (srcRect.top + srcRect.height / 2);
-  const scaleX = targetRect.width / Math.max(srcRect.width, 1);
-  const scaleY = targetRect.height / Math.max(srcRect.height, 1);
-  const arc = Math.max(38, Math.min(78, Math.abs(dy) * 0.2));
-  let finished = false;
-  const finish = () => {
-    if (finished) return;
-    finished = true;
-    ghost.remove();
-    if (target && target.isConnected) {
-      target.classList.remove('card-flight-target');
-      target.classList.add('card-flight-landed');
-      setTimeout(() => target.classList.remove('card-flight-landed'), 320);
-    }
-  };
-
-  const frames = [
-    { transform: `translate(0,0) scale(0.92) rotate(${direction * -9}deg)`, opacity: 1, filter: 'brightness(0.94)' },
-    { offset: 0.52, transform: `translate(${dx * 0.52}px, ${dy * 0.52 - arc}px) scale(1.04) rotate(${direction * 5}deg)`, opacity: 1, filter: 'brightness(1.28)' },
-    { offset: 0.86, transform: `translate(${dx * 0.9}px, ${dy * 0.9 - 8}px) scale(${scaleX * 1.03},${scaleY * 1.03}) rotate(${direction * -2}deg)`, opacity: 1, filter: 'brightness(1.12)' },
-    { transform: `translate(${dx}px,${dy}px) scale(${scaleX},${scaleY}) rotate(0deg)`, opacity: 0.18, filter: 'brightness(1)' },
-  ];
-  if (ghost.animate) {
-    const animation = ghost.animate(frames, { duration: 620, easing: 'cubic-bezier(.18,.76,.16,1)', fill: 'forwards' });
-    animation.onfinish = finish;
-    animation.oncancel = finish;
-    setTimeout(finish, 720);
-  } else {
-    ghost.style.transition = 'transform .62s cubic-bezier(.18,.76,.16,1), opacity .12s linear .5s';
-    requestAnimationFrame(() => {
-      ghost.style.transform = frames[frames.length - 1].transform;
-      ghost.style.opacity = '0';
-    });
-    setTimeout(finish, 640);
-  }
-}
-
-function makeFlightGhost(card, faceDown, srcRect) {
-  const ghost = makeCard(card, { faceDown });
-  ghost.classList.add('fly-ghost');
-  ghost.style.left = srcRect.left + 'px';
-  ghost.style.top = srcRect.top + 'px';
-  ghost.style.width = srcRect.width + 'px';
-  ghost.style.height = srcRect.height + 'px';
-  document.body.appendChild(ghost);
-  return ghost;
-}
-
-function flyCardGhost(from, toContainerId, card, sourceRect) {
-  const toEl = document.getElementById(toContainerId);
-  const srcRect = sourceRect || getPileSourceRect(from);
-  if (!srcRect || !toEl) return;
-  const target = card ? findHandCard(toEl, card.id) : toEl.querySelector('.card:last-child');
-  const targetRect = rectSnapshot((target || toEl).getBoundingClientRect());
-  if (target) target.classList.add('card-flight-target');
-  const ghost = makeFlightGhost(card, !card, srcRect);
-  runCardFlight(ghost, srcRect, targetRect, target, toContainerId === 'oppHand' ? -1 : 1);
-}
-
-function flyCardToDiscard(card, sourceRect) {
-  const slot = document.getElementById('discardSlot');
-  const target = slot && slot.querySelector('.card');
-  if (!card || !sourceRect || !slot || !target) return;
-  target.classList.remove('discard-pop');
-  target.classList.add('card-flight-target');
-  const targetRect = rectSnapshot(target.getBoundingClientRect());
-  const ghost = makeFlightGhost(card, false, sourceRect);
-  runCardFlight(ghost, sourceRect, targetRect, target, sourceRect.left < targetRect.left ? 1 : -1);
-}
-
 function updateGameModeUI() {
   const lbl = document.getElementById('gameModeLbl');
   const knockBtn = document.getElementById('btnKnock');
@@ -7638,7 +7537,12 @@ function renderGame() {
   // Opponent hand (face down)
   const oppEl = document.getElementById('oppHand');
   oppEl.innerHTML = '';
-  for (let i = 0; i < oppCardCount; i++) oppEl.appendChild(makeCard(null, { faceDown: true }));
+  for (let i = 0; i < oppCardCount; i++) {
+    const oppCardEl = makeCard(null, { faceDown: true });
+    if (oppJustDrew && i === oppCardCount - 1) oppCardEl.classList.add('draw-pop');
+    oppEl.appendChild(oppCardEl);
+  }
+  oppJustDrew = false;
   document.getElementById('oppCardCount').textContent = `(${oppCardCount}${t('cardsSuffix')})`;
 
   // Analyze my hand
@@ -7675,7 +7579,7 @@ function renderGame() {
     const inM = meldIds.has(card.id);
     const canClick = !aiControlled[myIdx] && isMyTurn() && currentPhase === 'discard';
     const el = makeCard(card, { selected: isSel, inMeld: inM, clickable: canClick });
-    if (card.id === lastDrawnId && !isSel) el.classList.add('just-drawn');
+    if (card.id === lastDrawnId && !isSel) { el.classList.add('just-drawn'); el.classList.add('draw-pop'); }
     if (inM && prevMeldIds && !prevMeldIds.has(card.id)) el.classList.add('meld-pop');
     if (canClick) el.onclick = () => toggleSelect(card);
     myEl.appendChild(el);
@@ -7820,17 +7724,13 @@ function actDiscard() {
   if (aiControlled[myIdx] || !selected || currentPhase !== 'discard') return;
   const cardId = selected.id;
   const discarded = selected;
-  const sourceCard = findHandCard(document.getElementById('myHand'), cardId);
-  const sourceRect = sourceCard ? rectSnapshot(sourceCard.getBoundingClientRect()) : null;
   pendingLocalDiscardId = cardId;
   myHand = myHand.filter(c => c.id !== cardId);
   discardTop = discarded;
   selected = null;
   lastDrawnId = null;
-  lastDiscardTopId = cardId;
   currentPhase = 'draw'; // optimistic: prevent double-discard before server confirms
-  renderGame();          // immediately reflect card removal in UI
-  if (sourceRect) requestAnimationFrame(() => flyCardToDiscard(discarded, sourceRect));
+  renderGame();          // immediately reflect card removal in UI — discard-pop animates it in
   socket.emit('action', { type: 'discard', cardId });
 }
 function actKnock() {
