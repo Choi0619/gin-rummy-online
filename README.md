@@ -42,12 +42,27 @@ Live deployment: https://gin-rummy-online.onrender.com
 
 ### Solo / AI mode
 - "Play vs AI" starts an instant single-player match — no waiting room needed.
+- Selectable AI difficulty (easy / normal / hard).
 - The AI evaluates every possible discard by simulating the resulting deadwood for each candidate card and keeps the one that minimizes it (not just "discard the highest-value deadwood card").
 - The AI also decides whether to draw from the discard pile or the deck based on whether the discard actually improves its hand.
+- Turn timer defaults to unlimited against the AI (no rush against a bot); PvP rooms keep a 20s default, configurable per room.
 
-### Polish
+### Accounts & social (Supabase-backed)
+- Optional sign-in (Supabase auth) with a persistent profile: nickname, game ID, animal-emoji character, and a ranked-points (RP) tier badge.
+- Friends list, friend requests, and direct messages that persist across sessions.
+- A room browser to find and join public games, plus shareable room codes.
+- **Spectator mode**: watch a friend's in-progress match live (full board state streamed to spectators), either by joining a full room or spectating directly by code.
+- Cosmetic collection system: unlockable profile/card border skins (bronze → challenger tiers) earned through play, shown on avatars, badges, and friend rows.
+
+### Revenge mode
+- After a match ends, the loser can challenge the winner to a "Revenge" rematch; if accepted, the loser's avatar gets a burning fire animation for the rest of that revenge match.
+
+### Themes & polish
+- Selectable UI themes, including an animated "Aurora" theme with glowing turn indicators and star-crystal card styling.
 - Win celebrations (confetti burst + bounce animation), loss shake animation, and bigger disconnect/forfeit effects.
-- Animated card draw/discard transitions.
+- Animated card draw/discard transitions and a fanned-out dealing animation at the start of each match.
+- In-match emoji reactions and text chat between players.
+- A "Secret Mode" (Ctrl+Shift+H) disguise screen for playing discreetly, with an optional AI-autopilot toggle.
 
 ---
 
@@ -72,7 +87,8 @@ Live deployment: https://gin-rummy-online.onrender.com
 | Server | Node.js, Express |
 | Real-time transport | Socket.IO (WebSocket-based) |
 | Client | Vanilla HTML / CSS / JavaScript (no build step, no framework) |
-| State | In-memory (per-process `Map` of rooms) — no database |
+| Game state | In-memory (per-process `Map` of rooms) — no database |
+| Accounts / social | Supabase (auth, profiles, friends, direct messages) |
 | Hosting | Render (free tier) |
 
 ---
@@ -156,11 +172,9 @@ The app is deployed on **Render** (free tier):
 
 ## Known Limitations
 
-- **No persistence**: all rooms/games live in server memory; a restart loses everything.
+- **Game state is not persisted**: active rooms/games live in server memory only; a restart or redeploy loses any match in progress. (Player accounts, profiles, friends, and DMs *are* persisted separately via Supabase.)
 - **No reconnection across socket IDs**: if a player's browser tab fully disconnects and reconnects with a new socket, they cannot rejoin an in-progress room (only the in-session "away/AI takeover" flow is supported for temporary absences).
 - **2 players only**: standard Gin Rummy is a 2-player game; this implementation does not support 3+ player variants.
-- **No spectator mode**.
-- **No persistent player accounts** — names and characters are chosen fresh each session.
 
 ---
 
