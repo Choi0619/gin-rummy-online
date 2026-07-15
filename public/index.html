@@ -2341,9 +2341,7 @@ body.theme-aurora .util-btn::after {
     linear-gradient(110deg, transparent 0 24%, rgba(255,255,255,0.38) 36%, transparent 50%),
     radial-gradient(1.5px 1.5px at 22% 74%, rgba(255,255,255,0.75), transparent 62%),
     radial-gradient(1.2px 1.2px at 76% 28%, rgba(143,255,236,0.78), transparent 62%);
-  background-size: 210% 100%, 100% 100%, 100% 100%;
   opacity: 0.55;
-  animation: auroraButtonGlitter 4.2s ease-in-out infinite;
   z-index: 0;
 }
 body.theme-aurora .util-btn:hover {
@@ -7162,7 +7160,9 @@ function initSocket() {
     if (turn !== undefined) currentTurn = turn;
     currentPhase = 'discard';
     renderGame();
-    flyCardGhost(from, 'myHand', card, sourceRect);
+    // Let the (potentially heavy) renderGame() reflow settle into its own paint
+    // before kicking off the flight animation, so its first frame isn't dropped.
+    requestAnimationFrame(() => flyCardGhost(from, 'myHand', card, sourceRect));
     setStatus(`✨ ${from === 'deck' ? '덱' : '버린 패'}에서 ${card.rank}${SUITS_SYM[card.suit]} 뽑음! 버릴 카드를 선택하세요.`, '노란 테두리 = 방금 뽑은 카드 · 초록 테두리 = 멜드');
   });
 
@@ -7181,7 +7181,7 @@ function initSocket() {
     if (turn !== undefined) currentTurn = turn;
     currentPhase = 'discard'; // opponent drew → now in their discard phase
     renderGame();
-    flyCardGhost(from, 'oppHand', null, sourceRect);
+    requestAnimationFrame(() => flyCardGhost(from, 'oppHand', null, sourceRect));
     setStatus(`${oppName()} 이(가) ${from === 'deck' ? '🂠 덱' : '♻️ 버린 패'}에서 뽑았습니다...`);
   });
 
@@ -7211,7 +7211,7 @@ function initSocket() {
     selected = null;
     matchTurns++;
     renderGame();
-    if (sourceRect) flyCardToDiscard(card, sourceRect);
+    if (sourceRect) requestAnimationFrame(() => flyCardToDiscard(card, sourceRect));
     if (wasLocalOptimisticDiscard) pendingLocalDiscardId = null;
     if (isMyTurn()) setStatus(`${oppName()} 이(가) ${card.rank}${SUITS_SYM[card.suit]} 버렸습니다. 내 턴!`);
     else setStatus(`내가 ${card.rank}${SUITS_SYM[card.suit]} 버렸습니다. ${oppName()} 턴...`);
@@ -7830,7 +7830,7 @@ function actDiscard() {
   lastDiscardTopId = cardId;
   currentPhase = 'draw'; // optimistic: prevent double-discard before server confirms
   renderGame();          // immediately reflect card removal in UI
-  if (sourceRect) flyCardToDiscard(discarded, sourceRect);
+  if (sourceRect) requestAnimationFrame(() => flyCardToDiscard(discarded, sourceRect));
   socket.emit('action', { type: 'discard', cardId });
 }
 function actKnock() {
