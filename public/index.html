@@ -763,9 +763,12 @@ body.theme-aurora .card.selected {
 /* Aurora is the rarest theme — card backs get the richest treatment: drifting aurora gradient + pulsing glow */
 body.theme-aurora .card.face-down {
   background: linear-gradient(135deg, #06111e, #0c1e30, #0a2a2a, #06111e);
-  background-size: 300% 300%;
   border-color: rgba(0,255,190,0.5);
-  animation: auroraBorder 6s linear infinite, auroraBackDrift 8s ease-in-out infinite, auroraBackGlow 4s ease-in-out infinite;
+  /* A face-down card can appear up to ~10x at once (opponent's hand); animating
+     background-position (auroraBorder/auroraBackDrift, both removed) on that many
+     elements simultaneously forces continuous repaint and was the main source of
+     visible stutter. A single cheap box-shadow pulse keeps the aurora feel. */
+  animation: auroraBackGlow 4s ease-in-out infinite;
 }
 body.theme-aurora .card.face-down::after {
   background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,255,190,0.06) 4px, rgba(0,255,190,0.06) 5px);
@@ -2439,8 +2442,12 @@ body.theme-aurora .card:not(.face-down) {
     inset 0 -10px 22px rgba(155,230,255,0.18),
     0 7px 14px rgba(0,12,26,0.26),
     0 0 12px rgba(130,236,255,0.24);
-  animation: auroraCrystalBreath 5.4s ease-in-out infinite;
 }
+/* Up to ~10 of these can be on screen at once (the full hand). auroraCrystalBreath
+   (filter animation) and auroraCrystalSweep (animated background-position across 5
+   layered gradients) used to run on every single one, forever — that's the main
+   thing that was making the whole game feel like it was stuttering. Both removed;
+   the static gradient below still reads as a shimmering crystal card at rest. */
 body.theme-aurora .card:not(.face-down)::before {
   content: '';
   position: absolute;
@@ -2455,9 +2462,7 @@ body.theme-aurora .card:not(.face-down)::before {
     radial-gradient(2px 2px at 22% 19%, rgba(0,210,255,0.72), transparent 58%),
     radial-gradient(1.4px 1.4px at 70% 24%, rgba(170,118,255,0.65), transparent 62%),
     radial-gradient(1.6px 1.6px at 78% 72%, rgba(0,230,185,0.54), transparent 62%);
-  background-size: 220% 220%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
   mix-blend-mode: normal;
-  animation: auroraCrystalSweep 6.5s ease-in-out infinite;
 }
 body.theme-aurora .card:not(.face-down)::after {
   content: '';
