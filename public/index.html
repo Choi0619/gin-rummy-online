@@ -4059,31 +4059,41 @@ function getBestStreak() {
   return best;
 }
 
-function hasPromoThemes() { return localStorage.getItem('grPromoThemes') === '1'; }
-function hasPromoBorders() { return localStorage.getItem('grPromoBorders') === '1'; }
+// Logged-in users: Supabase profile is the source of truth (syncs across devices).
+// Guests (no account): falls back to this device's localStorage only.
+function hasPromoThemes() { return supaProfile ? !!supaProfile.promo_themes : localStorage.getItem('grPromoThemes') === '1'; }
+function hasPromoBorders() { return supaProfile ? !!supaProfile.promo_borders : localStorage.getItem('grPromoBorders') === '1'; }
 
 function isRainbowUnlocked() { return hasPromoThemes() || getTotalWins() >= RAINBOW_UNLOCK_WINS; }
 function isAuroraUnlocked() { return hasPromoThemes() || getTotalWins() >= AURORA_UNLOCK_WINS; }
 
-function redeemPromoCode() {
+async function redeemPromoCode() {
   const input = document.getElementById('promoCodeInput');
   const msg = document.getElementById('promoCodeMsg');
   const code = input.value.trim().toUpperCase();
   if (!code) return;
   if (code === 'UNLOCKALLTHEME') {
     localStorage.setItem('grPromoThemes', '1');
+    if (supaUser) {
+      const { data } = await supa.from('profiles').update({ promo_themes: true }).eq('id', supaUser.id).select().single();
+      if (data) supaProfile = data;
+    }
     updateLockedSwatches();
     msg.style.color = '#69f0ae';
     msg.textContent = '✅ 모든 테마가 해금되었습니다!';
     input.value = '';
-    showConfirmModal({ emoji: '🎁', title: '프로모션 코드 등록 완료!', sub: '모든 배경 테마가 해금됐어요! 🎨 컬렉션에서 바로 사용해보세요.', acceptLabel: '확인', onAccept: () => {} });
+    showConfirmModal({ emoji: '🎁', title: '프로모션 코드 등록 완료!', sub: '모든 배경 테마가 해금됐어요! 🎨 컬렉션에서 바로 사용해보세요.' + (supaUser ? ' (계정에 저장돼 다른 기기에서도 적용돼요)' : ''), acceptLabel: '확인', onAccept: () => {} });
   } else if (code === 'UNLOCKALLBORADER') {
     localStorage.setItem('grPromoBorders', '1');
+    if (supaUser) {
+      const { data } = await supa.from('profiles').update({ promo_borders: true }).eq('id', supaUser.id).select().single();
+      if (data) supaProfile = data;
+    }
     renderBorderGrid();
     msg.style.color = '#69f0ae';
     msg.textContent = '✅ 모든 프로필 테두리가 해금되었습니다!';
     input.value = '';
-    showConfirmModal({ emoji: '🎁', title: '프로모션 코드 등록 완료!', sub: '모든 프로필 테두리가 해금됐어요! 🎨 컬렉션에서 바로 사용해보세요.', acceptLabel: '확인', onAccept: () => {} });
+    showConfirmModal({ emoji: '🎁', title: '프로모션 코드 등록 완료!', sub: '모든 프로필 테두리가 해금됐어요! 🎨 컬렉션에서 바로 사용해보세요.' + (supaUser ? ' (계정에 저장돼 다른 기기에서도 적용돼요)' : ''), acceptLabel: '확인', onAccept: () => {} });
   } else {
     msg.style.color = '#ef9a9a';
     msg.textContent = '❌ 유효하지 않은 코드예요.';
@@ -4449,6 +4459,10 @@ function spawnRainbowCelebration() {
 
 function showSettings() {
   document.getElementById('settingsOverlay').classList.add('show');
+  // Re-check unlock state every time the modal opens — win-count-based unlocks were
+  // otherwise only recalculated once at page load or right after a match, so a swatch
+  // could stay stuck showing "locked" even after you'd actually crossed the threshold.
+  updateLockedSwatches();
 }
 function hideSettings() { document.getElementById('settingsOverlay').classList.remove('show'); }
 
@@ -4830,6 +4844,7 @@ async function loadProfile() {
   if (nameInput) nameInput.value = savedNick;
   initFriendSystem();
   checkDailyReward();
+  updateLockedSwatches(); // supaProfile.pvp_wins may differ from the guest/localStorage count used before login
 }
 
 // ===== Daily check-in reward =====
@@ -6937,7 +6952,7 @@ function initSocket() {
     showConfirmModal({ emoji: '❌', title: '항복 요청이 거절됐어요', sub: '게임을 계속 진행합니다.', acceptLabel: '확인', declineLabel: null, onAccept: () => {} });
   });
 
-  socket.on('match-ended', ({ winnerIdx, scores: sc, names: ns, targetReached, wasRevenge, revengeSuccess }) => {
+  socket.on('match-ended', async ({ winnerIdx, scores: sc, names: ns, targetReached, wasRevenge, revengeSuccess }) => {
     if (isSpectator) {
       specState.scores = sc;
       renderSpectateView();
@@ -7021,9 +7036,13 @@ function initSocket() {
           }), 1500);
         }
       }
-      // Persist to Supabase
-      saveProfileAfterMatch(iWon, delta);
+      // Persist to Supabase — awaited so supaProfile.pvp_wins is fresh before the
+      // win-count unlock checks below run (otherwise they'd read the pre-win count
+      // and a just-crossed threshold like "10th win" could silently miss its
+      // celebration popup and leave the theme swatch looking locked).
+      await saveProfileAfterMatch(iWon, delta);
       renderLobbyRank();
+      updateLockedSwatches();
     } else {
       if (rankDeltaEl) rankDeltaEl.innerHTML = '';
     }
