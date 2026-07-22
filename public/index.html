@@ -2588,6 +2588,13 @@ body.theme-aurora .black-suit { color: #071321 !important; text-shadow: 0 0 3px 
    two-tone outer glow, so a completed meld reads as a glowing jewel. Static
    gradients only (no infinite animation) to keep the render cost near zero. */
 body.theme-aurora .card.in-meld {
+  /* .card only has position:relative (no z-index of its own), so a plain
+     z-index:-1 on the ::after halo below doesn't stay "one layer behind this
+     card" — it escapes to the parent's stacking context and can end up
+     painted underneath the hand-zone panel background or sibling cards,
+     i.e. fully hidden. isolation:isolate pins a local stacking context so
+     -1 only ever means "behind this card's own face". */
+  isolation: isolate;
   border: 2px solid transparent !important;
   background:
     linear-gradient(150deg, #ffffff 0%, #f0fdff 42%, #eaf6ff 72%, #f3efff 100%) padding-box,
