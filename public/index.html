@@ -5282,7 +5282,12 @@ function renderFriendsList() {
     const st = effectiveStatus(_statusMap[f.id]);
     const msg = (_statusMap[f.id] || {}).status_msg || '';
     const online = st !== 'offline';
-    const inviteBtn = (online && roomCode && !vsAI) ? '<button class="f-btn accept" onclick="inviteFriend(\'' + f.id + '\')">🎮 초대</button>' : '';
+    const alreadyInvited = invitedFriendIds.has(f.id);
+    const inviteBtn = (online && roomCode && !vsAI)
+      ? (alreadyInvited
+        ? '<button class="f-btn" disabled style="opacity:0.6;cursor:default">✅ 초대 완료</button>'
+        : '<button class="f-btn accept" onclick="inviteFriend(\'' + f.id + '\')">🎮 초대</button>')
+      : '';
     return '<div class="friend-row cb-' + (f.cardBorder || 'green') + '" oncontextmenu="showFriendCtxMenu(event,\'' + f.id + '\');return false;">' +
       '<span class="f-char cb-' + (f.cardBorder || 'green') + '" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' + charHTML(f.char) + '<span class="f-dot ' + st + '"></span></span>' +
       '<div class="f-info" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' +
@@ -5411,8 +5416,13 @@ async function inviteFriend(friendId) {
     setTimeout(() => hideToast(), 3000);
     return;
   }
-  showToast('📨 초대를 보냈어요! (친구가 오프라인이면 다음 접속 시 확인해요)', 'info');
-  setTimeout(() => hideToast(), 2500);
+  invitedFriendIds.add(friendId);
+  renderFriendsList();
+  showConfirmModal({
+    emoji: '📨', title: '초대를 보냈어요!',
+    sub: '친구가 오프라인이면 다음 접속 시 DM으로 확인할 수 있어요.',
+    acceptLabel: '확인', declineLabel: null, onAccept: () => {},
+  });
 }
 
 // ===== User profile viewer (opponent / friend) =====
@@ -6163,6 +6173,9 @@ let currentTurn = 0;
 let currentPhase = 'draw';
 let selected = null;
 let roomCode = '';
+// Friends invited to the current room. leaveRoom() reloads the page, so this
+// naturally resets whenever the room is left — no explicit reset needed.
+let invitedFriendIds = new Set();
 let myName = '';
 let names = ['', ''];
 let chars = [CHAR_LIST[0], CHAR_LIST[1]];

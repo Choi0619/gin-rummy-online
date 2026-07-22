@@ -287,6 +287,40 @@ io.on('connection', socket => {
     const room = rooms.get(code.toUpperCase().trim());
     if (!room) { socket.emit('err', '방을 찾을 수 없습니다.'); return; }
 
+    // Already seated in this room under this same socket (e.g. clicked a game-invite
+    // link a second time while still in the waiting room or mid-match) — both seats
+    // look "full" from here, but one of them is this socket. Re-treat it as that seat
+    // instead of falling through to the room-full spectator path.
+    const existingIdx = room.players.indexOf(socket.id);
+    if (existingIdx !== -1) {
+      socket.data.idx = existingIdx;
+      socket.join(code);
+      const oppIdx = 1 - existingIdx;
+      socket.emit('room-joined', {
+        code, playerIndex: existingIdx,
+        opponentName: room.names[oppIdx] || '',
+        opponentChar: room.chars[oppIdx] || '',
+        opponentGameId: (room.gameIds && room.gameIds[oppIdx]) || '',
+        opponentCardBorder: (room.cardBorders && room.cardBorders[oppIdx]) || 'green',
+        targetScore: room.targetScore,
+        turnTimeSecs: room.turnTimeSecs, gameMode: room.gameMode, handSize: room.handSize, isPublic: room.isPublic,
+      });
+      if (room.game && !room.game.over) {
+        const g = room.game;
+        socket.emit('sync-state', {
+          hand: g.hands[existingIdx],
+          discardTop: g.discardPile[g.discardPile.length - 1] || null,
+          deckCount: g.deck.length,
+          turn: g.turn,
+          phase: g.phase,
+          oppCardCount: g.hands[oppIdx].length,
+          scores: room.scores,
+          gameMode: g.gameMode, oklahomaCap: g.oklahomaCap, handSize: g.handSize,
+        });
+      }
+      return;
+    }
+
     // Find an empty (null = disconnected) slot
     let slotIdx = -1;
     if (!room.players[0]) slotIdx = 0;
