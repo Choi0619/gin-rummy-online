@@ -6577,7 +6577,7 @@ function playDealAnimation(myCount, oppCount, onDone) {
 // ===== Reaction emojis =====
 let _reactionCooldown = false;
 function sendReaction(emoji) {
-  if (_reactionCooldown || (vsAI && !isSpectator) || !socket) return;
+  if (_reactionCooldown || !socket) return;
   socket.emit('reaction', { emoji });
   _reactionCooldown = true;
   setTimeout(() => { _reactionCooldown = false; }, 2000);
@@ -7299,7 +7299,7 @@ function initSocket() {
     if (isRevenge) rlbl.textContent = revengerIdx === myIdx ? '🔥 리벤지 전!' : '🛡️ 리벤지 방어 중';
     updateRevengeProgress();
     document.querySelectorAll('.vs-ai-hide').forEach(el => el.style.display = vsAI ? 'none' : '');
-    document.getElementById('reactionBar').style.display = vsAI ? 'none' : 'flex';
+    document.getElementById('reactionBar').style.display = 'flex';
     showGame();
     if (supaUser && !vsAI) setMyStatus('gaming');
     renderGame();
