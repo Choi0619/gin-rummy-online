@@ -4106,43 +4106,62 @@ function getBestStreak() {
 
 // Logged-in users: Supabase profile is the source of truth (syncs across devices).
 // Guests (no account): falls back to this device's localStorage only.
+// Promo unlocks are stored as an "active" boolean flag (per account when logged
+// in, else per device). Because every unlock check ORs against this flag, any
+// future theme/border/character added later is automatically unlocked too — the
+// account simply stays permanently in the promo-active state.
 function hasPromoThemes() { return supaProfile ? !!supaProfile.promo_themes : localStorage.getItem('grPromoThemes') === '1'; }
 function hasPromoBorders() { return supaProfile ? !!supaProfile.promo_borders : localStorage.getItem('grPromoBorders') === '1'; }
+function hasPromoChars() { return supaProfile ? !!supaProfile.promo_chars : localStorage.getItem('grPromoChars') === '1'; }
 
 function isRainbowUnlocked() { return hasPromoThemes() || getTotalWins() >= RAINBOW_UNLOCK_WINS; }
 function isAuroraUnlocked() { return hasPromoThemes() || getTotalWins() >= AURORA_UNLOCK_WINS; }
+
+// code -> { already: <fn returning true if already active>, localKey, column,
+//           applied: <fn to refresh UI>, label }
+const PROMO_CODES = {
+  'UNLOCKALLTHEME': {
+    already: hasPromoThemes, localKey: 'grPromoThemes', column: 'promo_themes',
+    applied: () => updateLockedSwatches(), label: '모든 배경 테마',
+  },
+  'UNLOCKALLBORADER': {
+    already: hasPromoBorders, localKey: 'grPromoBorders', column: 'promo_borders',
+    applied: () => renderBorderGrid(), label: '모든 프로필 테두리',
+  },
+  'UNLOCKALLCHAR': {
+    already: hasPromoChars, localKey: 'grPromoChars', column: 'promo_chars',
+    applied: () => renderCharGrid(), label: '모든 캐릭터',
+  },
+};
 
 async function redeemPromoCode() {
   const input = document.getElementById('promoCodeInput');
   const msg = document.getElementById('promoCodeMsg');
   const code = input.value.trim().toUpperCase();
   if (!code) return;
-  if (code === 'UNLOCKALLTHEME') {
-    localStorage.setItem('grPromoThemes', '1');
-    if (supaUser) {
-      const { data } = await supa.from('profiles').update({ promo_themes: true }).eq('id', supaUser.id).select().single();
-      if (data) supaProfile = data;
-    }
-    updateLockedSwatches();
-    msg.style.color = '#69f0ae';
-    msg.textContent = '✅ 모든 테마가 해금되었습니다!';
-    input.value = '';
-    showConfirmModal({ emoji: '🎁', title: '프로모션 코드 등록 완료!', sub: '모든 배경 테마가 해금됐어요! 🎨 컬렉션에서 바로 사용해보세요.' + (supaUser ? ' (계정에 저장돼 다른 기기에서도 적용돼요)' : ''), acceptLabel: '확인', onAccept: () => {} });
-  } else if (code === 'UNLOCKALLBORADER') {
-    localStorage.setItem('grPromoBorders', '1');
-    if (supaUser) {
-      const { data } = await supa.from('profiles').update({ promo_borders: true }).eq('id', supaUser.id).select().single();
-      if (data) supaProfile = data;
-    }
-    renderBorderGrid();
-    msg.style.color = '#69f0ae';
-    msg.textContent = '✅ 모든 프로필 테두리가 해금되었습니다!';
-    input.value = '';
-    showConfirmModal({ emoji: '🎁', title: '프로모션 코드 등록 완료!', sub: '모든 프로필 테두리가 해금됐어요! 🎨 컬렉션에서 바로 사용해보세요.' + (supaUser ? ' (계정에 저장돼 다른 기기에서도 적용돼요)' : ''), acceptLabel: '확인', onAccept: () => {} });
-  } else {
+  const promo = PROMO_CODES[code];
+  if (!promo) {
     msg.style.color = '#ef9a9a';
     msg.textContent = '❌ 유효하지 않은 코드예요.';
+    return;
   }
+  if (promo.already()) {
+    msg.style.color = '#ffd76a';
+    msg.textContent = 'ℹ️ 이미 적용된 코드예요.';
+    input.value = '';
+    showConfirmModal({ emoji: '✅', title: '이미 적용된 코드예요', sub: promo.label + '이(가) 이미 해금되어 있어요. 컬렉션에서 바로 사용할 수 있어요!', acceptLabel: '확인', onAccept: () => {} });
+    return;
+  }
+  localStorage.setItem(promo.localKey, '1');
+  if (supaUser) {
+    const { data } = await supa.from('profiles').update({ [promo.column]: true }).eq('id', supaUser.id).select().single();
+    if (data) supaProfile = data;
+  }
+  promo.applied();
+  msg.style.color = '#69f0ae';
+  msg.textContent = '✅ ' + promo.label + '이(가) 해금되었습니다!';
+  input.value = '';
+  showConfirmModal({ emoji: '🎁', title: '프로모션 코드 등록 완료!', sub: promo.label + '이(가) 해금됐어요! 🎨 컬렉션에서 바로 사용해보세요.' + (supaUser ? ' (계정에 저장돼 다른 기기에서도 적용돼요)' : ''), acceptLabel: '확인', onAccept: () => {} });
 }
 
 function updateLockedSwatches() {
@@ -6216,7 +6235,7 @@ const CHAR_UNLOCK_REQ = { '🐢': 3, '🦁': 7, '🐸': 15, '🦄': 30 };
 
 function isCharUnlocked(ch) {
   if (!CHAR_UNLOCK_REQ[ch]) return true; // base chars
-  return getTotalWins() >= CHAR_UNLOCK_REQ[ch];
+  return hasPromoChars() || getTotalWins() >= CHAR_UNLOCK_REQ[ch];
 }
 
 function checkNewCharUnlocks(winsBeforeThisGame) {
