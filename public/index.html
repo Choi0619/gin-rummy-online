@@ -1034,6 +1034,41 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
 .player-slot .slot-status { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 4px; }
 .player-slot.ready-state .slot-status { color: #69f0ae; }
 
+.room-chip {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 4px 10px; color: rgba(255,255,255,0.65);
+}
+
+/* Aurora theme: the waiting-room card/pills used plain low-opacity dark panels,
+   which read fine against the old flat background but wash out against the busy
+   teal/purple aurora gradient. Give them the same solid-panel treatment the
+   in-game aurora UI already uses. */
+body.theme-aurora .waiting-card {
+  background: linear-gradient(180deg, rgba(4,21,33,0.88), rgba(2,10,22,0.9));
+  border: 1px solid rgba(100,255,226,0.18);
+  box-shadow: 0 16px 34px rgba(0,0,0,0.3), 0 0 24px rgba(0,220,190,0.08);
+}
+body.theme-aurora .room-code-display {
+  background: rgba(4,14,20,0.75);
+  border-color: rgba(0,255,190,0.55);
+  color: #7dffce;
+  text-shadow: 0 0 12px rgba(0,255,190,0.35);
+}
+body.theme-aurora .room-chip {
+  background: rgba(7,32,42,0.85); border-color: rgba(139,255,232,0.4);
+  color: #dffff8; font-weight: 700;
+}
+body.theme-aurora .player-slot {
+  background: rgba(4,14,20,0.7); border-color: rgba(255,255,255,0.08);
+}
+body.theme-aurora .player-slot.connected { border-color: rgba(105,240,174,0.55); }
+body.theme-aurora .player-slot .slot-status { color: rgba(255,255,255,0.55); }
+body.theme-aurora #waitingRoomBadge { color: rgba(223,255,248,0.75) !important; }
+body.theme-aurora .btn-secondary {
+  background: rgba(7,32,42,0.9); border-color: rgba(139,255,232,0.4); color: #eafffb;
+}
+body.theme-aurora .btn-secondary:hover { background: rgba(10,48,56,0.95); border-color: rgba(170,255,241,0.7); }
+
 .spinner { font-size: 24px; animation: spin 1.5s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -7370,13 +7405,12 @@ function showWaiting(code, isPublic) {
 function renderRoomSettingsSummary() {
   const el = document.getElementById('roomSettingsSummary');
   if (!el || vsAI) return;
-  const chipStyle = 'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 10px;color:rgba(255,255,255,0.65)';
   const gm = gameMode === 'oklahoma' ? '오클라호마' : gameMode === 'speed' ? '스피드' : '클래식';
   const tt = myTurnTimeSecs === null ? '♾️ 무제한' : myTurnTimeSecs + '초';
   el.innerHTML =
-    '<span style="' + chipStyle + '">🖐️ ' + handSize + '장</span>' +
-    '<span style="' + chipStyle + '">⏱️ ' + tt + '</span>' +
-    '<span style="' + chipStyle + '">🎮 ' + gm + '</span>';
+    '<span class="room-chip">🖐️ ' + handSize + '장</span>' +
+    '<span class="room-chip">⏱️ ' + tt + '</span>' +
+    '<span class="room-chip">🎮 ' + gm + '</span>';
 }
 
 function onOpponentJoined(name, char) {
