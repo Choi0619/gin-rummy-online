@@ -670,8 +670,12 @@ body.theme-aurora .aurora-layer { display: block; }
   position: absolute;
   width: 200%; height: 280px;
   border-radius: 60%;
-  filter: blur(50px);
+  /* blur is the single most expensive GPU filter; 50px on three full-width
+     moving layers was the top background cost on weak hardware. 34px still
+     reads as a soft aurora glow but is meaningfully cheaper to composite. */
+  filter: blur(34px);
   mix-blend-mode: screen;
+  will-change: transform;
 }
 .aurora-band-1 {
   background: linear-gradient(90deg, transparent 5%, rgba(0,230,160,0.5) 35%, rgba(0,200,120,0.6) 50%, rgba(0,230,160,0.5) 65%, transparent 95%);
@@ -701,52 +705,32 @@ body.theme-aurora .aurora-layer { display: block; }
   50%      { transform: translateX(20%) scaleY(1.4) rotate(1deg); opacity: 0.85; }
 }
 
-/* Aurora cards — bright frosted-crystal look instead of the old near-black card,
-   with a diagonal shimmer sweep so it reads like a glowing gem, not a dead pixel. */
+/* Aurora cards — "cut glass gem" look. The entire faceted-crystal pattern is a
+   single pre-baked SVG data-URI: the browser rasterizes it ONCE per card size
+   and caches the pixels, so no matter how ornate the facets are, the per-frame
+   cost is zero. The old approach animated border-color/background-position/
+   opacity on every card forever, forcing continuous repaints — the main source
+   of the low-end stutter. All continuous card animations are gone; motion now
+   only happens on interactions (draw pop, select lift, meld pop). */
 body.theme-aurora .card {
-  background: linear-gradient(145deg, #eafcff 0%, #d9f3ff 45%, #c3e9ff 100%);
-  border-color: rgba(0,200,180,0.55);
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 76 110' preserveAspectRatio='none'><polygon points='0,0 34,0 12,30' fill='%23ffffff' opacity='0.55'/><polygon points='34,0 76,0 58,26 12,30' fill='%23cdeeff' opacity='0.4'/><polygon points='76,0 76,44 58,26' fill='%23dcd2ff' opacity='0.45'/><polygon points='12,30 58,26 40,62 0,52' fill='%23ffffff' opacity='0.28'/><polygon points='58,26 76,44 76,78 40,62' fill='%23bfe9ff' opacity='0.32'/><polygon points='0,52 40,62 22,92 0,86' fill='%23e6dcff' opacity='0.3'/><polygon points='40,62 76,78 60,110 22,92' fill='%23ffffff' opacity='0.38'/><polygon points='22,92 60,110 12,110 0,86' fill='%23cfefff' opacity='0.42'/><polygon points='60,110 76,78 76,110' fill='%23f4e8ff' opacity='0.4'/><polygon points='30,22 38,14 44,24 36,30' fill='%23fff2c8' opacity='0.5'/><polygon points='52,70 58,64 63,74 55,79' fill='%23c8fff0' opacity='0.55'/></svg>") center / 100% 100% no-repeat,
+    linear-gradient(150deg, #ffffff 0%, #eefaff 40%, #ddefff 75%, #e9e2ff 100%);
+  border-color: rgba(150,225,255,0.8);
   color: #0a2432;
   position: relative;
-  box-shadow: 0 2px 10px rgba(0,200,180,0.25);
-  animation: auroraBorder 6s linear infinite;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.85),
+    inset 0 -8px 18px rgba(140,190,255,0.18),
+    0 4px 12px rgba(0,20,40,0.28),
+    0 0 10px rgba(120,220,255,0.22);
 }
+/* Static diagonal glass glint — painted once, never re-painted. */
 body.theme-aurora .card:not(.face-down)::before {
   content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
   border-radius: inherit; overflow: hidden;
-  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.35) 45%, rgba(180,255,240,0.25) 52%, transparent 68%);
-  background-size: 250% 250%;
+  background: linear-gradient(118deg, transparent 34%, rgba(255,255,255,0.5) 44%, rgba(255,255,255,0.12) 50%, transparent 60%);
   mix-blend-mode: soft-light;
-  animation: auroraCardSheen 4.5s ease-in-out infinite;
-}
-@keyframes auroraCardSheen {
-  0%   { background-position: 120% 0%; }
-  50%  { background-position: 0% 100%; }
-  100% { background-position: 120% 0%; }
-}
-/* Tiny nebula star-dust baked into the card face, twinkling softly */
-body.theme-aurora .card:not(.face-down) .card-inner::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: -1;
-  background-image:
-    radial-gradient(1.4px 1.4px at 15% 20%, rgba(120,80,255,0.9), transparent),
-    radial-gradient(1.2px 1.2px at 75% 15%, rgba(0,220,190,0.9), transparent),
-    radial-gradient(1.6px 1.6px at 40% 70%, rgba(255,255,255,0.9), transparent),
-    radial-gradient(1.2px 1.2px at 85% 60%, rgba(120,80,255,0.8), transparent),
-    radial-gradient(1.3px 1.3px at 60% 85%, rgba(0,220,190,0.85), transparent),
-    radial-gradient(1.1px 1.1px at 25% 55%, rgba(255,255,255,0.8), transparent);
-  animation: auroraCardTwinkle 3s ease-in-out infinite;
-}
-@keyframes auroraCardTwinkle {
-  0%,100% { opacity: 0.5; }
-  50%      { opacity: 1; }
-}
-/* Soft ambient glow sitting behind each card, independent of the sheen sweep */
-body.theme-aurora .card:not(.face-down) {
-  animation: auroraBorder 6s linear infinite, auroraCardGlow 3.6s ease-in-out infinite;
-}
-@keyframes auroraCardGlow {
-  0%,100% { box-shadow: 0 2px 10px rgba(0,200,180,0.25), 0 0 10px rgba(0,200,180,0.18); }
-  50%      { box-shadow: 0 2px 10px rgba(0,200,180,0.25), 0 0 20px rgba(120,80,255,0.3); }
 }
 body.theme-aurora .card .red { color: #d81b60 !important; }
 body.theme-aurora .card .black { color: #0a2432 !important; }
@@ -773,10 +757,6 @@ body.theme-aurora .card.face-down {
 body.theme-aurora .card.face-down::after {
   background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,255,190,0.06) 4px, rgba(0,255,190,0.06) 5px);
   border-color: rgba(0,255,190,0.25);
-}
-@keyframes auroraBackDrift {
-  0%,100% { background-position: 0% 50%; }
-  50%      { background-position: 100% 50%; }
 }
 @keyframes auroraBackGlow {
   0%,100% { box-shadow: 0 0 12px rgba(0,220,160,0.4); }
@@ -2137,7 +2117,6 @@ body.theme-aurora .card:not(.face-down) {
     linear-gradient(145deg, #ffffff 0%, #eefcff 46%, #d7f6ff 100%);
   border-color: rgba(134,236,255,0.9);
   box-shadow: 0 7px 18px rgba(0,18,34,0.35), 0 0 0 1px rgba(255,255,255,0.55) inset, 0 0 16px rgba(100,230,255,0.28);
-  animation: auroraCardGlowSoft 4.8s ease-in-out infinite;
 }
 body.theme-aurora .card:not(.face-down)::before {
   z-index: 1;
@@ -2170,10 +2149,6 @@ body.theme-aurora .card.meld {
 body.theme-aurora .card.selected {
   border-color: #b9fff3 !important;
   box-shadow: 0 16px 34px rgba(0,255,210,0.45), 0 0 0 7px rgba(122,92,255,0.16), 0 0 26px rgba(255,255,255,0.35) !important;
-}
-@keyframes auroraCardGlowSoft {
-  0%,100% { filter: saturate(1.02) brightness(1); }
-  50% { filter: saturate(1.12) brightness(1.035); }
 }
 
 body.theme-aurora .util-row { gap: 8px; padding-bottom: 10px; }
@@ -2526,8 +2501,11 @@ body.theme-aurora .hand-zone.my-turn-flash {
 body.theme-aurora .card:not(.face-down) {
   color: #061321;
   border: 1px solid rgba(180,242,255,0.95);
+  /* Pre-baked faceted-gem SVG (rasterized once & cached) over a cool glass
+     gradient — the "cut crystal" look with zero per-frame cost. */
   background:
-    linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(244,254,255,0.98) 38%, rgba(226,249,255,0.96) 100%);
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 76 110' preserveAspectRatio='none'><polygon points='0,0 34,0 12,30' fill='%23ffffff' opacity='0.55'/><polygon points='34,0 76,0 58,26 12,30' fill='%23cdeeff' opacity='0.4'/><polygon points='76,0 76,44 58,26' fill='%23dcd2ff' opacity='0.45'/><polygon points='12,30 58,26 40,62 0,52' fill='%23ffffff' opacity='0.28'/><polygon points='58,26 76,44 76,78 40,62' fill='%23bfe9ff' opacity='0.32'/><polygon points='0,52 40,62 22,92 0,86' fill='%23e6dcff' opacity='0.3'/><polygon points='40,62 76,78 60,110 22,92' fill='%23ffffff' opacity='0.38'/><polygon points='22,92 60,110 12,110 0,86' fill='%23cfefff' opacity='0.42'/><polygon points='60,110 76,78 76,110' fill='%23f4e8ff' opacity='0.4'/><polygon points='30,22 38,14 44,24 36,30' fill='%23fff2c8' opacity='0.5'/><polygon points='52,70 58,64 63,74 55,79' fill='%23c8fff0' opacity='0.55'/></svg>") center / 100% 100% no-repeat,
+    linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(240,251,255,0.98) 42%, rgba(224,240,255,0.97) 74%, rgba(233,226,255,0.97) 100%);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.82),
     inset 0 -10px 22px rgba(155,230,255,0.18),
@@ -2608,14 +2586,6 @@ body.theme-aurora .card.selected {
 body.theme-aurora .card.just-drawn {
   border-color: rgba(255,245,172,0.98) !important;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.88), 0 12px 24px rgba(0,20,30,0.28), 0 0 22px rgba(255,232,122,0.52) !important;
-}
-@keyframes auroraCrystalBreath {
-  0%,100% { filter: saturate(1.02) brightness(1); }
-  50% { filter: saturate(1.10) brightness(1.035); }
-}
-@keyframes auroraCrystalSweep {
-  0%,100% { background-position: 115% 0, 0 0, 0 0, 0 0, 0 0; }
-  50% { background-position: -55% 0, 0 0, 0 0, 0 0, 0 0; }
 }
 
 @media (max-width: 680px) {
@@ -4210,7 +4180,9 @@ function setTheme(theme) {
 let auroraStarEls = [];
 function startAuroraStars() {
   stopAuroraStars();
-  const count = 60;
+  // Kept modest (was 60) — each star is its own fixed-position compositing layer,
+  // and on low-end GPUs a large layer count costs more than the twinkle itself.
+  const count = 28;
   for (let i = 0; i < count; i++) {
     const star = document.createElement('div');
     star.className = 'aurora-star';
