@@ -1044,30 +1044,54 @@ input[type="text"]:focus { border-color: rgba(255,255,255,0.5); }
    teal/purple aurora gradient. Give them the same solid-panel treatment the
    in-game aurora UI already uses. */
 body.theme-aurora .waiting-card {
-  background: linear-gradient(180deg, rgba(4,21,33,0.88), rgba(2,10,22,0.9));
-  border: 1px solid rgba(100,255,226,0.18);
-  box-shadow: 0 16px 34px rgba(0,0,0,0.3), 0 0 24px rgba(0,220,190,0.08);
+  background: linear-gradient(180deg, rgba(3,16,26,0.97), rgba(2,8,18,0.97));
+  border: 1.5px solid rgba(120,255,232,0.42);
+  box-shadow: 0 18px 44px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.4), 0 0 34px rgba(0,230,195,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
+/* Inline-styled dim helper texts inside the waiting card need !important to win. */
+body.theme-aurora .waiting-card [data-i18n="roomCodeHint"] { color: rgba(213,255,246,0.85) !important; font-weight: 700; }
+body.theme-aurora .copy-hint { color: rgba(200,244,234,0.62); }
 body.theme-aurora .room-code-display {
-  background: rgba(4,14,20,0.75);
-  border-color: rgba(0,255,190,0.55);
-  color: #7dffce;
-  text-shadow: 0 0 12px rgba(0,255,190,0.35);
+  background: rgba(3,12,18,0.92);
+  border: 2px dashed rgba(0,255,195,0.75);
+  color: #8dffd6;
+  text-shadow: 0 0 14px rgba(0,255,195,0.55);
+  box-shadow: 0 0 18px rgba(0,255,195,0.14), inset 0 0 22px rgba(0,255,195,0.06);
 }
 body.theme-aurora .room-chip {
-  background: rgba(7,32,42,0.85); border-color: rgba(139,255,232,0.4);
-  color: #dffff8; font-weight: 700;
+  background: linear-gradient(180deg, rgba(14,58,66,0.98), rgba(6,28,40,0.98));
+  border-color: rgba(160,255,240,0.65);
+  color: #f0fffb; font-weight: 800;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 0 10px rgba(0,240,210,0.18);
 }
 body.theme-aurora .player-slot {
-  background: rgba(4,14,20,0.7); border-color: rgba(255,255,255,0.08);
+  background: rgba(3,12,18,0.85); border-color: rgba(140,255,235,0.22);
 }
-body.theme-aurora .player-slot.connected { border-color: rgba(105,240,174,0.55); }
-body.theme-aurora .player-slot .slot-status { color: rgba(255,255,255,0.55); }
-body.theme-aurora #waitingRoomBadge { color: rgba(223,255,248,0.75) !important; }
+body.theme-aurora .player-slot.connected {
+  border-color: rgba(105,240,174,0.8);
+  box-shadow: 0 0 14px rgba(105,240,174,0.22);
+}
+body.theme-aurora .player-slot .slot-name { color: #f2fffb; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+body.theme-aurora .player-slot .slot-status { color: rgba(220,255,247,0.68); }
+body.theme-aurora #waitingRoomBadge { color: rgba(223,255,248,0.85) !important; }
 body.theme-aurora .btn-secondary {
-  background: rgba(7,32,42,0.9); border-color: rgba(139,255,232,0.4); color: #eafffb;
+  background: linear-gradient(180deg, rgba(16,62,72,0.98), rgba(7,30,44,0.98));
+  border: 1px solid rgba(165,255,240,0.6); color: #ffffff;
+  font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 4px 12px rgba(0,0,0,0.3), 0 0 12px rgba(0,240,210,0.15);
 }
-body.theme-aurora .btn-secondary:hover { background: rgba(10,48,56,0.95); border-color: rgba(170,255,241,0.7); }
+body.theme-aurora .btn-secondary:hover {
+  background: linear-gradient(180deg, rgba(20,78,88,0.98), rgba(10,38,54,0.98));
+  border-color: rgba(200,255,247,0.85);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 6px 16px rgba(0,0,0,0.32), 0 0 18px rgba(0,255,220,0.3);
+}
+body.theme-aurora .btn-primary {
+  box-shadow: 0 6px 18px rgba(76,175,80,0.4), 0 0 18px rgba(105,240,174,0.28);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+body.theme-aurora .btn:disabled { opacity: 0.5; }
 
 .spinner { font-size: 24px; animation: spin 1.5s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -1092,6 +1116,14 @@ body.theme-aurora .btn-secondary:hover { background: rgba(10,48,56,0.95); border
 .btn-orange { background: linear-gradient(135deg, #ff6b35, #f5501a); color: white; }
 .btn-red { background: #ef5350; color: white; }
 .btn-gold { background: linear-gradient(135deg, #ffc94d, #e69111); color: #23180a; box-shadow: 0 6px 16px rgba(249,168,37,0.26); }
+
+/* Small fixed hint about the secret-mode hotkey (PVP only, bottom-left) */
+.secret-hint {
+  position: fixed; left: 12px; bottom: 10px; z-index: 60;
+  font-size: 11px; color: rgba(255,255,255,0.35);
+  pointer-events: none; user-select: none;
+}
+.secret-hint b { color: rgba(255,255,255,0.6); }
 
 /* ===== Revenge mode styles ===== */
 .revenge-lbl {
@@ -1708,12 +1740,31 @@ body.theme-aurora .sort-btn.active {
 .friend-row .f-sub { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .friend-row .f-status-msg { font-size: 10.5px; color: #ffd76a; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 .f-btn {
-  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff;
-  border-radius: 9px; padding: 6px 10px; font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
+  border: 1px solid rgba(255,255,255,0.18); color: #fff;
+  border-radius: 10px; padding: 6px 11px; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 6px rgba(0,0,0,0.2);
 }
-.f-btn:hover { background: rgba(255,255,255,0.18); }
-.f-btn.accept { background: rgba(105,240,174,0.15); border-color: rgba(105,240,174,0.4); color: #69f0ae; }
-.f-btn.danger { background: rgba(239,83,80,0.12); border-color: rgba(239,83,80,0.35); color: #ef9a9a; }
+.f-btn:hover { background: linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1)); transform: translateY(-1px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 4px 10px rgba(0,0,0,0.26); }
+.f-btn:active { transform: translateY(0); }
+.f-btn.accept {
+  background: linear-gradient(180deg, rgba(105,240,174,0.3), rgba(50,160,100,0.24));
+  border-color: rgba(105,240,174,0.6); color: #8fffc4;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 2px 8px rgba(0,80,40,0.3), 0 0 10px rgba(105,240,174,0.16);
+}
+.f-btn.accept:hover {
+  background: linear-gradient(180deg, rgba(105,240,174,0.42), rgba(50,160,100,0.32));
+  border-color: rgba(160,255,205,0.85);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 12px rgba(0,80,40,0.34), 0 0 16px rgba(105,240,174,0.32);
+}
+.f-btn.danger { background: linear-gradient(180deg, rgba(239,83,80,0.22), rgba(160,40,40,0.18)); border-color: rgba(239,83,80,0.45); color: #ffb0ae; }
+.f-btn.danger:hover { background: linear-gradient(180deg, rgba(239,83,80,0.34), rgba(160,40,40,0.26)); border-color: rgba(255,140,138,0.7); }
+.f-btn.invited {
+  background: linear-gradient(180deg, rgba(120,220,170,0.16), rgba(60,120,90,0.12));
+  border: 1px solid rgba(140,230,185,0.35); color: rgba(160,240,200,0.85);
+  cursor: default; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
 .room-browser-row {
   display: flex; align-items: center; gap: 10px; padding: 12px;
   background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.08);
@@ -2398,17 +2449,25 @@ body.theme-aurora .util-btn.danger:hover {
   0%,100% { background-position: 130% 0, 0 0, 0 0; opacity: 0.45; }
   48% { background-position: -70% 0, 0 0, 0 0; opacity: 0.82; }
 }
-/* Reaction emoji buttons were still washed out at rest — bring them up to
-   near-hover contrast so they read clearly against the aurora backdrop. */
+/* Reaction emoji buttons were still washed out at rest — luminous backing disc +
+   a drop-shadow glow so the emoji glyph itself pops, and an unmistakable hover
+   state (bigger scale + white-hot ring). */
 body.theme-aurora .reaction-btn {
-  background: linear-gradient(180deg, rgba(24,82,92,0.95), rgba(8,34,48,0.95));
-  border: 1px solid rgba(176,255,241,0.7);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 6px 14px rgba(0,0,0,0.26), 0 0 14px rgba(0,240,210,0.24);
+  background:
+    radial-gradient(circle at 50% 32%, rgba(255,255,255,0.22), transparent 62%),
+    linear-gradient(180deg, rgba(30,104,112,0.98), rgba(10,44,60,0.98));
+  border: 1.5px solid rgba(190,255,244,0.85);
+  filter: drop-shadow(0 0 6px rgba(0,240,210,0.35));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 6px 14px rgba(0,0,0,0.3), 0 0 16px rgba(0,240,210,0.3);
 }
 body.theme-aurora .reaction-btn:hover {
-  background: linear-gradient(180deg, rgba(21,78,86,0.98), rgba(10,35,50,0.98));
-  border-color: rgba(199,255,246,0.92);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 8px 18px rgba(0,0,0,0.3), 0 0 20px rgba(0,255,220,0.32);
+  transform: scale(1.28);
+  background:
+    radial-gradient(circle at 50% 32%, rgba(255,255,255,0.32), transparent 66%),
+    linear-gradient(180deg, rgba(38,126,132,1), rgba(14,56,76,1));
+  border-color: #ffffff;
+  filter: drop-shadow(0 0 10px rgba(120,255,235,0.7));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 8px 20px rgba(0,0,0,0.34), 0 0 26px rgba(0,255,220,0.55);
 }
 
 /* Final in-game contrast pass: each tool remains readable before hover. */
@@ -2521,10 +2580,25 @@ body.theme-aurora .card-center {
 }
 body.theme-aurora .red-suit { color: #d91f46 !important; text-shadow: 0 0 3px rgba(255,255,255,0.62); }
 body.theme-aurora .black-suit { color: #071321 !important; text-shadow: 0 0 3px rgba(255,255,255,0.54); }
+/* Melded cards under aurora: an iridescent "gem" treatment instead of the flat
+   green used by other themes — a teal→violet→ice gradient ring plus a soft
+   two-tone outer glow, so a completed meld reads as a glowing jewel. Static
+   gradients only (no infinite animation) to keep the render cost near zero. */
 body.theme-aurora .card.in-meld {
-  border-color: rgba(72,255,201,0.95) !important;
-  background: linear-gradient(145deg, #fbfffe 0%, #e8fff8 48%, #d7fff4 100%) !important;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.88), 0 8px 15px rgba(0,24,20,0.26), 0 0 18px rgba(42,255,196,0.34) !important;
+  border: 2px solid transparent !important;
+  background:
+    linear-gradient(150deg, #ffffff 0%, #f0fdff 42%, #eaf6ff 72%, #f3efff 100%) padding-box,
+    linear-gradient(135deg, #3affc8 0%, #6fd8ff 34%, #b48aff 68%, #ff9de8 100%) border-box !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.9),
+    inset 0 -8px 16px rgba(150,120,255,0.10),
+    0 8px 16px rgba(0,18,30,0.3),
+    0 0 14px rgba(60,255,205,0.4),
+    0 0 26px rgba(160,120,255,0.28) !important;
+}
+body.theme-aurora .card.in-meld .meld-dot {
+  background: linear-gradient(135deg, #4dffce, #b48aff);
+  box-shadow: 0 0 8px rgba(120,220,255,0.85);
 }
 body.theme-aurora .card.selected {
   border-color: rgba(255,255,255,0.98) !important;
@@ -3333,6 +3407,7 @@ body.theme-aurora .card.just-drawn {
       <div class="hand" id="myHand"></div>
     </div>
   </div>
+  <div class="secret-hint vs-ai-hide">🕵️ 비밀 모드로 전환하려면 <b>H</b> 키를 눌러주세요</div>
 </div>
 
 <!-- ===== SPECTATOR SCREEN ===== -->
@@ -5133,8 +5208,22 @@ async function initFriendSystem() {
           showConfirmModal({
             emoji: '🎮', title: senderName + ' 님의 게임 초대!',
             sub: m.content, acceptLabel: '🚀 바로 입장',
+            declineLabel: '거절',
             onAccept: () => { if (codeMatch) joinRoomByCode(codeMatch[0]); },
+            onDecline: () => {
+              supa.from('direct_messages').insert({
+                sender_id: supaUser.id, receiver_id: m.sender_id,
+                content: '🚫 게임 초대를 거절했어요.',
+              }).then(() => {});
+            },
           });
+        } else if (m.content.startsWith('🚫 게임 초대를 거절')) {
+          // My invite was declined — free the friend up for re-inviting.
+          invitedFriendIds.delete(m.sender_id);
+          if (document.getElementById('friendsOverlay').classList.contains('show')) renderFriendsList();
+          showToast('🚫 ' + senderName + ' 님이 초대를 거절했어요', 'alert');
+          setTimeout(() => hideToast(), 3000);
+          supa.from('direct_messages').update({ read: true }).eq('id', m.id).then(() => {});
         } else {
           showDmNotifyToast(senderName, m.content, m.sender_id);
         }
@@ -5283,9 +5372,13 @@ function renderFriendsList() {
     const msg = (_statusMap[f.id] || {}).status_msg || '';
     const online = st !== 'offline';
     const alreadyInvited = invitedFriendIds.has(f.id);
-    const inviteBtn = (online && roomCode && !vsAI)
+    // Invites only make sense from the waiting room: not while I'm mid-game,
+    // and not to a friend who is themselves mid-game.
+    const iAmInWaitingRoom = document.getElementById('waitingScreen').classList.contains('active');
+    const canInvite = online && st !== 'gaming' && roomCode && !vsAI && iAmInWaitingRoom;
+    const inviteBtn = canInvite
       ? (alreadyInvited
-        ? '<button class="f-btn" disabled style="opacity:0.6;cursor:default">✅ 초대 완료</button>'
+        ? '<button class="f-btn invited" disabled>✅ 초대 완료</button>'
         : '<button class="f-btn accept" onclick="inviteFriend(\'' + f.id + '\')">🎮 초대</button>')
       : '';
     return '<div class="friend-row cb-' + (f.cardBorder || 'green') + '" oncontextmenu="showFriendCtxMenu(event,\'' + f.id + '\');return false;">' +
@@ -7868,8 +7961,13 @@ function toggleFullAuto() {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.ctrlKey && e.shiftKey && (e.key === 'H' || e.key === 'h')) {
-    e.preventDefault();
+  // Plain H works too (panic key) — but never while typing in an input/textarea,
+  // where "h" is just a letter being typed.
+  const typing = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable);
+  const plainH = (e.key === 'H' || e.key === 'h') && !e.ctrlKey && !e.altKey && !e.metaKey && !typing;
+  const comboH = e.ctrlKey && e.shiftKey && (e.key === 'H' || e.key === 'h');
+  if (plainH || comboH) {
+    if (comboH) e.preventDefault();
     toggleSecretMode();
   }
 });
