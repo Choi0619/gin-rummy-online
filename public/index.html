@@ -2603,6 +2603,30 @@ body.theme-aurora .card.in-meld .meld-dot {
   background: linear-gradient(135deg, #4dffce, #b48aff);
   box-shadow: 0 0 8px rgba(120,220,255,0.85);
 }
+/* Starlight halo behind a melded card. The stars are a pre-baked SVG (rasterized
+   once, cached), sitting BEHIND the card face (z-index:-1) so only the halo that
+   extends past the card edges shows. The ONLY animated property is opacity, which
+   the compositor handles off the main thread — no repaint, no layout — and it runs
+   on just the few meld cards, so it's effectively free. This is the "shimmering
+   starlight" effect without the per-frame cost that plagued the old card anims. */
+body.theme-aurora .card.in-meld::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 14px;
+  pointer-events: none;
+  z-index: -1;
+  filter: none;
+  opacity: 0.5;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(120,255,225,0.28), rgba(150,120,255,0.14) 46%, transparent 72%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='124' viewBox='0 0 90 124'><g fill='%23ffffff'><path d='M10 18 l1.1 3 3 1.1 -3 1.1 -1.1 3 -1.1 -3 -3 -1.1 3 -1.1z'/><path d='M80 30 l0.9 2.4 2.4 0.9 -2.4 0.9 -0.9 2.4 -0.9 -2.4 -2.4 -0.9 2.4 -0.9z' fill='%23b7fff0'/><path d='M16 96 l1 2.6 2.6 1 -2.6 1 -1 2.6 -1 -2.6 -2.6 -1 2.6 -1z' fill='%23cdbcff'/><path d='M78 100 l1.1 3 3 1.1 -3 1.1 -1.1 3 -1.1 -3 -3 -1.1 3 -1.1z'/><path d='M46 8 l0.8 2.2 2.2 0.8 -2.2 0.8 -0.8 2.2 -0.8 -2.2 -2.2 -0.8 2.2 -0.8z' fill='%23aef3ff'/><path d='M50 116 l0.9 2.4 2.4 0.9 -2.4 0.9 -0.9 2.4 -0.9 -2.4 -2.4 -0.9 2.4 -0.9z' fill='%23e6dcff'/><circle cx='30' cy='60' r='0.9' opacity='0.8'/><circle cx='66' cy='66' r='0.9' opacity='0.8' fill='%23bff'/><circle cx='24' cy='40' r='0.8' opacity='0.7'/></g></svg>") center / 100% 100% no-repeat;
+  animation: auroraMeldTwinkle 3.4s ease-in-out infinite;
+}
+@keyframes auroraMeldTwinkle {
+  0%, 100% { opacity: 0.42; }
+  50%      { opacity: 0.92; }
+}
 body.theme-aurora .card.selected {
   border-color: rgba(255,255,255,0.98) !important;
   transform: translateY(-18px) scale(1.045) !important;
@@ -4224,9 +4248,10 @@ function setTheme(theme) {
 let auroraStarEls = [];
 function startAuroraStars() {
   stopAuroraStars();
-  // Kept modest (was 60) — each star is its own fixed-position compositing layer,
-  // and on low-end GPUs a large layer count costs more than the twinkle itself.
-  const count = 28;
+  // Stars twinkle via opacity/transform only (compositor-thread, no repaint), so a
+  // denser field is affordable. 48 reads as a fuller starscape while staying well
+  // clear of the layer counts that hurt low-end GPUs.
+  const count = 48;
   for (let i = 0; i < count; i++) {
     const star = document.createElement('div');
     star.className = 'aurora-star';
