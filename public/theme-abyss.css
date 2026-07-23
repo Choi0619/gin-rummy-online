@@ -11,8 +11,26 @@
    while idle.
    =================================================================== */
 
+/* Real underwater photo (Unsplash, free-to-use license) as a darkened base
+   layer instead of a flat gradient — a single static image request, decoded
+   once and cached by the browser like any other <img>, so it costs nothing
+   per frame (this is the "video vs photo" distinction: a still image has no
+   ongoing decode cost, unlike video). The dark gradient on top keeps it from
+   competing with the UI/cards for attention and keeps our existing color
+   mood consistent with the rest of the theme. */
 body.theme-abyss {
-  background: linear-gradient(180deg, #010509 0%, #041220 55%, #062038 100%);
+  background:
+    linear-gradient(180deg, rgba(1,5,9,0.90) 0%, rgba(4,18,32,0.72) 45%, rgba(1,5,9,0.93) 100%),
+    url('https://images.unsplash.com/photo-1632061684048-34a67dc24372?fm=jpg&q=60&w=1600&auto=format&fit=crop') center / cover no-repeat fixed,
+    linear-gradient(180deg, #010509 0%, #041220 55%, #062038 100%);
+}
+/* #lobbyScreen paints its own opaque background (var(--lobby-grad)) that
+   would otherwise fully cover the photo above — layer it there too. */
+body.theme-abyss #lobbyScreen {
+  background:
+    linear-gradient(180deg, rgba(1,5,9,0.90) 0%, rgba(4,18,32,0.68) 45%, rgba(1,5,9,0.94) 100%),
+    url('https://images.unsplash.com/photo-1632061684048-34a67dc24372?fm=jpg&q=60&w=1600&auto=format&fit=crop') center / cover no-repeat fixed,
+    var(--lobby-grad);
 }
 
 .abyss-layer {
