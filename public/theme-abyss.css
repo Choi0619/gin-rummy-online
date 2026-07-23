@@ -176,6 +176,15 @@ body.theme-abyss .result-box.pop-lose {
   pointer-events: none;
   z-index: 2;
   filter: drop-shadow(0 0 10px var(--glow, rgba(110,230,255,0.35)));
+  /* Scale/mirror is set inline (JS) as a static transform on THIS element.
+     The float bob below animates transform on the inner <svg> instead of
+     here — a CSS animation's transform fully replaces (not composes with)
+     whatever transform was already on the element for its whole duration,
+     so putting both on the same node would silently wipe out the inline
+     scale/mirror every frame. */
+}
+.abyss-jelly > svg {
+  display: block;
   animation: abyssJellyFloat var(--float-dur, 10s) ease-in-out infinite;
   animation-delay: var(--float-delay, 0s);
 }

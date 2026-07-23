@@ -138,11 +138,15 @@ function startAbyssTheme() {
   layer.appendChild(_abyssGlowEl);
   document.addEventListener('pointermove', _abyssPointerMove);
 
-  // 3 jellyfish, placed once and left to drift in place for as long as the
+  // 6 jellyfish, placed once and left to drift in place for as long as the
   // theme is active — no re-creation, no per-frame cost, just a handful of
-  // long-running CSS loops on a handful of elements.
+  // long-running CSS loops on a handful of elements. Spread across more of
+  // the viewport (including a couple of mid-height spots, not just corners)
+  // and sized up a bit — 3 tucked at 0.6x in the edges read as "almost
+  // nothing" on a lobby screen where the eye is mostly on the center card.
   const spots = [
-    { top: '12%', left: '8%' }, { top: '55%', left: '85%' }, { top: '70%', left: '18%' },
+    { top: '10%', left: '6%' }, { top: '58%', left: '88%' }, { top: '72%', left: '14%' },
+    { top: '34%', left: '92%' }, { top: '46%', left: '3%' }, { top: '82%', left: '70%' },
   ];
   spots.forEach((pos, i) => {
     const palette = ABYSS_JELLY_PALETTE[i % ABYSS_JELLY_PALETTE.length];
@@ -151,12 +155,16 @@ function startAbyssTheme() {
     el.style.top = pos.top;
     el.style.left = pos.left;
     el.style.setProperty('--glow', palette.glow + '59');
-    el.style.setProperty('--float-dur', (9 + i * 1.7) + 's');
-    el.style.setProperty('--float-delay', (i * 1.3) + 's');
-    el.style.setProperty('--pulse-dur', (3.2 + i * 0.4) + 's');
-    el.style.setProperty('--pulse-delay', (i * 0.5) + 's');
-    el.style.opacity = '0.85';
-    el.style.transform = i % 2 ? 'scaleX(-0.6) scale(0.6)' : 'scale(0.6)';
+    el.style.setProperty('--float-dur', (8 + i * 1.4) + 's');
+    el.style.setProperty('--float-delay', (i * 1.1) + 's');
+    el.style.setProperty('--pulse-dur', (3.2 + i * 0.35) + 's');
+    el.style.setProperty('--pulse-delay', (i * 0.4) + 's');
+    el.style.opacity = '0.9';
+    const scale = 0.72 + (i % 3) * 0.08;
+    // A single scale(x,y) call with a negative x mirrors horizontally without
+    // compounding two separate scale transforms (scaleX(-s) followed by
+    // scale(s) multiplies to s*-s, silently shrinking/warping it further).
+    el.style.transform = i % 2 ? `scale(${-scale}, ${scale})` : `scale(${scale})`;
     el.innerHTML = abyssJellySvg(palette.bell, palette.glow);
     layer.appendChild(el);
     _abyssJellyEls.push(el);
@@ -189,19 +197,24 @@ function startAbyssTheme() {
     const el = document.createElement('div');
     el.className = 'abyss-anglerfish';
     el.style.setProperty('--y', (15 + Math.random() * 55) + '%');
-    el.style.setProperty('--swim-dur', (22 + Math.random() * 10) + 's');
-    if (Math.random() < 0.5) el.style.transform = 'scaleX(-1)';
+    el.style.setProperty('--swim-dur', (18 + Math.random() * 8) + 's');
     el.innerHTML = abyssAnglerSvg();
+    // Same reasoning as the fish above: mirror the inner <svg>, since `el`'s
+    // transform belongs to the abyssAnglerSwim animation.
+    if (Math.random() < 0.5) el.firstElementChild.style.transform = 'scaleX(-1)';
     document.getElementById('abyssLayer')?.appendChild(el);
-    setTimeout(() => el.remove(), 34000);
+    setTimeout(() => el.remove(), 30000);
   };
   const scheduleAngler = () => {
     _abyssAnglerTimer = setTimeout(() => {
       if (document.body.classList.contains('theme-abyss')) spawnAngler();
       scheduleAngler();
-    }, 25000 + Math.random() * 20000);
+    }, 16000 + Math.random() * 14000);
   };
   scheduleAngler();
+  // Also fire one shortly after the theme is switched on, instead of making
+  // the first sighting wait a full 16-30s.
+  setTimeout(() => { if (document.body.classList.contains('theme-abyss')) spawnAngler(); }, 3000);
 
   // Occasional small background fish, cheap and frequent.
   const spawnFish = () => {
@@ -213,8 +226,12 @@ function startAbyssTheme() {
     el.style.left = rtl ? '100%' : '-40px';
     el.style.setProperty('--dx', (rtl ? -1 : 1) * (window.innerWidth + 80) + 'px');
     el.style.setProperty('--swim-dur', (14 + Math.random() * 10) + 's');
-    if (rtl) el.style.transform = 'scaleX(-1)';
     el.innerHTML = abyssFishSvg(color);
+    // Mirror the inner <svg>, not `el` itself — `el`'s transform is owned by
+    // the abyssFishSwim CSS animation (translateX), and an animated
+    // transform fully replaces any inline transform on the same element for
+    // its whole run, so setting the flip on `el` would just be discarded.
+    if (rtl) el.firstElementChild.style.transform = 'scaleX(-1)';
     document.getElementById('abyssLayer')?.appendChild(el);
     setTimeout(() => el.remove(), 26000);
   };
