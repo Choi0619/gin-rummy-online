@@ -274,6 +274,42 @@ body.theme-abyss .card.in-meld .card-inner::before {
 }
 
 /* ===================================================================
+   Every other modal in the app (.howto-box covers room settings,
+   collection, friends/DM, history, general settings, profile, room
+   browser — 9+ overlays; .result-box covers round/match results AND
+   every showConfirmModal() popup, which is how invites, unlock
+   messages, and win/lose text all render). Styling these two classes
+   once covers essentially the whole app in one pass, instead of
+   chasing each modal's own id.
+   =================================================================== */
+body.theme-abyss .howto-box,
+body.theme-abyss .result-box {
+  background: linear-gradient(165deg, #03121e 0%, #051a2c 55%, #04141f 100%);
+  border: 1px solid rgba(110,220,255,0.28);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(60,200,255,0.1), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+body.theme-abyss .howto-title { color: #9fe9ff; text-shadow: 0 0 12px rgba(90,220,255,0.3); }
+body.theme-abyss .howto-close { background: rgba(110,220,255,0.14); color: #eafdff; }
+body.theme-abyss .howto-close:hover { background: rgba(110,220,255,0.26); }
+body.theme-abyss .howto-section h3 { color: #9fe9ff; }
+body.theme-abyss .score-bar,
+body.theme-abyss .layoff-box {
+  background: rgba(3,18,30,0.55);
+  border-color: rgba(110,220,255,0.2);
+}
+/* Win/lose result cards get a deep-sea accent instead of the shared
+   gold/red tint — subtle "rising light" vs "sinking calm" via border glow
+   only (static, no extra animation loops beyond what result-box already
+   triggers on its own pop-in). */
+body.theme-abyss .result-box.pop-win {
+  border-color: rgba(90,220,255,0.55);
+  box-shadow: 0 0 46px rgba(90,220,255,0.28), 0 20px 60px rgba(0,0,0,0.6);
+}
+body.theme-abyss .result-box.pop-lose {
+  border-color: rgba(80,110,150,0.5);
+}
+
+/* ===================================================================
    Lobby & Waiting Room — same solid-panel treatment philosophy as the
    in-game UI, applied to every other screen so the theme doesn't stop
    at the game board. Ring/accents use a static gradient + slow opacity
