@@ -189,11 +189,11 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
 }
 
 /* ===== Settings: theme swatches ===== */
-.theme-grid { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+.theme-grid { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
 .theme-swatch {
-  width: 38px; height: 38px; border-radius: 50%; cursor: pointer; flex-shrink: 0;
-  border: 3px solid rgba(255,255,255,0.15); transition: all 0.15s;
-  font-size: 15px; line-height: 32px; text-align: center;
+  width: 33px; height: 33px; border-radius: 50%; cursor: pointer; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,0.15); transition: all 0.15s;
+  font-size: 13px; line-height: 29px; text-align: center;
   position: relative;
 }
 .theme-swatch:hover { transform: scale(1.1); }
@@ -3680,7 +3680,7 @@ body.theme-aurora .card.just-drawn {
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="purple" onclick="setTheme('purple')" style="background:linear-gradient(135deg,#7c3fb0,#2d1245)"></button><div class="swatch-tip"><strong>보라</strong>신비로운 마법의 밤</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="red" onclick="setTheme('red')" style="background:linear-gradient(135deg,#a8233f,#3f0a16)"></button><div class="swatch-tip"><strong>빨강</strong>열정적인 붉은 승부</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="dark" onclick="setTheme('dark')" style="background:linear-gradient(135deg,#3e4a52,#0e1316)"></button><div class="swatch-tip"><strong>다크</strong>집중력을 높이는 어둠</div></div>
-          <div class="swatch-wrap"><button class="theme-swatch" data-theme="pink" onclick="setTheme('pink')" style="background:linear-gradient(135deg,#c0397a,#4a0d2e)"></button><div class="swatch-tip"><strong>핑크</strong>화려하고 샤랄라한 분위기</div></div>
+          <div class="swatch-wrap"><button class="theme-swatch" data-theme="pink" onclick="setTheme('pink')" style="background:linear-gradient(135deg,#c0397a,#4a0d2e)"></button><div class="swatch-tip"><strong>핑크</strong>화려하고 샤랄라한 분위기<br>1승 달성 시 해금</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="rainbow" onclick="setTheme('rainbow')" style="background:conic-gradient(#ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff,#ff4e4e)">🌈</button><div class="swatch-tip"><strong>🌈 무지개</strong>누적 10승 달성 시 해금</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="aurora" onclick="setTheme('aurora')" style="background:linear-gradient(135deg,#0e2a3a,#030c1a);border-color:rgba(0,220,160,0.5)">🌌</button><div class="swatch-tip"><strong>🌌 오로라 성운</strong>25승 달성 시 해금</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="abyss" onclick="setTheme('abyss')" style="background:linear-gradient(180deg,#010509,#062038);border-color:rgba(90,220,255,0.5)">🌊</button><div class="swatch-tip"><strong>🌊 심연</strong>50승 달성 시 해금</div></div>
@@ -4146,6 +4146,7 @@ function spawnStreakCelebration(streak) {
 }
 
 // ===== Themes =====
+const PINK_UNLOCK_WINS = 1;
 const RAINBOW_UNLOCK_WINS = 10;
 const AURORA_UNLOCK_WINS = 25;
 const ABYSS_UNLOCK_WINS = 50;
@@ -4182,6 +4183,7 @@ function hasPromoThemes() { return supaProfile ? !!supaProfile.promo_themes : lo
 function hasPromoBorders() { return supaProfile ? !!supaProfile.promo_borders : localStorage.getItem('grPromoBorders') === '1'; }
 function hasPromoChars() { return supaProfile ? !!supaProfile.promo_chars : localStorage.getItem('grPromoChars') === '1'; }
 
+function isPinkUnlocked() { return hasPromoThemes() || getTotalWins() >= PINK_UNLOCK_WINS; }
 function isRainbowUnlocked() { return hasPromoThemes() || getTotalWins() >= RAINBOW_UNLOCK_WINS; }
 function isAuroraUnlocked() { return hasPromoThemes() || getTotalWins() >= AURORA_UNLOCK_WINS; }
 function isAbyssUnlocked() { return hasPromoThemes() || getTotalWins() >= ABYSS_UNLOCK_WINS; }
@@ -4193,7 +4195,10 @@ const PROMO_CODES = {
     already: hasPromoThemes, localKey: 'grPromoThemes', column: 'promo_themes',
     applied: () => updateLockedSwatches(), label: '모든 배경 테마',
   },
-  'UNLOCKALLBORADER': {
+  // The old typo'd code (UNLOCKALLBORADER) no longer redeems — but anyone
+  // who already redeemed it keeps promo_borders=true regardless, since that's
+  // a persistent flag on their account/device, not tied to the code string.
+  'UNLOCKALLBORDER': {
     already: hasPromoBorders, localKey: 'grPromoBorders', column: 'promo_borders',
     applied: () => renderBorderGrid(), label: '모든 프로필 테두리',
   },
@@ -4234,9 +4239,11 @@ async function redeemPromoCode() {
 }
 
 function updateLockedSwatches() {
+  const pink = document.querySelector('.theme-swatch[data-theme="pink"]');
   const rainbow = document.querySelector('.theme-swatch[data-theme="rainbow"]');
   const aurora = document.querySelector('.theme-swatch[data-theme="aurora"]');
   const abyss = document.querySelector('.theme-swatch[data-theme="abyss"]');
+  if (pink) pink.classList.toggle('locked', !isPinkUnlocked());
   if (rainbow) rainbow.classList.toggle('locked', !isRainbowUnlocked());
   if (aurora) aurora.classList.toggle('locked', !isAuroraUnlocked());
   if (abyss) abyss.classList.toggle('locked', !isAbyssUnlocked());
@@ -4245,6 +4252,10 @@ function updateLockedSwatches() {
 function updateRainbowSwatch() { updateLockedSwatches(); }
 
 function setTheme(theme) {
+  if (theme === 'pink' && !isPinkUnlocked()) {
+    showConfirmModal({ emoji:'🔒', title:'핑크 테마 잠금', sub:`PVP ${PINK_UNLOCK_WINS}승 달성 시 해금됩니다.`, acceptLabel:'확인', onAccept:()=>{} });
+    return;
+  }
   if (theme === 'rainbow' && !isRainbowUnlocked()) {
     const wins = getTotalWins();
     showConfirmModal({ emoji:'🔒', title:'무지개 테마 잠금', sub:`누적 ${RAINBOW_UNLOCK_WINS}승 달성 시 해금됩니다.\n현재: ${wins}/${RAINBOW_UNLOCK_WINS}승 (PVP)`, acceptLabel:'확인', onAccept:()=>{} });

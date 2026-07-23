@@ -274,6 +274,94 @@ body.theme-abyss .card.in-meld .card-inner::before {
 }
 
 /* ===================================================================
+   Lobby & Waiting Room — same solid-panel treatment philosophy as the
+   in-game UI, applied to every other screen so the theme doesn't stop
+   at the game board. Ring/accents use a static gradient + slow opacity
+   breathe (no rotation) to keep Abyss reading as "calm" versus Aurora's
+   spinning nebula ring.
+   =================================================================== */
+body.theme-abyss .lobby-card { position: relative; isolation: isolate; }
+body.theme-abyss .lobby-card::after {
+  content: ''; position: absolute; inset: -2px; border-radius: 24px; z-index: -1;
+  padding: 2px;
+  background: linear-gradient(135deg, #4dfff0, #6fc9ff, #8a6bff, #4dfff0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: abyssRingBreathe 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes abyssRingBreathe {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.95; }
+}
+body.theme-abyss .lobby-section {
+  background: rgba(4,16,26,0.4);
+  border-color: rgba(110,220,255,0.14);
+}
+body.theme-abyss .lobby-section-title { color: #9fe9ff; }
+body.theme-abyss input[type="text"],
+body.theme-abyss .target-score-select {
+  background: rgba(4,16,26,0.6);
+  border-color: rgba(110,220,255,0.28);
+}
+body.theme-abyss input[type="text"]:focus { border-color: rgba(140,235,255,0.7); }
+body.theme-abyss .char-opt {
+  background: rgba(4,16,26,0.55);
+  border-color: rgba(110,220,255,0.2);
+}
+body.theme-abyss .char-opt:hover { background: rgba(10,40,58,0.7); }
+body.theme-abyss .char-opt.selected { border-color: #4dfff0; background: rgba(77,255,240,0.16); }
+body.theme-abyss .btn-howto,
+body.theme-abyss .btn-settings {
+  background: rgba(10,40,58,0.75); border-color: rgba(120,225,255,0.4); color: #eafdff;
+}
+body.theme-abyss .auth-user-badge {
+  background: rgba(4,16,26,0.7); border-color: rgba(110,220,255,0.25);
+}
+
+/* Waiting room */
+body.theme-abyss .waiting-card {
+  background: linear-gradient(180deg, rgba(3,13,22,0.97), rgba(1,7,13,0.97));
+  border: 1.5px solid rgba(110,225,255,0.38);
+  box-shadow: 0 18px 44px rgba(0,0,0,0.5), 0 0 30px rgba(60,200,255,0.16), inset 0 1px 0 rgba(255,255,255,0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+body.theme-abyss .waiting-card [data-i18n="roomCodeHint"] { color: rgba(210,250,255,0.85) !important; font-weight: 700; }
+body.theme-abyss .copy-hint { color: rgba(200,240,255,0.6); }
+body.theme-abyss .room-code-display {
+  background: rgba(3,11,18,0.9);
+  border: 2px dashed rgba(90,220,255,0.7);
+  color: #7fe0ff;
+  text-shadow: 0 0 14px rgba(90,220,255,0.5);
+  box-shadow: 0 0 16px rgba(90,220,255,0.14), inset 0 0 20px rgba(90,220,255,0.06);
+}
+body.theme-abyss .room-chip {
+  background: linear-gradient(180deg, rgba(10,48,64,0.98), rgba(4,22,36,0.98));
+  border-color: rgba(140,230,255,0.55);
+  color: #eafdff; font-weight: 700;
+}
+body.theme-abyss .player-slot {
+  background: rgba(3,11,18,0.85); border-color: rgba(110,220,255,0.2);
+}
+body.theme-abyss .player-slot.connected {
+  border-color: rgba(90,220,255,0.7);
+  box-shadow: 0 0 14px rgba(90,220,255,0.2);
+}
+body.theme-abyss .player-slot .slot-name { color: #f0fdff; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+body.theme-abyss .player-slot .slot-status { color: rgba(210,245,255,0.65); }
+body.theme-abyss #waitingRoomBadge { color: rgba(210,245,255,0.85) !important; }
+body.theme-abyss .btn-secondary {
+  background: linear-gradient(180deg, rgba(10,48,64,0.98), rgba(4,22,36,0.98));
+  border: 1px solid rgba(140,230,255,0.5); color: #ffffff;
+  font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+body.theme-abyss .btn-secondary:hover {
+  background: linear-gradient(180deg, rgba(14,60,78,0.98), rgba(6,30,48,0.98));
+  border-color: rgba(180,245,255,0.8);
+}
+
+/* ===================================================================
    Panels, avatar / turn glow (pulse, not rotation — Abyss is calm)
    =================================================================== */
 body.theme-abyss .hand-zone,
