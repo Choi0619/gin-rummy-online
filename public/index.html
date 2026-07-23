@@ -9,6 +9,10 @@
 <title>진 러미 온라인</title>
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Abyss theme lives in its own files (not inlined below) so its artwork can
+     be as detailed as it needs without bloating this file further. -->
+<link rel="stylesheet" href="/theme-abyss.css">
+<script src="/theme-abyss.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { overflow-x: hidden; }
@@ -2877,6 +2881,10 @@ body.theme-aurora .card.just-drawn {
   <div class="aurora-band aurora-band-3"></div>
 </div>
 
+<!-- Abyss background layer (shown only with theme-abyss) — populated by
+     theme-abyss.js with jellyfish/anglerfish/bubbles/fish -->
+<div class="abyss-layer" id="abyssLayer"></div>
+
 <!-- ===== ROOM SETTINGS MODAL ===== -->
 <div class="overlay" id="roomSettingsOverlay">
   <div class="howto-box" style="max-width:420px">
@@ -3356,11 +3364,11 @@ body.theme-aurora .card.just-drawn {
     </div>
   </div>
   <div id="reactionBar" style="display:none;justify-content:center;gap:8px;padding:4px 0">
-    <button class="reaction-btn" onclick="sendReaction('👏')">👏</button>
-    <button class="reaction-btn" onclick="sendReaction('😂')">😂</button>
-    <button class="reaction-btn" onclick="sendReaction('😭')">😭</button>
-    <button class="reaction-btn" onclick="sendReaction('🔥')">🔥</button>
-    <button class="reaction-btn" onclick="sendReaction('👍')">👍</button>
+    <button class="reaction-btn water-fill" onclick="sendReaction('👏')"><span class="water-fill-liquid"></span>👏</button>
+    <button class="reaction-btn water-fill" onclick="sendReaction('😂')"><span class="water-fill-liquid"></span>😂</button>
+    <button class="reaction-btn water-fill" onclick="sendReaction('😭')"><span class="water-fill-liquid"></span>😭</button>
+    <button class="reaction-btn water-fill" onclick="sendReaction('🔥')"><span class="water-fill-liquid"></span>🔥</button>
+    <button class="reaction-btn water-fill" onclick="sendReaction('👍')"><span class="water-fill-liquid"></span>👍</button>
   </div>
   <div id="revengeProgressLbl" style="display:none;text-align:center;font-size:12px;font-weight:700;padding:4px 0 2px;color:#ff9040;animation:revengeLblPulse 1.4s ease-in-out infinite;"></div>
 
@@ -3507,11 +3515,11 @@ body.theme-aurora .card.just-drawn {
     <div class="spectate-hand" id="spec1Hand"></div>
   </div>
   <div id="reactionBarSpectate" style="display:none;justify-content:center;gap:8px;padding:14px 0 0">
-    <button class="reaction-btn" onclick="sendReaction('👏')">👏</button>
-    <button class="reaction-btn" onclick="sendReaction('😂')">😂</button>
-    <button class="reaction-btn" onclick="sendReaction('😭')">😭</button>
-    <button class="reaction-btn" onclick="sendReaction('🔥')">🔥</button>
-    <button class="reaction-btn" onclick="sendReaction('👍')">👍</button>
+    <button class="reaction-btn water-fill" onclick="sendReaction('👏')"><span class="water-fill-liquid"></span>👏</button>
+    <button class="reaction-btn water-fill" onclick="sendReaction('😂')"><span class="water-fill-liquid"></span>😂</button>
+    <button class="reaction-btn water-fill" onclick="sendReaction('😭')"><span class="water-fill-liquid"></span>😭</button>
+    <button class="reaction-btn water-fill" onclick="sendReaction('🔥')"><span class="water-fill-liquid"></span>🔥</button>
+    <button class="reaction-btn water-fill" onclick="sendReaction('👍')"><span class="water-fill-liquid"></span>👍</button>
   </div>
   <button class="btn btn-secondary" style="max-width:200px;margin:24px auto 0" onclick="leaveSpectate()">← 관전 종료</button>
 </div>
@@ -3675,6 +3683,7 @@ body.theme-aurora .card.just-drawn {
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="pink" onclick="setTheme('pink')" style="background:linear-gradient(135deg,#c0397a,#4a0d2e)"></button><div class="swatch-tip"><strong>핑크</strong>화려하고 샤랄라한 분위기</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="rainbow" onclick="setTheme('rainbow')" style="background:conic-gradient(#ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff,#ff4e4e)">🌈</button><div class="swatch-tip"><strong>🌈 무지개</strong>누적 10승 달성 시 해금</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="aurora" onclick="setTheme('aurora')" style="background:linear-gradient(135deg,#0e2a3a,#030c1a);border-color:rgba(0,220,160,0.5)">🌌</button><div class="swatch-tip"><strong>🌌 오로라 성운</strong>25승 달성 시 해금</div></div>
+          <div class="swatch-wrap"><button class="theme-swatch" data-theme="abyss" onclick="setTheme('abyss')" style="background:linear-gradient(180deg,#010509,#062038);border-color:rgba(90,220,255,0.5)">🌊</button><div class="swatch-tip"><strong>🌊 심연</strong>50승 달성 시 해금</div></div>
         </div>
         <div id="themeDesc"></div>
       </div>
@@ -4139,6 +4148,7 @@ function spawnStreakCelebration(streak) {
 // ===== Themes =====
 const RAINBOW_UNLOCK_WINS = 10;
 const AURORA_UNLOCK_WINS = 25;
+const ABYSS_UNLOCK_WINS = 50;
 
 function getTotalWins() {
   // Supabase profile is source of truth when logged in (includes imported wins)
@@ -4174,6 +4184,7 @@ function hasPromoChars() { return supaProfile ? !!supaProfile.promo_chars : loca
 
 function isRainbowUnlocked() { return hasPromoThemes() || getTotalWins() >= RAINBOW_UNLOCK_WINS; }
 function isAuroraUnlocked() { return hasPromoThemes() || getTotalWins() >= AURORA_UNLOCK_WINS; }
+function isAbyssUnlocked() { return hasPromoThemes() || getTotalWins() >= ABYSS_UNLOCK_WINS; }
 
 // code -> { already: <fn returning true if already active>, localKey, column,
 //           applied: <fn to refresh UI>, label }
@@ -4225,8 +4236,10 @@ async function redeemPromoCode() {
 function updateLockedSwatches() {
   const rainbow = document.querySelector('.theme-swatch[data-theme="rainbow"]');
   const aurora = document.querySelector('.theme-swatch[data-theme="aurora"]');
+  const abyss = document.querySelector('.theme-swatch[data-theme="abyss"]');
   if (rainbow) rainbow.classList.toggle('locked', !isRainbowUnlocked());
   if (aurora) aurora.classList.toggle('locked', !isAuroraUnlocked());
+  if (abyss) abyss.classList.toggle('locked', !isAbyssUnlocked());
 }
 // Keep old name for backwards compat calls
 function updateRainbowSwatch() { updateLockedSwatches(); }
@@ -4242,6 +4255,11 @@ function setTheme(theme) {
     showConfirmModal({ emoji:'🌌', title:'오로라 성운 테마 잠금', sub:'PVP 25승 달성 시 해금됩니다.\n현재 총 승리: ' + wins + '승', acceptLabel:'확인', onAccept:()=>{} });
     return;
   }
+  if (theme === 'abyss' && !isAbyssUnlocked()) {
+    const wins = getTotalWins();
+    showConfirmModal({ emoji:'🌊', title:'심연 테마 잠금', sub:'PVP 50승 달성 시 해금됩니다.\n현재 총 승리: ' + wins + '승', acceptLabel:'확인', onAccept:()=>{} });
+    return;
+  }
   document.body.className = document.body.className.replace(/theme-\S+/g, '').trim();
   if (theme !== 'green') document.body.classList.add('theme-' + theme);
   localStorage.setItem('grTheme', theme);
@@ -4249,6 +4267,7 @@ function setTheme(theme) {
   if (theme === 'pink') startPetals(); else stopPetals();
   if (theme === 'rainbow') startGrass(); else stopGrass();
   if (theme === 'aurora') { startAuroraStars(); startAuroraSparkleLoop(); startAuroraShootingStarLoop(); } else { stopAuroraStars(); stopAuroraSparkleLoop(); stopAuroraShootingStarLoop(); }
+  if (theme === 'abyss') { startAbyssTheme(); } else { stopAbyssTheme(); }
   updatePetalSection();
   updateGrassSection();
 }
@@ -7208,6 +7227,9 @@ function initSocket() {
     }
     if (matchResult === 'win' && getTotalWins() === AURORA_UNLOCK_WINS) {
       setTimeout(() => showConfirmModal({ emoji:'🌌', title:'오로라 성운 해금!', sub:'PVP 25승 달성! 전설의 테마가 열렸습니다!', acceptLabel:'🌌 확인', onAccept:()=>{} }), 2500);
+    }
+    if (matchResult === 'win' && getTotalWins() === ABYSS_UNLOCK_WINS) {
+      setTimeout(() => showConfirmModal({ emoji:'🌊', title:'심연 테마 해금!', sub:'PVP 50승 달성! 해파리가 헤엄치는 심해가 열렸습니다!', acceptLabel:'🌊 확인', onAccept:()=>{} }), 2500);
     }
     if (!vsAI && matchResult === 'win' && myChar === '🦄') {
       setTimeout(() => spawnUnicornCelebration(), 600);
