@@ -101,6 +101,67 @@ body.theme-abyss .abyss-layer { display: block; }
   100% { transform: translateY(-110vh) translateX(var(--drift, 20px)) scale(1.15); opacity: 0; }
 }
 
+/* ---------- Win: bubble burst (same .abyss-bubble, spawned in a dense
+   one-time burst instead of the slow ambient trickle — JS sets z-index
+   inline so the burst floats above the dark result-overlay backdrop) ---------- */
+
+/* ---------- Win: a large jellyfish drifting behind the result card ----------
+   Reuses abyssJellySvg() with a golden "celebration" colorway. Inserted
+   BEFORE .result-box in the DOM (not just given a z-index) so it paints
+   behind the card without needing any stacking-context workaround. */
+.abyss-win-jelly {
+  position: absolute;
+  top: 34%;
+  left: -170px;
+  width: 130px;
+  pointer-events: none;
+  filter: drop-shadow(0 0 16px rgba(255,215,120,0.55));
+  animation: abyssWinJellyLTR 3.4s ease-in-out forwards;
+}
+.abyss-win-jelly.rtl { left: auto; right: -170px; animation-name: abyssWinJellyRTL; }
+@keyframes abyssWinJellyLTR {
+  0%   { transform: translateX(0) translateY(0); opacity: 0; }
+  10%  { opacity: 0.92; }
+  50%  { transform: translateX(45vw) translateY(-16px); }
+  88%  { opacity: 0.92; }
+  100% { transform: translateX(calc(100vw + 220px)) translateY(8px); opacity: 0; }
+}
+@keyframes abyssWinJellyRTL {
+  0%   { transform: translateX(0) translateY(0); opacity: 0; }
+  10%  { opacity: 0.92; }
+  50%  { transform: translateX(-45vw) translateY(-16px); }
+  88%  { opacity: 0.92; }
+  100% { transform: translateX(calc(-100vw - 220px)) translateY(8px); opacity: 0; }
+}
+
+/* ---------- Lose: bubbles sinking down instead of rising ---------- */
+.abyss-sink-bubble {
+  position: fixed;
+  top: -20px;
+  border-radius: 50%;
+  border: 1px solid rgba(140,170,200,0.4);
+  background: radial-gradient(circle at 32% 28%, rgba(255,255,255,0.28), rgba(90,120,150,0.05) 70%);
+  pointer-events: none;
+  animation: abyssBubbleSink linear forwards;
+}
+@keyframes abyssBubbleSink {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.7; }
+  100% { transform: translateY(72vh) translateX(var(--sink-drift, 0px)); opacity: 0; }
+}
+/* Result card entrance under Abyss: a calm downward settle instead of the
+   shared shakeX bounce, matching the "sinking, not shaken" mood the win
+   effect's "rising light" is meant to contrast with. Higher specificity
+   than the shared .result-box.pop-lose rule, so it wins regardless of
+   source order. */
+body.theme-abyss .result-box.pop-lose {
+  animation: abyssSinkIn 0.65s ease-out both;
+}
+@keyframes abyssSinkIn {
+  0%   { transform: translateY(-22px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
 /* ---------- Jellyfish (JS-spawned, persistent while theme is active) ----------
    Each jellyfish is one positioned container. Only two things animate:
    1) the whole creature drifts up/down slowly (transform: translateY)

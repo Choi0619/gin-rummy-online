@@ -238,3 +238,57 @@ function stopAbyssTheme() {
   if (layer) layer.innerHTML = '';
   _abyssJellyEls = [];
 }
+
+// ===== Win/lose celebration effects =====
+// Called from index.html's showResult()/match-ended handlers, gated behind
+// `document.body.classList.contains('theme-abyss')`, the same pattern
+// already used there for Aurora/Rainbow's celebration functions.
+
+function spawnAbyssWinBurst(overlayId) {
+  const overlay = document.getElementById(overlayId);
+  if (!overlay) return;
+  // Bubble burst rising past the darkened result overlay (inline z-index
+  // above the overlay's own z-index:300) instead of the slow ambient trickle.
+  for (let i = 0; i < 26; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      const size = 5 + Math.random() * 12;
+      el.className = 'abyss-bubble';
+      el.style.left = (10 + Math.random() * 80) + 'vw';
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+      el.style.zIndex = 350;
+      el.style.setProperty('--drift', (Math.random() * 60 - 30) + 'px');
+      el.style.animationDuration = (1.5 + Math.random() * 1.3) + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3200);
+    }, i * 35);
+  }
+  // Large jellyfish drifting behind the result card — golden colorway, real
+  // multi-tentacle anatomy reused from the ambient jellyfish builder.
+  const box = overlay.querySelector('.result-box');
+  const jelly = document.createElement('div');
+  const rtl = Math.random() < 0.5;
+  jelly.className = 'abyss-win-jelly' + (rtl ? ' rtl' : '');
+  jelly.innerHTML = abyssJellySvg('#ffe27a', '#ffd76a');
+  if (box) overlay.insertBefore(jelly, box); else overlay.appendChild(jelly);
+  setTimeout(() => jelly.remove(), 3600);
+}
+
+function spawnAbyssLoseEffect() {
+  for (let i = 0; i < 10; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      const size = 4 + Math.random() * 8;
+      el.className = 'abyss-sink-bubble';
+      el.style.left = (20 + Math.random() * 60) + 'vw';
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+      el.style.zIndex = 350;
+      el.style.setProperty('--sink-drift', (Math.random() * 40 - 20) + 'px');
+      el.style.animationDuration = (2 + Math.random()) + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3300);
+    }, i * 90);
+  }
+}

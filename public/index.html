@@ -7273,8 +7273,11 @@ function initSocket() {
     if (iWon) {
       if (document.body.classList.contains('theme-aurora')) spawnAuroraCelebration();
       else if (document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
+      else if (document.body.classList.contains('theme-abyss')) spawnAbyssWinBurst('matchEndOverlay');
       else if (wasRevenge && revengeSuccess) spawnFireworks();
       else spawnConfetti();
+    } else if (!tie && document.body.classList.contains('theme-abyss')) {
+      spawnAbyssLoseEffect();
     }
 
     // Show revenge/rematch/leave buttons based on role (only for human vs human)
@@ -8137,11 +8140,13 @@ function showResult(data) {
   const myStreak = streaks[myIdx] || 0;
   if (iWon && document.body.classList.contains('theme-aurora')) spawnAuroraCelebration();
   else if (iWon && document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
+  else if (iWon && document.body.classList.contains('theme-abyss')) spawnAbyssWinBurst('resultOverlay');
   else if (iWon && isBigGin) spawnFireworks();
   else if (iWon && !isTie) {
     if (myStreak >= 4) spawnStreakCelebration(myStreak);
     else spawnConfetti();
   }
+  if (!iWon && !isTie && document.body.classList.contains('theme-abyss')) spawnAbyssLoseEffect();
   if (iWon && !isTie && myStreak >= 4) showStreakBanner(myStreak);
 
   function cardSpan(c) { return `<span class="mini-card ${IS_RED[c.suit]?'red':''}">${c.rank}${SUITS_SYM[c.suit]}</span>`; }
