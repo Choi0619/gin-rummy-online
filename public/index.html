@@ -661,6 +661,16 @@ body.theme-aurora {
   --bg-grad: radial-gradient(ellipse at center, #081828 0%, #030b14 100%);
   --lobby-grad: radial-gradient(circle at 50% 38%, #0e2a3a 0%, #08172a 50%, #030c1a 100%);
 }
+/* ===== Abyss theme (50-win unlock) =====
+   #lobbyScreen/#gameScreen etc. paint their own background from these two
+   variables (see every other theme block above) — Abyss's own CSS file
+   sets body's background directly, but that never showed through because
+   these per-screen backgrounds sit on top of it. Missing this block was
+   why switching to Abyss still looked like the default green felt. */
+body.theme-abyss {
+  --bg-grad: radial-gradient(ellipse at center, #041627 0%, #010509 100%);
+  --lobby-grad: radial-gradient(circle at 50% 38%, #062038 0%, #041220 50%, #010509 100%);
+}
 
 /* Aurora-only crystal cursor. A static SVG data-URI handed to the OS/compositor
    as the cursor image — it is NOT painted per frame, so there is zero runtime
