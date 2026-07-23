@@ -9,43 +9,62 @@
 // itself (no per-frame JS at all).
 // ===================================================================
 
-// A real jellyfish silhouette: a domed bell with rib lines, four long
-// independently-swaying tentacles (each its own <g class="tentacle"> with a
-// naturally wavy pre-drawn curve — no path morphing needed), and a cluster
-// of shorter frilly oral arms underneath. `hue`/`glow` let us recolor the
-// same detailed artwork per-instance for variety without duplicating markup.
-function abyssJellySvg(bell, glow) {
+// A real jellyfish silhouette: a domed, scalloped bell lit from within by a
+// layered glow (core hotspot + mid color + outer bloom, like the reference
+// photo), four long independently-swaying tentacles (each its own
+// <g class="tentacle"> with a naturally wavy pre-drawn curve — no path
+// morphing needed) with small bioluminescent dots strung along them, and
+// frilly oral arms underneath. `uid` makes every gradient id unique per
+// instance — reusing the same id ("bellGrad" etc.) across multiple jellies
+// on the same page is an SVG id collision, and every instance had silently
+// been resolving to the FIRST jelly's gradient regardless of its own colors.
+let _abyssJellyUidSeq = 0;
+function abyssJellySvg(bell, glow, core) {
+  core = core || '#ffffff';
+  const uid = 'j' + (_abyssJellyUidSeq++);
   return `
-  <svg width="70" height="150" viewBox="0 0 70 150" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+  <svg width="94" height="190" viewBox="0 0 94 190" xmlns="http://www.w3.org/2000/svg" overflow="visible">
     <defs>
-      <radialGradient id="bellGrad" cx="42%" cy="30%" r="70%">
-        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
-        <stop offset="45%" stop-color="${bell}" stop-opacity="0.55"/>
-        <stop offset="100%" stop-color="${bell}" stop-opacity="0.12"/>
+      <radialGradient id="bellGrad-${uid}" cx="44%" cy="26%" r="68%">
+        <stop offset="0%" stop-color="${core}" stop-opacity="0.98"/>
+        <stop offset="30%" stop-color="${bell}" stop-opacity="0.85"/>
+        <stop offset="68%" stop-color="${bell}" stop-opacity="0.42"/>
+        <stop offset="100%" stop-color="${bell}" stop-opacity="0.08"/>
+      </radialGradient>
+      <radialGradient id="coreGlow-${uid}" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="${core}" stop-opacity="0.9"/>
+        <stop offset="100%" stop-color="${core}" stop-opacity="0"/>
       </radialGradient>
     </defs>
     <g class="bell">
-      <path d="M6 40 C6 14 24 2 35 2 C46 2 64 14 64 40 C64 52 56 58 46 60 C50 66 46 70 40 68 C42 74 36 76 33 70 C30 76 24 74 26 68 C20 70 16 64 20 58 C12 56 6 50 6 40 Z"
-            fill="url(#bellGrad)" stroke="${bell}" stroke-width="1.1" stroke-opacity="0.7"/>
-      <path d="M14 20 C20 34 20 46 16 56" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1"/>
-      <path d="M35 8 C37 24 37 42 35 60" fill="none" stroke="#ffffff" stroke-opacity="0.4" stroke-width="1"/>
-      <path d="M54 20 C48 34 48 46 52 56" fill="none" stroke="#ffffff" stroke-opacity="0.3" stroke-width="1"/>
-      <ellipse cx="26" cy="18" rx="6" ry="9" fill="#ffffff" opacity="0.5"/>
+      <path d="M8 54 C8 20 30 3 47 3 C64 3 86 20 86 54 C86 70 74 78 62 81 C67 89 62 94 54 91 C57 99 48 102 44 94 C40 102 31 99 34 91 C26 94 21 89 26 81 C14 78 8 70 8 54 Z"
+            fill="url(#bellGrad-${uid})" stroke="${bell}" stroke-width="1.2" stroke-opacity="0.75"/>
+      <ellipse cx="47" cy="34" rx="30" ry="22" fill="url(#coreGlow-${uid})" opacity="0.55"/>
+      <path d="M18 26 C26 44 26 62 21 76" fill="none" stroke="${core}" stroke-opacity="0.4" stroke-width="1.1"/>
+      <path d="M47 10 C50 32 50 56 47 81" fill="none" stroke="${core}" stroke-opacity="0.5" stroke-width="1.2"/>
+      <path d="M76 26 C68 44 68 62 73 76" fill="none" stroke="${core}" stroke-opacity="0.35" stroke-width="1.1"/>
+      <ellipse cx="34" cy="22" rx="8" ry="12" fill="#ffffff" opacity="0.55"/>
     </g>
-    <g class="tentacle" style="--sway-dur:4.1s;--sway-delay:0s" stroke="${glow}" stroke-opacity="0.55" stroke-width="1.6" fill="none" stroke-linecap="round">
-      <path d="M18 62 C10 80 26 92 16 108 C8 120 22 130 14 144"/>
+    <g class="tentacle" style="--sway-dur:4.1s;--sway-delay:0s" stroke="${glow}" stroke-opacity="0.62" stroke-width="2" fill="none" stroke-linecap="round">
+      <path d="M24 84 C13 108 34 124 21 146 C11 162 29 175 18 192"/>
+      <circle cx="18" cy="110" r="1.4" fill="${core}" opacity="0.85"/>
+      <circle cx="15" cy="150" r="1.2" fill="${core}" opacity="0.7"/>
     </g>
-    <g class="tentacle" style="--sway-dur:5.2s;--sway-delay:0.6s" stroke="${glow}" stroke-opacity="0.5" stroke-width="1.5" fill="none" stroke-linecap="round">
-      <path d="M30 66 C26 86 38 96 30 114 C24 128 34 136 28 148"/>
+    <g class="tentacle" style="--sway-dur:5.2s;--sway-delay:0.6s" stroke="${glow}" stroke-opacity="0.55" stroke-width="1.8" fill="none" stroke-linecap="round">
+      <path d="M40 89 C35 114 51 128 40 152 C33 170 46 180 38 196"/>
+      <circle cx="42" cy="118" r="1.3" fill="${core}" opacity="0.8"/>
     </g>
-    <g class="tentacle" style="--sway-dur:4.6s;--sway-delay:1.1s" stroke="${glow}" stroke-opacity="0.5" stroke-width="1.5" fill="none" stroke-linecap="round">
-      <path d="M42 66 C46 86 34 96 42 114 C48 128 38 136 44 148"/>
+    <g class="tentacle" style="--sway-dur:4.6s;--sway-delay:1.1s" stroke="${glow}" stroke-opacity="0.55" stroke-width="1.8" fill="none" stroke-linecap="round">
+      <path d="M55 89 C60 114 44 128 55 152 C62 170 49 180 57 196"/>
+      <circle cx="53" cy="122" r="1.3" fill="${core}" opacity="0.8"/>
     </g>
-    <g class="tentacle" style="--sway-dur:4.9s;--sway-delay:0.3s" stroke="${glow}" stroke-opacity="0.55" stroke-width="1.6" fill="none" stroke-linecap="round">
-      <path d="M52 62 C60 80 44 92 54 108 C62 120 48 130 56 144"/>
+    <g class="tentacle" style="--sway-dur:4.9s;--sway-delay:0.3s" stroke="${glow}" stroke-opacity="0.62" stroke-width="2" fill="none" stroke-linecap="round">
+      <path d="M70 84 C81 108 60 124 73 146 C83 162 65 175 76 192"/>
+      <circle cx="76" cy="112" r="1.4" fill="${core}" opacity="0.85"/>
+      <circle cx="79" cy="152" r="1.2" fill="${core}" opacity="0.7"/>
     </g>
-    <g class="tentacle" style="--sway-dur:3.8s;--sway-delay:0.8s" stroke="${glow}" stroke-opacity="0.35" stroke-width="1" fill="none" stroke-linecap="round">
-      <path d="M35 64 C33 76 37 84 35 96 C33 106 37 112 35 122"/>
+    <g class="tentacle" style="--sway-dur:3.8s;--sway-delay:0.8s" stroke="${glow}" stroke-opacity="0.4" stroke-width="1.2" fill="none" stroke-linecap="round">
+      <path d="M47 82 C44 96 50 106 47 122 C44 136 50 144 47 158"/>
     </g>
   </svg>`;
 }
@@ -80,24 +99,45 @@ function abyssAnglerSvg() {
   </svg>`;
 }
 
-// A tiny, cheap silhouette for background swimmers — deliberately simple
-// since several of these can be inferred on screen; detail budget is spent
-// on the jellyfish/anglerfish instead.
-function abyssFishSvg(color) {
+// Three small, cheap background-swimmer silhouettes instead of one repeated
+// shape — a round school fish, a slim ribbon/eel, and a spiny lanternfish.
+// Still deliberately simple (a handful of these can be on screen at once),
+// but three shapes read as a real ecosystem instead of one sprite copy-pasted.
+function abyssFishSvgRound(color) {
   return `
   <svg width="34" height="18" viewBox="0 0 34 18" xmlns="http://www.w3.org/2000/svg">
-    <path d="M2 9 C8 2 20 2 26 9 C20 16 8 16 2 9 Z" fill="${color}" opacity="0.8"/>
-    <path d="M26 9 L34 3 L30 9 L34 15 Z" fill="${color}" opacity="0.8"/>
+    <path d="M2 9 C8 2 20 2 26 9 C20 16 8 16 2 9 Z" fill="${color}" opacity="0.82"/>
+    <path d="M26 9 L34 3 L30 9 L34 15 Z" fill="${color}" opacity="0.82"/>
     <circle cx="8" cy="8" r="1" fill="#04121c"/>
+  </svg>`;
+}
+function abyssFishSvgRibbon(color) {
+  return `
+  <svg width="46" height="14" viewBox="0 0 46 14" xmlns="http://www.w3.org/2000/svg">
+    <path d="M1 7 C10 1 20 12 30 6 C36 3 42 5 45 7 C42 9 36 11 30 8 C20 2 10 13 1 7 Z" fill="${color}" opacity="0.75"/>
+    <circle cx="6" cy="7" r="0.9" fill="#04121c"/>
+  </svg>`;
+}
+function abyssFishSvgLantern(color, lureColor) {
+  return `
+  <svg width="30" height="20" viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+    <path d="M3 10 C3 3 12 1 18 4 C24 7 26 13 22 16 C15 20 5 17 3 10 Z" fill="${color}" opacity="0.85"/>
+    <path d="M22 10 L29 6 L26 10 L29 14 Z" fill="${color}" opacity="0.85"/>
+    <path d="M9 3 C9 -2 13 -2 12 2" fill="none" stroke="${color}" stroke-width="1"/>
+    <circle cx="12" cy="1" r="1.6" fill="${lureColor || '#fff3c4'}" opacity="0.9"/>
+    <circle cx="9" cy="9" r="1" fill="#04121c"/>
   </svg>`;
 }
 
 const ABYSS_JELLY_PALETTE = [
-  { bell: '#6fe3ff', glow: '#4dfff0' },
-  { bell: '#a98bff', glow: '#8a6bff' },
-  { bell: '#7fd9ff', glow: '#6fc9ff' },
+  { bell: '#6fe3ff', glow: '#4dfff0', core: '#eafcff' },
+  { bell: '#a98bff', glow: '#8a6bff', core: '#f0e8ff' },
+  { bell: '#7fd9ff', glow: '#6fc9ff', core: '#ffffff' },
+  // Warm bioluminescent variant, closer to the reference photo's golden bell.
+  { bell: '#ff9d4d', glow: '#ffb347', core: '#fff3c4' },
 ];
-const ABYSS_FISH_COLORS = ['#3fd8c8', '#6a8fff', '#4db8e8'];
+const ABYSS_FISH_COLORS = ['#3fd8c8', '#6a8fff', '#4db8e8', '#ffb347'];
+const ABYSS_FISH_BUILDERS = [abyssFishSvgRound, abyssFishSvgRibbon, abyssFishSvgLantern];
 
 let _abyssJellyEls = [];
 let _abyssBubbleTimer = null;
@@ -165,7 +205,7 @@ function startAbyssTheme() {
     // compounding two separate scale transforms (scaleX(-s) followed by
     // scale(s) multiplies to s*-s, silently shrinking/warping it further).
     el.style.transform = i % 2 ? `scale(${-scale}, ${scale})` : `scale(${scale})`;
-    el.innerHTML = abyssJellySvg(palette.bell, palette.glow);
+    el.innerHTML = abyssJellySvg(palette.bell, palette.glow, palette.core);
     layer.appendChild(el);
     _abyssJellyEls.push(el);
   });
@@ -226,7 +266,8 @@ function startAbyssTheme() {
     el.style.left = rtl ? '100%' : '-40px';
     el.style.setProperty('--dx', (rtl ? -1 : 1) * (window.innerWidth + 80) + 'px');
     el.style.setProperty('--swim-dur', (14 + Math.random() * 10) + 's');
-    el.innerHTML = abyssFishSvg(color);
+    const builder = ABYSS_FISH_BUILDERS[Math.floor(Math.random() * ABYSS_FISH_BUILDERS.length)];
+    el.innerHTML = builder(color, '#fff3c4');
     // Mirror the inner <svg>, not `el` itself — `el`'s transform is owned by
     // the abyssFishSwim CSS animation (translateX), and an animated
     // transform fully replaces any inline transform on the same element for
@@ -287,7 +328,7 @@ function spawnAbyssWinBurst(overlayId) {
   const jelly = document.createElement('div');
   const rtl = Math.random() < 0.5;
   jelly.className = 'abyss-win-jelly' + (rtl ? ' rtl' : '');
-  jelly.innerHTML = abyssJellySvg('#ffe27a', '#ffd76a');
+  jelly.innerHTML = abyssJellySvg('#ffe27a', '#ffd76a', '#fffbe6');
   if (box) overlay.insertBefore(jelly, box); else overlay.appendChild(jelly);
   setTimeout(() => jelly.remove(), 3600);
 }

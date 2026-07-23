@@ -175,7 +175,7 @@ body.theme-abyss .result-box.pop-lose {
   position: fixed;
   pointer-events: none;
   z-index: 2;
-  filter: drop-shadow(0 0 10px var(--glow, rgba(110,230,255,0.35)));
+  filter: drop-shadow(0 0 14px var(--glow, rgba(110,230,255,0.5))) drop-shadow(0 0 30px var(--glow, rgba(110,230,255,0.25)));
   /* Scale/mirror is set inline (JS) as a static transform on THIS element.
      The float bob below animates transform on the inner <svg> instead of
      here — a CSS animation's transform fully replaces (not composes with)
@@ -306,6 +306,13 @@ body.theme-abyss .card.in-meld .meld-dot {
   background: linear-gradient(135deg, #4dfff0, #8a6bff);
   box-shadow: 0 0 8px rgba(120,220,255,0.8);
 }
+/* Water-ripple meld effect: two concentric rings (::after on the card = ring
+   A, ::before on .card-inner = ring B, phase-offset by half a cycle) instead
+   of a solid glow blob or a diagonal light sweep — a melded card now reads
+   as "a stone just dropped into water here", which fits the Abyss setting
+   much better. Each ring is a single radial-gradient shaped like an actual
+   ring (transparent center -> colored band -> transparent edge) that scales
+   up while fading out — still transform + opacity only. */
 body.theme-abyss .card.in-meld::after {
   content: '';
   position: absolute;
@@ -314,33 +321,25 @@ body.theme-abyss .card.in-meld::after {
   pointer-events: none;
   z-index: -1;
   transform-origin: 50% 50%;
-  background: radial-gradient(circle at 50% 50%, rgba(77,255,240,0.3), rgba(138,107,255,0.14) 50%, transparent 74%);
-  animation: abyssMeldBreathe 4.2s ease-in-out infinite;
+  background: radial-gradient(circle at 50% 50%, transparent 0%, transparent 52%, rgba(77,255,240,0.55) 60%, rgba(77,255,240,0.18) 68%, transparent 78%);
+  animation: abyssRippleRing 3s ease-out infinite;
 }
-@keyframes abyssMeldBreathe {
-  0%, 100% { opacity: 0.45; transform: scale(0.94); }
-  50%      { opacity: 0.85; transform: scale(1.08); }
-}
-/* Caustic light-ray sweeping across the card face itself, on top of the
-   breathing halo behind it. Reuses .card-inner (already exists, z-index:2)
-   as the clip so the sweep never spills past the card edges. Still only
-   transform + opacity animated. */
-body.theme-abyss .card.in-meld .card-inner { overflow: hidden; }
+body.theme-abyss .card.in-meld .card-inner { overflow: visible; position: relative; }
 body.theme-abyss .card.in-meld .card-inner::before {
   content: '';
   position: absolute;
-  inset: -20% -80%;
-  z-index: 4;
+  inset: -10px;
+  z-index: -1;
   pointer-events: none;
-  background: linear-gradient(100deg, transparent 42%, rgba(255,255,255,0.55) 49%, rgba(140,230,255,0.4) 53%, transparent 62%);
-  animation: abyssMeldSweep 3.8s ease-in-out infinite;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, transparent 0%, transparent 50%, rgba(138,107,255,0.5) 58%, rgba(138,107,255,0.16) 68%, transparent 78%);
+  animation: abyssRippleRing 3s ease-out infinite;
+  animation-delay: 1.5s;
 }
-@keyframes abyssMeldSweep {
-  0%   { transform: translateX(-55%); opacity: 0; }
+@keyframes abyssRippleRing {
+  0%   { opacity: 0; transform: scale(0.55); }
   12%  { opacity: 0.9; }
-  48%  { transform: translateX(55%); opacity: 0.9; }
-  62%  { opacity: 0; }
-  100% { transform: translateX(55%); opacity: 0; }
+  100% { opacity: 0; transform: scale(1.65); }
 }
 
 /* ===================================================================
