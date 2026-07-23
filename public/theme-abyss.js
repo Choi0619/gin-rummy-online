@@ -103,11 +103,40 @@ let _abyssJellyEls = [];
 let _abyssBubbleTimer = null;
 let _abyssAnglerTimer = null;
 let _abyssFishTimer = null;
+let _abyssGlowEl = null;
+let _abyssGlowRAF = null;
+let _abyssGlowTarget = { x: -100, y: -100 };
+
+function _abyssPointerMove(e) {
+  _abyssGlowTarget.x = e.clientX;
+  _abyssGlowTarget.y = e.clientY;
+  // rAF-throttled: no matter how fast mousemove fires, the glow element is
+  // repositioned at most once per rendered frame, and only ever via
+  // `transform` (never left/top), so this never triggers layout.
+  if (!_abyssGlowRAF) _abyssGlowRAF = requestAnimationFrame(_abyssGlowTick);
+}
+function _abyssGlowTick() {
+  _abyssGlowRAF = null;
+  if (_abyssGlowEl) _abyssGlowEl.style.transform = `translate3d(${_abyssGlowTarget.x}px, ${_abyssGlowTarget.y}px, 0)`;
+}
 
 function startAbyssTheme() {
   stopAbyssTheme();
   const layer = document.getElementById('abyssLayer');
   if (!layer) return;
+
+  // Underwater light-ray sweep across the whole board (see theme-abyss.css
+  // for why this is transform-panned rather than the cheaper-looking but
+  // actually-expensive background-position approach).
+  const caustics = document.createElement('div');
+  caustics.className = 'abyss-caustics';
+  layer.appendChild(caustics);
+
+  // Cursor glow trail — one element, repositioned via JS on pointermove.
+  _abyssGlowEl = document.createElement('div');
+  _abyssGlowEl.className = 'abyss-cursor-glow';
+  layer.appendChild(_abyssGlowEl);
+  document.addEventListener('pointermove', _abyssPointerMove);
 
   // 3 jellyfish, placed once and left to drift in place for as long as the
   // theme is active — no re-creation, no per-frame cost, just a handful of
@@ -202,6 +231,9 @@ function stopAbyssTheme() {
   clearTimeout(_abyssBubbleTimer); _abyssBubbleTimer = null;
   clearTimeout(_abyssAnglerTimer); _abyssAnglerTimer = null;
   clearTimeout(_abyssFishTimer); _abyssFishTimer = null;
+  document.removeEventListener('pointermove', _abyssPointerMove);
+  if (_abyssGlowRAF) { cancelAnimationFrame(_abyssGlowRAF); _abyssGlowRAF = null; }
+  _abyssGlowEl = null;
   const layer = document.getElementById('abyssLayer');
   if (layer) layer.innerHTML = '';
   _abyssJellyEls = [];

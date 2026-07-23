@@ -40,6 +40,50 @@ body.theme-abyss .abyss-layer { display: block; }
     radial-gradient(2px 2px at 60% 94%, rgba(140,230,255,0.13), transparent 60%);
 }
 
+/* ---------- Caustics: underwater light rays sweeping the whole board ----------
+   Real caustics (what you'd get from feTurbulence/feDisplacementMap) are
+   gorgeous but recompute every frame — that's exactly the kind of cost that
+   caused the original Aurora stutter. This fakes the same "light rippling
+   through water" read cheaply: a single tileable SVG streak pattern, panned
+   by animating `transform: translate()` on the whole (oversized) layer by
+   exactly one tile's width/height so the loop is seamless. transform-panning
+   is compositor-only — background-position panning (which the old Aurora
+   code used) is NOT, which is why this uses transform instead. */
+.abyss-caustics {
+  position: fixed;
+  inset: -20% -20%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.14;
+  mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='360' height='360' viewBox='0 0 360 360'><g fill='none' stroke='%23bdf3ff' stroke-linecap='round'><path d='M-20 40 C 60 10, 120 80, 200 40 S 340 10, 420 50' stroke-width='14' opacity='0.5' filter='url(%23b)'/><path d='M-30 150 C 50 190, 130 110, 210 160 S 330 210, 410 150' stroke-width='10' opacity='0.4' filter='url(%23b)'/><path d='M-20 260 C 70 230, 140 300, 220 250 S 330 220, 420 270' stroke-width='16' opacity='0.45' filter='url(%23b)'/><path d='M-10 320 C 90 300, 150 350, 240 320' stroke-width='8' opacity='0.3' filter='url(%23b)'/></g><defs><filter id='b'><feGaussianBlur stdDeviation='9'/></filter></defs></svg>");
+  background-repeat: repeat;
+  background-size: 360px 360px;
+  animation: abyssCausticsPan 34s linear infinite;
+  will-change: transform;
+}
+@keyframes abyssCausticsPan {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(-360px, 240px); }
+}
+
+/* ---------- Cursor glow trail: a single soft light following the pointer ----------
+   Positioned via JS (mousemove -> transform, rAF-throttled to <=1 update per
+   frame) rather than CSS `left/top`, so moving it never triggers layout —
+   it's the same "just move a GPU layer" trick as everything else here. */
+.abyss-cursor-glow {
+  position: fixed;
+  top: 0; left: 0;
+  width: 34px; height: 34px;
+  margin: -17px 0 0 -17px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 5;
+  background: radial-gradient(circle, rgba(130,235,255,0.5), rgba(130,235,255,0.14) 55%, transparent 76%);
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
 /* ---------- Rising bubbles (JS-spawned, one-shot, self-removing) ---------- */
 .abyss-bubble {
   position: fixed;
@@ -207,6 +251,27 @@ body.theme-abyss .card.in-meld::after {
   0%, 100% { opacity: 0.45; transform: scale(0.94); }
   50%      { opacity: 0.85; transform: scale(1.08); }
 }
+/* Caustic light-ray sweeping across the card face itself, on top of the
+   breathing halo behind it. Reuses .card-inner (already exists, z-index:2)
+   as the clip so the sweep never spills past the card edges. Still only
+   transform + opacity animated. */
+body.theme-abyss .card.in-meld .card-inner { overflow: hidden; }
+body.theme-abyss .card.in-meld .card-inner::before {
+  content: '';
+  position: absolute;
+  inset: -20% -80%;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 42%, rgba(255,255,255,0.55) 49%, rgba(140,230,255,0.4) 53%, transparent 62%);
+  animation: abyssMeldSweep 3.8s ease-in-out infinite;
+}
+@keyframes abyssMeldSweep {
+  0%   { transform: translateX(-55%); opacity: 0; }
+  12%  { opacity: 0.9; }
+  48%  { transform: translateX(55%); opacity: 0.9; }
+  62%  { opacity: 0; }
+  100% { transform: translateX(55%); opacity: 0; }
+}
 
 /* ===================================================================
    Panels, avatar / turn glow (pulse, not rotation — Abyss is calm)
@@ -301,4 +366,24 @@ body.theme-abyss .water-fill:focus-visible .water-fill-liquid {
 @keyframes abyssWaterRipple {
   0%   { background-position: 0 0, 0 0; }
   100% { background-position: 0 0, 40px 0; }
+}
+/* A tiny bubble rising inside the liquid — only exists while hovered
+   (the animation is declared on the :hover-scoped selector below), so it
+   adds polish with zero idle cost, same principle as the fill itself. */
+body.theme-abyss .water-fill-liquid::after {
+  content: '';
+  position: absolute;
+  left: 46%; bottom: -6px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.8);
+  opacity: 0;
+}
+body.theme-abyss .water-fill:hover .water-fill-liquid::after {
+  animation: abyssWaterBubble 1.1s ease-in 0.15s infinite;
+}
+@keyframes abyssWaterBubble {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  15%  { opacity: 0.9; }
+  100% { transform: translateY(-22px) scale(1); opacity: 0; }
 }
