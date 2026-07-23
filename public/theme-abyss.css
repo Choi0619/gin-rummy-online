@@ -85,12 +85,24 @@ body.theme-abyss .abyss-layer { display: block; }
 }
 
 /* ---------- Rising bubbles (JS-spawned, one-shot, self-removing) ---------- */
+/* Glassy bubble: layered radial-gradients standing in for what would
+   otherwise need a raster texture — a bright glint (top-left, where the
+   "light" hits), a soft rim-light ring around the edge, and a darker
+   underside shadow, so it reads as a real glass sphere rather than a flat
+   tinted circle. Still a single element per bubble, still transform/opacity
+   only when animated (the gradient itself never changes, only the whole
+   bubble's position/scale/opacity move). */
 .abyss-bubble {
   position: fixed;
   bottom: -20px;
   border-radius: 50%;
-  border: 1px solid rgba(170,235,255,0.45);
-  background: radial-gradient(circle at 32% 28%, rgba(255,255,255,0.5), rgba(140,220,255,0.08) 70%);
+  border: 1px solid rgba(200,240,255,0.55);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.55) 8%, transparent 16%),
+    radial-gradient(circle at 68% 74%, rgba(20,60,90,0.35) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, transparent 55%, rgba(180,235,255,0.5) 80%, rgba(140,220,255,0.15) 92%),
+    radial-gradient(circle at 40% 35%, rgba(210,245,255,0.22), rgba(140,220,255,0.05) 75%);
+  box-shadow: inset 0 0 4px rgba(255,255,255,0.3);
   pointer-events: none;
   z-index: 1;
   animation: abyssBubbleRise linear forwards;
@@ -140,7 +152,10 @@ body.theme-abyss .abyss-layer { display: block; }
   top: -20px;
   border-radius: 50%;
   border: 1px solid rgba(140,170,200,0.4);
-  background: radial-gradient(circle at 32% 28%, rgba(255,255,255,0.28), rgba(90,120,150,0.05) 70%);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255,255,255,0.6) 0%, transparent 18%),
+    radial-gradient(circle at 50% 50%, transparent 60%, rgba(120,150,180,0.3) 85%),
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,0.22), rgba(90,120,150,0.04) 70%);
   pointer-events: none;
   animation: abyssBubbleSink linear forwards;
 }

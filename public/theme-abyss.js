@@ -141,6 +141,7 @@ const ABYSS_FISH_BUILDERS = [abyssFishSvgRound, abyssFishSvgRibbon, abyssFishSvg
 
 let _abyssJellyEls = [];
 let _abyssBubbleTimer = null;
+let _abyssClusterTimer = null;
 let _abyssAnglerTimer = null;
 let _abyssFishTimer = null;
 let _abyssGlowEl = null;
@@ -212,11 +213,11 @@ function startAbyssTheme() {
 
   // Rising bubbles, one-shot elements that self-remove after their CSS
   // animation finishes.
-  const spawnBubble = () => {
+  const spawnBubble = (fromLeft) => {
     const el = document.createElement('div');
     const size = 4 + Math.random() * 9;
     el.className = 'abyss-bubble';
-    el.style.left = (Math.random() * 100) + 'vw';
+    el.style.left = (fromLeft !== undefined ? fromLeft : Math.random() * 100) + 'vw';
     el.style.width = size + 'px';
     el.style.height = size + 'px';
     el.style.setProperty('--drift', (Math.random() * 40 - 20) + 'px');
@@ -231,6 +232,26 @@ function startAbyssTheme() {
     }, 900 + Math.random() * 1400);
   };
   scheduleBubble();
+
+  // Periodic bubble-cluster burst — a handful of bubbles rising together
+  // from roughly the same spot (like a real cluster breaking off the
+  // seafloor/a vent), instead of only the steady single-bubble trickle
+  // above. Same spawnBubble() one-shot elements, just several fired in a
+  // tight burst from a shared origin with slight spread.
+  const spawnBubbleCluster = () => {
+    const originVw = 8 + Math.random() * 84;
+    const count = 5 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => spawnBubble(originVw + (Math.random() * 8 - 4)), i * 90 + Math.random() * 60);
+    }
+  };
+  const scheduleBubbleCluster = () => {
+    _abyssClusterTimer = setTimeout(() => {
+      if (document.body.classList.contains('theme-abyss')) spawnBubbleCluster();
+      scheduleBubbleCluster();
+    }, 7000 + Math.random() * 8000);
+  };
+  scheduleBubbleCluster();
 
   // Rare anglerfish crossing — the deep-sea "wow" moment. Self-removes.
   const spawnAngler = () => {
@@ -287,6 +308,7 @@ function startAbyssTheme() {
 
 function stopAbyssTheme() {
   clearTimeout(_abyssBubbleTimer); _abyssBubbleTimer = null;
+  clearTimeout(_abyssClusterTimer); _abyssClusterTimer = null;
   clearTimeout(_abyssAnglerTimer); _abyssAnglerTimer = null;
   clearTimeout(_abyssFishTimer); _abyssFishTimer = null;
   document.removeEventListener('pointermove', _abyssPointerMove);
