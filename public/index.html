@@ -1155,47 +1155,54 @@ body.theme-aurora .btn:disabled { opacity: 0.5; }
 @keyframes revengeLblPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
 
 /* Dedicated effect layers keep profile-border gems and flourishes untouched.
-   Real flame-tongue shapes (hand-drawn SVG paths, not a CSS gradient ring)
-   anchored at the bottom of a box noticeably WIDER than the card, so the
-   fire visibly licks up around the outside of it rather than tracing the
-   card's own edge. Each tongue flickers independently via transform
-   (scaleY/skewX/translateY from a bottom transform-origin) + opacity —
-   compositor-only, same as everywhere else in this codebase; the SVG
-   artwork itself is static and only rasterized once. */
+   A continuous "wall" of blurred flame shapes hugging the card's bottom edge
+   (plus short flames climbing the lower sides) so there are no visible gaps
+   between individual tongues, tapering upward like real fire. All children
+   are built ONCE by buildRevengeFlame() on load; only transform/opacity
+   loop afterward (compositor-only, no per-frame JS/layout cost). */
 .avatar-card.revenge-fire,
 .avatar-card.revenge-fire-intense { isolation: isolate; overflow: visible; }
 .revenge-flame-layer {
-  position: absolute; left: 50%; bottom: -4px;
-  width: 240%; max-width: 340px;
-  transform: translateX(-50%);
+  position: absolute; inset: -18px; border-radius: 26px;
   pointer-events: none; z-index: -1; opacity: 0;
+  transform-origin: 50% 100%;
   transition: opacity 0.2s ease;
 }
-.revenge-fire > .revenge-flame-layer { opacity: 0.5; transform: translateX(-50%) scale(0.72); transform-origin: 50% 100%; }
+.revenge-fire > .revenge-flame-layer { opacity: 0.5; transform: scale(0.85); }
 .revenge-fire-intense > .revenge-flame-layer { opacity: 1; }
-.flame-svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 0 10px rgba(255,90,0,0.55)) drop-shadow(0 0 22px rgba(255,130,0,0.3)); }
-.flame-tongue { transform-box: fill-box; transform-origin: 50% 100%; }
-.ft1 { animation: flameFlick1 0.55s ease-in-out infinite; }
-.ft2 { animation: flameFlick2 0.62s ease-in-out infinite; }
-.ft3 { animation: flameFlick3 0.48s ease-in-out infinite; }
-.ft4 { animation: flameFlick1 0.58s ease-in-out infinite reverse; }
-.ft5 { animation: flameFlick2 0.51s ease-in-out infinite reverse; }
-@keyframes flameFlick1 {
-  0%, 100% { transform: scaleY(1) skewX(-2deg) translateY(0); opacity: 0.9; }
-  30% { transform: scaleY(1.12) skewX(3deg) translateY(-3px); opacity: 1; }
-  55% { transform: scaleY(0.88) skewX(-4deg) translateY(1px); opacity: 0.8; }
-  80% { transform: scaleY(1.06) skewX(2deg) translateY(-2px); opacity: 0.95; }
+.rf-fillbase {
+  position: absolute; left: 2%; right: 2%; bottom: -6px; height: 58px; border-radius: 22px;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255,150,20,0.85) 0%, rgba(255,90,0,0.55) 45%, rgba(255,60,0,0.2) 75%, transparent 92%);
+  filter: blur(10px);
+  animation: rfBaseGlow 1s ease-in-out infinite;
 }
-@keyframes flameFlick2 {
-  0%, 100% { transform: scaleY(1) skewX(3deg) translateY(0); opacity: 0.85; }
-  25% { transform: scaleY(0.9) skewX(-3deg) translateY(2px); opacity: 0.95; }
-  50% { transform: scaleY(1.15) skewX(2deg) translateY(-4px); opacity: 1; }
-  75% { transform: scaleY(0.95) skewX(-2deg) translateY(1px); opacity: 0.8; }
+@keyframes rfBaseGlow { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
+.rf-fillside {
+  position: absolute; bottom: -4px; width: 20px; height: 44px; border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255,120,10,0.7) 0%, rgba(255,70,0,0.35) 55%, transparent 85%);
+  filter: blur(9px);
 }
-@keyframes flameFlick3 {
-  0%, 100% { transform: scaleY(1.05) skewX(-3deg) translateY(-2px); opacity: 1; }
-  40% { transform: scaleY(0.92) skewX(4deg) translateY(1px); opacity: 0.85; }
-  70% { transform: scaleY(1.1) skewX(-2deg) translateY(-3px); opacity: 0.95; }
+.rf-flame {
+  position: absolute; bottom: -4px; border-radius: 50% 50% 40% 40% / 65% 65% 35% 35%;
+  filter: blur(6px); mix-blend-mode: screen; transform-origin: 50% 100%;
+  background: linear-gradient(180deg, rgba(255,240,190,0) 0%, rgba(255,210,110,0.6) 25%, rgba(255,140,20,0.88) 58%, rgba(255,70,0,0.92) 100%);
+  animation: rfRiseFlicker 0.85s ease-in-out infinite;
+}
+.rf-spark {
+  position: absolute; width: 2.5px; height: 2.5px; border-radius: 50%; background: #ffdca0;
+  box-shadow: 0 0 6px 1px rgba(255,180,80,0.9);
+  animation: rfSparkFloat 2s ease-in infinite;
+}
+@keyframes rfRiseFlicker {
+  0%,100% { transform: scaleY(1) scaleX(1) translateX(0); }
+  30% { transform: scaleY(1.2) scaleX(0.88) translateX(1px); }
+  60% { transform: scaleY(0.9) scaleX(1.08) translateX(-1px); }
+  80% { transform: scaleY(1.1) scaleX(0.94) translateX(1px); }
+}
+@keyframes rfSparkFloat {
+  0% { transform: translateY(0); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translateY(-46px); opacity: 0; }
 }
 
 /* ===== Game screen ===== */
@@ -3353,7 +3360,7 @@ body.theme-aurora .card.just-drawn {
 
   <div class="player-bar">
     <div class="avatar-card hoverable" id="oppAvatarCard" onclick="showOpponentProfile()">
-      <span class="revenge-flame-layer" aria-hidden="true"><svg class="flame-svg" viewBox="0 0 210 150" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><defs><linearGradient id="flameA-opp" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#ff2d00"/><stop offset="35%" stop-color="#ff7a00"/><stop offset="70%" stop-color="#ffb300"/><stop offset="100%" stop-color="#fff3b0"/></linearGradient><linearGradient id="flameB-opp" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#e01f00"/><stop offset="45%" stop-color="#ff6a00"/><stop offset="100%" stop-color="#ffd76a"/></linearGradient></defs><g class="flame-tongue ft1"><path d="M18 148 C4 122 10 100 22 84 C14 96 20 70 34 56 C26 74 40 60 36 42 C48 56 46 74 40 88 C52 76 50 96 40 112 C50 104 46 130 30 148 Z" fill="url(#flameA-opp)"/></g><g class="flame-tongue ft2"><path d="M55 148 C42 126 48 106 58 90 C50 102 56 78 68 64 C60 80 72 68 68 50 C80 64 78 82 72 94 C82 84 80 102 70 118 C78 110 76 132 62 148 Z" fill="url(#flameB-opp)"/></g><g class="flame-tongue ft3"><path d="M92 148 C76 120 84 96 98 78 C88 92 96 64 112 48 C102 68 118 52 114 32 C128 48 126 68 118 84 C132 72 130 94 118 112 C130 102 126 130 106 148 Z" fill="url(#flameA-opp)"/></g><g class="flame-tongue ft4"><path d="M132 148 C120 126 126 106 136 90 C128 102 134 78 146 64 C138 80 150 68 146 50 C158 64 156 82 150 94 C160 84 158 102 148 118 C156 110 154 132 140 148 Z" fill="url(#flameB-opp)"/></g><g class="flame-tongue ft5"><path d="M168 148 C154 122 160 100 172 84 C164 96 170 70 184 56 C176 74 190 60 186 42 C198 56 196 74 190 88 C202 76 200 96 190 112 C200 104 196 130 180 148 Z" fill="url(#flameA-opp)"/></g></svg></span>
+      <span class="revenge-flame-layer" aria-hidden="true"></span>
       <span class="turn-halo-layer" aria-hidden="true"></span>
       <div class="avatar-emoji" id="oppAvatarEmoji">🐶<span class="face-overlay" id="oppFaceOverlay"></span></div>
       <div class="avatar-info">
@@ -3366,7 +3373,7 @@ body.theme-aurora .card.just-drawn {
     </div>
     <div class="vs-label">VS</div>
     <div class="avatar-card hoverable" id="myAvatarCard" onclick="showProfileModal()">
-      <span class="revenge-flame-layer" aria-hidden="true"><svg class="flame-svg" viewBox="0 0 210 150" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><defs><linearGradient id="flameA-my" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#ff2d00"/><stop offset="35%" stop-color="#ff7a00"/><stop offset="70%" stop-color="#ffb300"/><stop offset="100%" stop-color="#fff3b0"/></linearGradient><linearGradient id="flameB-my" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#e01f00"/><stop offset="45%" stop-color="#ff6a00"/><stop offset="100%" stop-color="#ffd76a"/></linearGradient></defs><g class="flame-tongue ft1"><path d="M18 148 C4 122 10 100 22 84 C14 96 20 70 34 56 C26 74 40 60 36 42 C48 56 46 74 40 88 C52 76 50 96 40 112 C50 104 46 130 30 148 Z" fill="url(#flameA-my)"/></g><g class="flame-tongue ft2"><path d="M55 148 C42 126 48 106 58 90 C50 102 56 78 68 64 C60 80 72 68 68 50 C80 64 78 82 72 94 C82 84 80 102 70 118 C78 110 76 132 62 148 Z" fill="url(#flameB-my)"/></g><g class="flame-tongue ft3"><path d="M92 148 C76 120 84 96 98 78 C88 92 96 64 112 48 C102 68 118 52 114 32 C128 48 126 68 118 84 C132 72 130 94 118 112 C130 102 126 130 106 148 Z" fill="url(#flameA-my)"/></g><g class="flame-tongue ft4"><path d="M132 148 C120 126 126 106 136 90 C128 102 134 78 146 64 C138 80 150 68 146 50 C158 64 156 82 150 94 C160 84 158 102 148 118 C156 110 154 132 140 148 Z" fill="url(#flameB-my)"/></g><g class="flame-tongue ft5"><path d="M168 148 C154 122 160 100 172 84 C164 96 170 70 184 56 C176 74 190 60 186 42 C198 56 196 74 190 88 C202 76 200 96 190 112 C200 104 196 130 180 148 Z" fill="url(#flameA-my)"/></g></svg></span>
+      <span class="revenge-flame-layer" aria-hidden="true"></span>
       <span class="turn-halo-layer" aria-hidden="true"></span>
       <div class="avatar-emoji" id="myAvatarEmoji">🐱<span class="face-overlay" id="myFaceOverlay"></span></div>
       <div class="avatar-info">
@@ -8083,6 +8090,42 @@ function toggleFullAuto() {
   const btn = document.getElementById('disguiseLuckyBtn');
   if (btn) btn.classList.toggle('ai-on', fullAutoMode);
 }
+
+function buildRevengeFlame(layer) {
+  if (!layer || layer.dataset.built) return;
+  layer.dataset.built = '1';
+  const fillBase = document.createElement('div');
+  fillBase.className = 'rf-fillbase';
+  layer.appendChild(fillBase);
+  [{ l: '-6px', b: 6 }, { l: '-4px', b: 16 }, { l: 'calc(100% - 14px)', b: 6 }, { l: 'calc(100% - 12px)', b: 16 }].forEach(f => {
+    const s = document.createElement('div');
+    s.className = 'rf-fillside';
+    s.style.left = f.l; s.style.bottom = f.b + 'px';
+    layer.appendChild(s);
+  });
+  for (let i = 0; i < 12; i++) {
+    const w = 24 + Math.random() * 6;
+    const el = document.createElement('div');
+    el.className = 'rf-flame';
+    el.style.left = (2 + i * 8.2) + '%';
+    el.style.width = w + 'px';
+    el.style.marginLeft = (-w / 2) + 'px';
+    el.style.height = (40 + Math.random() * 26) + 'px';
+    el.style.animationDuration = (0.7 + Math.random() * 0.4) + 's';
+    if (i % 2) el.style.animationDirection = 'reverse';
+    layer.appendChild(el);
+  }
+  for (let i = 0; i < 9; i++) {
+    const s = document.createElement('div');
+    s.className = 'rf-spark';
+    s.style.left = (10 + Math.random() * 80) + '%';
+    s.style.bottom = (Math.random() * 20) + 'px';
+    s.style.animationDuration = (1.4 + Math.random() * 1.3) + 's';
+    s.style.animationDelay = (Math.random() * 2) + 's';
+    layer.appendChild(s);
+  }
+}
+document.querySelectorAll('.avatar-card .revenge-flame-layer').forEach(buildRevengeFlame);
 
 document.addEventListener('keydown', e => {
   // Plain H works too (panic key) — but never while typing in an input/textarea,
