@@ -277,9 +277,13 @@ let _abyssBubbleTimer = null;
 let _abyssClusterTimer = null;
 let _abyssAnglerTimer = null;
 let _abyssFishTimer = null;
+let _abyssCursorFxLayer = null;
 let _abyssGlowEl = null;
+let _abyssWakeEl = null;
 let _abyssGlowRAF = null;
-let _abyssGlowTarget = { x: -100, y: -100 };
+let _abyssWakeTimer = null;
+let _abyssGlowTarget = { x: -100, y: -100, angle: 0, speed: 0 };
+let _abyssPointerLast = { x: -100, y: -100 };
 let _abyssFishEls = [];
 let _abyssFloraEls = [];
 let _abyssSeedTimers = [];
@@ -288,37 +292,49 @@ let _abyssCursorBubblePool = [];
 let _abyssCursorBubbleIndex = 0;
 let _abyssCursorBubbleLast = { x: -100, y: -100, time: 0 };
 
-function _abyssEmitCursorBubble(x, y) {
+function _abyssEmitCursorBubble(x, y, delay = 0, scale = 1) {
   if (!_abyssCursorBubblePool.length) return;
   const bubble = _abyssCursorBubblePool[_abyssCursorBubbleIndex % _abyssCursorBubblePool.length];
   _abyssCursorBubbleIndex += 1;
-  const size = abyssRandomBetween(4, 10);
+  const size = abyssRandomBetween(5, 11) * scale;
   bubble.style.width = size.toFixed(1) + 'px';
   bubble.style.height = size.toFixed(1) + 'px';
-  bubble.style.setProperty('--bubble-x', (x - size * 0.5 + abyssRandomBetween(-3, 3)).toFixed(1) + 'px');
-  bubble.style.setProperty('--bubble-y', (y - size * 0.5 + abyssRandomBetween(-2, 2)).toFixed(1) + 'px');
-  bubble.style.setProperty('--bubble-drift', abyssRandomBetween(-13, 13).toFixed(1) + 'px');
-  bubble.style.setProperty('--bubble-rise', abyssRandomBetween(24, 46).toFixed(1) + 'px');
-  bubble.style.setProperty('--bubble-duration', abyssRandomBetween(0.9, 1.35).toFixed(2) + 's');
-  // The pool has an odd number of elements, so a reused node always receives
-  // the opposite animation name and restarts without a forced layout read.
-  bubble.style.animationName = _abyssCursorBubbleIndex % 2 ? 'abyssCursorBubbleA' : 'abyssCursorBubbleB';
+  bubble.style.setProperty('--bubble-x', (x - size * 0.5 + abyssRandomBetween(-6, 6)).toFixed(1) + 'px');
+  bubble.style.setProperty('--bubble-y', (y - size * 0.5 + abyssRandomBetween(-4, 4)).toFixed(1) + 'px');
+  bubble.style.setProperty('--bubble-drift', abyssRandomBetween(-18, 18).toFixed(1) + 'px');
+  bubble.style.setProperty('--bubble-rise', abyssRandomBetween(48, 82).toFixed(1) + 'px');
+  bubble.style.setProperty('--bubble-duration', abyssRandomBetween(1.05, 1.55).toFixed(2) + 's');
+  bubble.style.setProperty('--bubble-delay', delay.toFixed(2) + 's');
+  bubble.className = 'abyss-cursor-bubble ' + (_abyssCursorBubbleIndex % 2 ? 'cycle-a' : 'cycle-b');
 }
 
 function _abyssPointerMove(e) {
+  if (e.pointerType === 'touch') return;
+  const dx = _abyssPointerLast.x < 0 ? 0 : e.clientX - _abyssPointerLast.x;
+  const dy = _abyssPointerLast.y < 0 ? 0 : e.clientY - _abyssPointerLast.y;
+  const distance = Math.hypot(dx, dy);
   _abyssGlowTarget.x = e.clientX;
   _abyssGlowTarget.y = e.clientY;
-  // rAF-throttled: no matter how fast mousemove fires, the glow element is
-  // repositioned at most once per rendered frame, and only ever via
-  // `transform` (never left/top), so this never triggers layout.
+  if (distance > 0.5) _abyssGlowTarget.angle = Math.atan2(dy, dx);
+  _abyssGlowTarget.speed = Math.min(distance, 24);
+  _abyssPointerLast = { x: e.clientX, y: e.clientY };
   if (!_abyssGlowRAF) _abyssGlowRAF = requestAnimationFrame(_abyssGlowTick);
 
-  if (e.pointerType !== 'touch' && _abyssCursorBubblePool.length) {
+  if (_abyssCursorBubblePool.length) {
     const now = Date.now();
-    const dx = e.clientX - _abyssCursorBubbleLast.x;
-    const dy = e.clientY - _abyssCursorBubbleLast.y;
-    if (now - _abyssCursorBubbleLast.time >= 85 && dx * dx + dy * dy >= 196) {
-      _abyssEmitCursorBubble(e.clientX, e.clientY);
+    if (_abyssCursorBubbleLast.x < 0) {
+      _abyssCursorBubbleLast = { x: e.clientX, y: e.clientY, time: now };
+      return;
+    }
+    const trailDx = e.clientX - _abyssCursorBubbleLast.x;
+    const trailDy = e.clientY - _abyssCursorBubbleLast.y;
+    if (now - _abyssCursorBubbleLast.time >= 72 && trailDx * trailDx + trailDy * trailDy >= 256) {
+      const tailX = e.clientX - Math.cos(_abyssGlowTarget.angle) * 11;
+      const tailY = e.clientY - Math.sin(_abyssGlowTarget.angle) * 11;
+      _abyssEmitCursorBubble(tailX, tailY);
+      if (_abyssCursorBubbleIndex % 3 === 0) {
+        _abyssEmitCursorBubble(tailX + abyssRandomBetween(-8, 8), tailY + 5, 0.06, 0.68);
+      }
       _abyssCursorBubbleLast = { x: e.clientX, y: e.clientY, time: now };
     }
   }
@@ -326,6 +342,15 @@ function _abyssPointerMove(e) {
 function _abyssGlowTick() {
   _abyssGlowRAF = null;
   if (_abyssGlowEl) _abyssGlowEl.style.transform = `translate3d(${_abyssGlowTarget.x}px, ${_abyssGlowTarget.y}px, 0)`;
+  if (_abyssWakeEl) {
+    const stretch = 1 + _abyssGlowTarget.speed / 30;
+    _abyssWakeEl.style.transform = `translate3d(${_abyssGlowTarget.x}px, ${_abyssGlowTarget.y}px, 0) rotate(${_abyssGlowTarget.angle}rad) scaleX(${stretch})`;
+    _abyssWakeEl.style.opacity = Math.min(0.34, 0.12 + _abyssGlowTarget.speed / 80).toFixed(2);
+    clearTimeout(_abyssWakeTimer);
+    _abyssWakeTimer = setTimeout(() => {
+      if (_abyssWakeEl) _abyssWakeEl.style.opacity = '0';
+    }, 90);
+  }
 }
 
 function startAbyssTheme() {
@@ -388,21 +413,29 @@ function startAbyssTheme() {
   }
 
   // Cursor glow trail — one element, repositioned via JS on pointermove.
-  _abyssGlowEl = document.createElement('div');
-  _abyssGlowEl.className = 'abyss-cursor-glow';
-  layer.appendChild(_abyssGlowEl);
-
   const hasFinePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
-  if (!motion.reduced && hasFinePointer) {
-    for (let i = 0; i < 13; i++) {
+  if (hasFinePointer) {
+    // Keep pointer effects above every screen instead of burying them in the
+    // ambient background layer. This also makes them visible in the lobby.
+    _abyssCursorFxLayer = document.createElement('div');
+    _abyssCursorFxLayer.className = 'abyss-cursor-fx-layer';
+    _abyssCursorFxLayer.setAttribute('aria-hidden', 'true');
+    _abyssGlowEl = document.createElement('div');
+    _abyssGlowEl.className = 'abyss-cursor-glow';
+    _abyssWakeEl = document.createElement('div');
+    _abyssWakeEl.className = 'abyss-cursor-wake';
+    _abyssCursorFxLayer.append(_abyssGlowEl, _abyssWakeEl);
+    document.body.appendChild(_abyssCursorFxLayer);
+
+    for (let i = 0; !motion.reduced && i < 17; i++) {
       const bubble = document.createElement('i');
       bubble.className = 'abyss-cursor-bubble';
       bubble.setAttribute('aria-hidden', 'true');
-      layer.appendChild(bubble);
+      _abyssCursorFxLayer.appendChild(bubble);
       _abyssCursorBubblePool.push(bubble);
     }
+    document.addEventListener('pointermove', _abyssPointerMove, { passive: true });
   }
-  document.addEventListener('pointermove', _abyssPointerMove);
 
   // The detailed white jelly is a pre-rendered WebP sprite strip. The browser
   // decodes one texture; CSS loops its poses while this function only chooses
@@ -622,7 +655,11 @@ function stopAbyssTheme() {
   _abyssSeedTimers.forEach(clearTimeout); _abyssSeedTimers = [];
   document.removeEventListener('pointermove', _abyssPointerMove);
   if (_abyssGlowRAF) { cancelAnimationFrame(_abyssGlowRAF); _abyssGlowRAF = null; }
+  clearTimeout(_abyssWakeTimer); _abyssWakeTimer = null;
+  if (_abyssCursorFxLayer) _abyssCursorFxLayer.remove();
+  _abyssCursorFxLayer = null;
   _abyssGlowEl = null;
+  _abyssWakeEl = null;
   const layer = document.getElementById('abyssLayer');
   if (layer) layer.innerHTML = '';
   _abyssJellyEls = [];
@@ -632,6 +669,8 @@ function stopAbyssTheme() {
   _abyssCursorBubblePool = [];
   _abyssCursorBubbleIndex = 0;
   _abyssCursorBubbleLast = { x: -100, y: -100, time: 0 };
+  _abyssPointerLast = { x: -100, y: -100 };
+  _abyssGlowTarget = { x: -100, y: -100, angle: 0, speed: 0 };
 }
 
 // ===== Win/lose celebration effects =====
