@@ -3874,6 +3874,15 @@ const I18N = {
 };
 let LANG = localStorage.getItem('grLang') || 'ko';
 
+// Persistent per-browser identity for the reconnect/resume feature — unlike
+// socket.id (fresh every connection), this survives reloads and crashes so
+// a returning session can be matched back to the room it dropped from.
+let CLIENT_ID = localStorage.getItem('grClientId');
+if (!CLIENT_ID) {
+  CLIENT_ID = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  localStorage.setItem('grClientId', CLIENT_ID);
+}
+
 function t(key) { return (I18N[LANG] && I18N[LANG][key]) || I18N.ko[key] || key; }
 
 function applyLanguage() {
@@ -4586,9 +4595,9 @@ function confirmRoomSettings() {
   if (_roomMode === 'ai') {
     myIdx = 0;
     myAiDifficulty = _roomDiff;
-    socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff, gameMode: _gameMode, handSize: _handSize, cardBorder: myCardBorder });
+    socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff, gameMode: _gameMode, handSize: _handSize, cardBorder: myCardBorder, clientId: CLIENT_ID });
   } else {
-    socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder });
+    socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder, clientId: CLIENT_ID });
   }
 }
 
@@ -7038,6 +7047,101 @@ function initSocket() {
       : `${oppName()} 턴...`);
   });
 
+  // Fires on every connect, including socket.io's own auto-reconnects — the
+  // server uses this to hand back a queued match result (see
+  // 'forfeit-match-result' below) and/or offer to resume a dropped game.
+  socket.on('connect', () => {
+    socket.emit('check-resume', { clientId: CLIENT_ID });
+  });
+
+  socket.on('resume-available', ({ code, opponentName, myScore, oppScore, targetScore: ts }) => {
+    showConfirmModal({
+      emoji: '🔄',
+      title: '게임이 진행 중입니다',
+      sub: `${opponentName || '상대방'}님과의 경기 (${myScore}:${oppScore}) — 이어서 하시겠습니까?`,
+      acceptLabel: '이어하기',
+      declineLabel: '안 하기',
+      onAccept: () => socket.emit('resume-room', { clientId: CLIENT_ID, code }),
+      onDecline: () => socket.emit('decline-resume', { clientId: CLIENT_ID, code }),
+    });
+  });
+
+  socket.on('resume-failed', () => {
+    // Room was already reclaimed or ended by the time we asked — nothing to do.
+  });
+
+  socket.on('resume-success', data => {
+    myIdx = data.playerIndex;
+    roomCode = data.code;
+    vsAI = !!data.vsAI;
+    myHand = data.hand;
+    discardTop = data.discardTop;
+    deckCount = data.deckCount;
+    currentTurn = data.turn;
+    currentPhase = data.phase;
+    oppCardCount = data.oppCardCount;
+    scores = data.scores;
+    names = data.names;
+    chars = data.chars || chars;
+    chars[myIdx] = myChar;
+    gameIds[1 - myIdx] = data.opponentGameId || '';
+    cardBorders[myIdx] = myCardBorder;
+    cardBorders[1 - myIdx] = data.opponentCardBorder || 'green';
+    targetScore = data.targetScore;
+    gameMode = data.gameMode || 'classic';
+    oklahomaCap = data.oklahomaCap ?? null;
+    handSize = data.handSize || 10;
+    away = [false, false];
+    aiControlled = [false, false];
+    selected = null;
+    lastDrawnId = null;
+    pendingLocalDiscardId = null;
+    document.getElementById('targetScoreLbl').textContent = formatTargetScore();
+    updateGameModeUI();
+    document.querySelectorAll('.vs-ai-hide').forEach(el => el.style.display = vsAI ? 'none' : '');
+    document.getElementById('reactionBar').style.display = 'flex';
+    showGame();
+    if (supaUser && !vsAI) setMyStatus('gaming');
+    renderGame();
+    setStatus(isMyTurn()
+      ? (currentPhase === 'draw' ? '내 턴: 덱 또는 버린 패에서 뽑으세요.' : '버릴 카드를 선택하세요.')
+      : `${oppName()} 턴...`);
+    showToast('✅ 게임에 다시 접속했습니다.', 'info');
+    setTimeout(() => hideToast(), 3000);
+  });
+
+  socket.on('opponent-resumed', ({ name }) => {
+    showToast(`✅ ${name || '상대방'}님이 다시 접속했습니다.`, 'info');
+    setTimeout(() => hideToast(), 3000);
+  });
+
+  socket.on('opponent-declined-resume', ({ name }) => {
+    showConfirmModal({
+      emoji: '🚪',
+      title: `${name || '상대방'}님이 게임을 하지 않기로 결정했습니다`,
+      sub: 'AI가 상대방을 대신해 계속 진행할 수 있습니다. 계속하시겠어요, 아니면 지금 종료하시겠어요?',
+      acceptLabel: 'AI와 계속',
+      declineLabel: '지금 종료',
+      onAccept: () => {},
+      onDecline: () => socket.emit('end-vs-forfeited-opponent'),
+    });
+  });
+
+  // A match that finished while we (this account) weren't connected to see
+  // it — e.g. we declared "안 하기" and the AI played it out, or we simply
+  // never came back. Record it to our own match history now, same as a live
+  // match-ended would have, then let the player know.
+  socket.on('forfeit-match-result', ({ opponentName, opponentChar, myScore, oppScore, result, gameMode: gm, targetScore: ts }) => {
+    if (supaUser) {
+      saveMatchToDb({ opponentName, opponentChar, myScore, oppScore, result, gameMode: gm, targetScore: ts });
+    } else {
+      saveMatchResult({ opponentName, myScore, oppScore, result, mode: 'pvp' });
+    }
+    const label = result === 'win' ? '승리' : result === 'lose' ? '패배' : '무승부';
+    showToast(`📋 지난 경기 결과가 기록되었습니다: ${opponentName || '상대방'}과 ${label} (${myScore}:${oppScore})`, 'waiting');
+    setTimeout(() => hideToast(), 5000);
+  });
+
   socket.on('player-left', ({ name, disconnected }) => {
     hideToast();
     document.getElementById('resultOverlay').classList.remove('show');
@@ -7570,7 +7674,7 @@ function joinRoom() {
   myName = document.getElementById('myName').value.trim() || t('defaultPlayer2');
   if (!socket) initSocket();
   document.getElementById('lobbyError').textContent = '';
-  socket.emit('join-room', { code, name: myName, char: myChar, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder });
+  socket.emit('join-room', { code, name: myName, char: myChar, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder, clientId: CLIENT_ID });
 }
 
 document.getElementById('joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
@@ -8390,6 +8494,11 @@ function showGame() {
     document.getElementById('joinCode').value = code.toUpperCase();
   }
 })();
+
+// Connect eagerly (rather than waiting for the user to open/join a room) so
+// a returning visitor gets the "resume your game?" prompt immediately on
+// load, not only after they click something.
+if (!socket) initSocket();
 
 // Initialise auth + lobby on page load
 initAuth();

@@ -12,6 +12,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ===== In-memory rooms =====
 const rooms = new Map(); // code -> Room
 
+// Reconnection support. Both maps are keyed by the client's persistent
+// `clientId` (generated once in localStorage, survives page reloads/crashes
+// — unlike socket.id, which is a fresh value every connection).
+// disconnectRegistry: clientId -> { code, idx } for a player who dropped
+//   mid-round, so a later connection from the same browser can be matched
+//   back into their seat.
+// pendingForfeitResults: clientId -> a pre-computed match_history payload for
+//   a player who declared they weren't coming back (or never did) and whose
+//   match has since finished without them connected to record it themselves.
+//   Delivered (and cleared) the next time that clientId connects, from
+//   anywhere — match_history writes are client-side per-account, so this is
+//   just a one-shot mailbox holding the result until they're back.
+const disconnectRegistry = new Map();
+const pendingForfeitResults = new Map();
+
 // ===== Card logic (server-authoritative) =====
 const SUITS   = ['S','H','D','C'];
 const SUIT_SYM = { S:'♠', H:'♥', D:'♦', C:'♣' };
@@ -226,11 +241,12 @@ function joinAsSpectator(socket, room, payload = {}) {
 io.on('connection', socket => {
   console.log('connect', socket.id);
 
-  socket.on('create-room', ({ name, char, targetScore, turnTimeSecs, gameMode, handSize, isPublic, gameId, cardBorder }) => {
+  socket.on('create-room', ({ name, char, targetScore, turnTimeSecs, gameMode, handSize, isPublic, gameId, cardBorder, clientId }) => {
     const code = makeCode();
     rooms.set(code, {
       code,
       players: [socket.id],
+      clientIds: [clientId || null, null],
       names: [name || '플레이어1', ''],
       chars: [char || '🐱', ''],
       gameIds: [gameId || '', ''],
@@ -251,15 +267,17 @@ io.on('connection', socket => {
     socket.join(code);
     socket.data.room = code;
     socket.data.idx = 0;
+    socket.data.clientId = clientId || null;
     const r = rooms.get(code);
     socket.emit('room-created', { code, playerIndex: 0, targetScore: r.targetScore, isPublic: r.isPublic, turnTimeSecs: r.turnTimeSecs, gameMode: r.gameMode, handSize: r.handSize });
   });
 
-  socket.on('create-ai-room', ({ name, char, targetScore, turnTimeSecs, aiDifficulty, gameMode, handSize, cardBorder }) => {
+  socket.on('create-ai-room', ({ name, char, targetScore, turnTimeSecs, aiDifficulty, gameMode, handSize, cardBorder, clientId }) => {
     const code = makeCode();
     const room = {
       code,
       players: [socket.id],
+      clientIds: [clientId || null, null],
       names: [name || '플레이어1', 'AI'],
       chars: [char || '🐱', '🤖'],
       cardBorders: [cardBorder || 'green', 'green'],
@@ -280,10 +298,11 @@ io.on('connection', socket => {
     socket.join(code);
     socket.data.room = code;
     socket.data.idx = 0;
+    socket.data.clientId = clientId || null;
     startGame(room);
   });
 
-  socket.on('join-room', ({ code, name, char, gameId, cardBorder }) => {
+  socket.on('join-room', ({ code, name, char, gameId, cardBorder, clientId }) => {
     const room = rooms.get(code.toUpperCase().trim());
     if (!room) { socket.emit('err', '방을 찾을 수 없습니다.'); return; }
 
@@ -294,6 +313,9 @@ io.on('connection', socket => {
     const existingIdx = room.players.indexOf(socket.id);
     if (existingIdx !== -1) {
       socket.data.idx = existingIdx;
+      socket.data.clientId = clientId || socket.data.clientId || null;
+      if (!room.clientIds) room.clientIds = [null, null];
+      if (clientId) room.clientIds[existingIdx] = clientId;
       socket.join(code);
       const oppIdx = 1 - existingIdx;
       socket.emit('room-joined', {
@@ -334,14 +356,17 @@ io.on('connection', socket => {
     const oppIdx = 1 - slotIdx;
     if (!room.gameIds) room.gameIds = ['', ''];
     if (!room.cardBorders) room.cardBorders = ['green', 'green'];
+    if (!room.clientIds) room.clientIds = [null, null];
     room.players[slotIdx] = socket.id;
     room.names[slotIdx] = name || (slotIdx === 0 ? '플레이어1' : '플레이어2');
     room.chars[slotIdx] = char || (slotIdx === 0 ? '🐱' : '🐶');
     room.gameIds[slotIdx] = gameId || '';
     room.cardBorders[slotIdx] = cardBorder || 'green';
+    room.clientIds[slotIdx] = clientId || null;
     socket.join(code);
     socket.data.room = code;
     socket.data.idx = slotIdx;
+    socket.data.clientId = clientId || null;
 
     socket.emit('room-joined', {
       code, playerIndex: slotIdx,
@@ -533,6 +558,106 @@ io.on('connection', socket => {
       scores: room.scores,
       gameMode: g.gameMode, oklahomaCap: g.oklahomaCap, handSize: g.handSize,
     });
+  });
+
+  // Fired once on every connect (including auto-reconnects). Delivers any
+  // queued forfeit result for this browser's persistent clientId, and — if
+  // this clientId was mid-round in a room when it dropped — offers to
+  // resume that seat.
+  socket.on('check-resume', ({ clientId }) => {
+    if (!clientId) return;
+    socket.data.clientId = clientId;
+
+    if (pendingForfeitResults.has(clientId)) {
+      socket.emit('forfeit-match-result', pendingForfeitResults.get(clientId));
+      pendingForfeitResults.delete(clientId);
+    }
+
+    const reg = disconnectRegistry.get(clientId);
+    if (!reg) return;
+    const room = rooms.get(reg.code);
+    if (!room || !room.game || room.game.over || room.players[reg.idx] || (room.forfeited && room.forfeited[reg.idx])) {
+      disconnectRegistry.delete(clientId);
+      return;
+    }
+    socket.emit('resume-available', {
+      code: reg.code,
+      opponentName: room.names[1 - reg.idx] || '상대방',
+      myScore: room.scores[reg.idx],
+      oppScore: room.scores[1 - reg.idx],
+      targetScore: room.targetScore,
+    });
+  });
+
+  socket.on('resume-room', ({ clientId, code }) => {
+    const reg = disconnectRegistry.get(clientId);
+    if (!reg || reg.code !== code) { socket.emit('resume-failed', {}); return; }
+    const room = rooms.get(code);
+    const idx = reg.idx;
+    if (!room || !room.game || room.game.over || room.players[idx]) {
+      disconnectRegistry.delete(clientId);
+      socket.emit('resume-failed', {});
+      return;
+    }
+    disconnectRegistry.delete(clientId);
+
+    room.players[idx] = socket.id;
+    if (!room.clientIds) room.clientIds = [null, null];
+    room.clientIds[idx] = clientId;
+    socket.join(code);
+    socket.data.room = code;
+    socket.data.idx = idx;
+    socket.data.clientId = clientId;
+
+    if (room.aiControlled) room.aiControlled[idx] = false;
+    if (room.away) room.away[idx] = false;
+    io.to(code).emit('status-update', { idx, away: false });
+    io.to(code).emit('ai-takeover-update', { idx, enabled: false });
+
+    const g = room.game;
+    const oppIdx = 1 - idx;
+    socket.emit('resume-success', {
+      code, playerIndex: idx,
+      opponentName: room.names[oppIdx] || '', opponentChar: room.chars[oppIdx] || '',
+      opponentGameId: (room.gameIds && room.gameIds[oppIdx]) || '',
+      opponentCardBorder: (room.cardBorders && room.cardBorders[oppIdx]) || 'green',
+      hand: g.hands[idx],
+      discardTop: g.discardPile[g.discardPile.length - 1] || null,
+      deckCount: g.deck.length,
+      turn: g.turn, phase: g.phase,
+      oppCardCount: g.hands[oppIdx].length,
+      scores: room.scores, names: room.names, chars: room.chars,
+      targetScore: room.targetScore, gameMode: g.gameMode, oklahomaCap: g.oklahomaCap, handSize: g.handSize,
+      vsAI: !!room.vsAI,
+    });
+    emitToPlayer(room, oppIdx, 'opponent-resumed', { name: room.names[idx] });
+    if (room.game.turn === idx) startTurnTimer(room);
+  });
+
+  socket.on('decline-resume', ({ clientId, code }) => {
+    const reg = disconnectRegistry.get(clientId);
+    disconnectRegistry.delete(clientId);
+    const idx = (reg && reg.code === code) ? reg.idx : null;
+    const room = rooms.get(code);
+    if (!room || idx === null) return;
+    if (!room.forfeited) room.forfeited = [false, false];
+    room.forfeited[idx] = true;
+    emitToPlayer(room, 1 - idx, 'opponent-declined-resume', { name: room.names[idx] });
+  });
+
+  // The remaining player chooses to end the match right now, rather than
+  // let the AI keep playing out the forfeited opponent's seat. Per spec the
+  // forfeiting side always loses this way, regardless of current score.
+  socket.on('end-vs-forfeited-opponent', () => {
+    const room = rooms.get(socket.data.room);
+    if (!room || !room.game || room.game.over) return;
+    const idx = socket.data.idx;
+    const oppIdx = 1 - idx;
+    if (!room.forfeited || !room.forfeited[oppIdx]) return;
+    room.game.over = true;
+    clearTurnTimers(room);
+    if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
+    finalizeForfeitMatch(room, idx, oppIdx);
   });
 
   socket.on('leave-game', () => {
@@ -734,6 +859,8 @@ io.on('connection', socket => {
       io.to(code).emit('status-update', { idx, away: true });
       io.to(code).emit('ai-takeover-update', { idx, enabled: true, auto: true });
       emitToPlayer(room, 1 - idx, 'opponent-disconnected-info', { name: room.names[idx] });
+      const clientId = room.clientIds && room.clientIds[idx];
+      if (clientId) disconnectRegistry.set(clientId, { code: room.code, idx });
       if (room.game.turn === idx) aiTakeTurn(room, idx);
     } else if (room.game && room.game.over) {
       // Between rounds (match-end / round-end screen showing): treat as explicit leave
@@ -832,6 +959,52 @@ function checkMatchEnd(room) {
     winnerIdx, scores: room.scores, names: room.names,
     targetReached: true, wasRevenge, revengeSuccess,
   });
+  queueForfeitResultIfAny(room, winnerIdx);
+}
+
+// A player who declared they weren't coming back had the AI finish the
+// match for them; queue their own match_history payload so it's written
+// (client-side, to their own account) whenever they're next seen — could be
+// a different session entirely, since their socket is long gone.
+function queueForfeitResultIfAny(room, winnerIdx) {
+  if (!room.forfeited || winnerIdx === -1) return;
+  const forfeitedIdx = room.forfeited[0] ? 0 : room.forfeited[1] ? 1 : -1;
+  if (forfeitedIdx === -1) return;
+  const clientId = room.clientIds && room.clientIds[forfeitedIdx];
+  if (!clientId) return;
+  const oppIdx = 1 - forfeitedIdx;
+  pendingForfeitResults.set(clientId, {
+    opponentName: room.names[oppIdx] || '상대방',
+    opponentChar: room.chars[oppIdx] || '🐱',
+    myScore: room.scores[forfeitedIdx],
+    oppScore: room.scores[oppIdx],
+    result: winnerIdx === forfeitedIdx ? 'win' : 'lose',
+    gameMode: room.gameMode,
+    targetScore: room.targetScore,
+  });
+}
+
+// Ends the match immediately in favor of the remaining player — the
+// forfeiting side always loses here, independent of the score at the
+// moment they were cut off.
+function finalizeForfeitMatch(room, winnerIdx, loserIdx) {
+  io.to(room.code).emit('match-ended', {
+    winnerIdx, scores: room.scores, names: room.names,
+    targetReached: false, wasRevenge: false, revengeSuccess: false, forfeitedIdx: loserIdx,
+  });
+  const loserClientId = room.clientIds && room.clientIds[loserIdx];
+  if (loserClientId) {
+    pendingForfeitResults.set(loserClientId, {
+      opponentName: room.names[winnerIdx] || '상대방',
+      opponentChar: room.chars[winnerIdx] || '🐱',
+      myScore: room.scores[loserIdx],
+      oppScore: room.scores[winnerIdx],
+      result: 'lose',
+      gameMode: room.gameMode,
+      targetScore: room.targetScore,
+    });
+  }
+  rooms.delete(room.code);
 }
 
 // ===== First-card (up-card) offer procedure =====
