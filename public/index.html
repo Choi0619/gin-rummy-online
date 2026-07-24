@@ -1154,62 +1154,48 @@ body.theme-aurora .btn:disabled { opacity: 0.5; }
 }
 @keyframes revengeLblPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
 
-/* Dedicated effect layers keep profile-border gems and flourishes untouched. */
+/* Dedicated effect layers keep profile-border gems and flourishes untouched.
+   Real flame-tongue shapes (hand-drawn SVG paths, not a CSS gradient ring)
+   anchored at the bottom of a box noticeably WIDER than the card, so the
+   fire visibly licks up around the outside of it rather than tracing the
+   card's own edge. Each tongue flickers independently via transform
+   (scaleY/skewX/translateY from a bottom transform-origin) + opacity —
+   compositor-only, same as everywhere else in this codebase; the SVG
+   artwork itself is static and only rasterized once. */
 .avatar-card.revenge-fire,
 .avatar-card.revenge-fire-intense { isolation: isolate; overflow: visible; }
 .revenge-flame-layer {
-  position: absolute; inset: -9px; border-radius: 21px;
-  pointer-events: none; z-index: -1; opacity: 0; transform-origin: 50% 80%;
+  position: absolute; left: 50%; bottom: -4px;
+  width: 240%; max-width: 340px;
+  transform: translateX(-50%);
+  pointer-events: none; z-index: -1; opacity: 0;
   transition: opacity 0.2s ease;
 }
-.revenge-flame-layer::before,
-.revenge-flame-layer::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
-.revenge-fire > .revenge-flame-layer { opacity: 0.68; }
+.revenge-fire > .revenge-flame-layer { opacity: 0.5; transform: translateX(-50%) scale(0.72); transform-origin: 50% 100%; }
 .revenge-fire-intense > .revenge-flame-layer { opacity: 1; }
-.revenge-fire > .revenge-flame-layer::before {
-  inset: 1px; padding: 4px;
-  background: conic-gradient(from 20deg, rgba(255,73,0,0.35), rgba(255,177,40,0.78), rgba(255,65,0,0.34), rgba(255,207,70,0.72), rgba(255,73,0,0.35));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor; mask-composite: exclude;
-  filter: blur(2px) drop-shadow(0 0 8px rgba(255,91,0,0.52));
-  animation: revengeEmberBreathe 1.9s ease-in-out infinite;
+.flame-svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 0 10px rgba(255,90,0,0.55)) drop-shadow(0 0 22px rgba(255,130,0,0.3)); }
+.flame-tongue { transform-box: fill-box; transform-origin: 50% 100%; }
+.ft1 { animation: flameFlick1 0.55s ease-in-out infinite; }
+.ft2 { animation: flameFlick2 0.62s ease-in-out infinite; }
+.ft3 { animation: flameFlick3 0.48s ease-in-out infinite; }
+.ft4 { animation: flameFlick1 0.58s ease-in-out infinite reverse; }
+.ft5 { animation: flameFlick2 0.51s ease-in-out infinite reverse; }
+@keyframes flameFlick1 {
+  0%, 100% { transform: scaleY(1) skewX(-2deg) translateY(0); opacity: 0.9; }
+  30% { transform: scaleY(1.12) skewX(3deg) translateY(-3px); opacity: 1; }
+  55% { transform: scaleY(0.88) skewX(-4deg) translateY(1px); opacity: 0.8; }
+  80% { transform: scaleY(1.06) skewX(2deg) translateY(-2px); opacity: 0.95; }
 }
-.revenge-fire-intense > .revenge-flame-layer::before {
-  inset: 0; padding: 5px;
-  background: conic-gradient(from var(--fire-angle, 15deg), #ff4a00, #ffd04e, #ff6100, #ffb31f, #ff3d00, #ffe06a, #ff4a00);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor; mask-composite: exclude;
-  filter: drop-shadow(0 0 7px rgba(255,70,0,0.95)) drop-shadow(0 0 16px rgba(255,130,0,0.58));
-  animation: revengeFireRing 1.6s linear infinite, revengeFirePulse 0.72s ease-in-out infinite alternate;
+@keyframes flameFlick2 {
+  0%, 100% { transform: scaleY(1) skewX(3deg) translateY(0); opacity: 0.85; }
+  25% { transform: scaleY(0.9) skewX(-3deg) translateY(2px); opacity: 0.95; }
+  50% { transform: scaleY(1.15) skewX(2deg) translateY(-4px); opacity: 1; }
+  75% { transform: scaleY(0.95) skewX(-2deg) translateY(1px); opacity: 0.8; }
 }
-.revenge-fire-intense > .revenge-flame-layer::after {
-  inset: auto 8% calc(100% - 5px); height: 15px; border-radius: 0;
-  background:
-    radial-gradient(ellipse at 10% 100%, #ffe27a 0 15%, #ff7200 38%, transparent 68%),
-    radial-gradient(ellipse at 34% 100%, #fff0a1 0 12%, #ff8a00 36%, transparent 67%),
-    radial-gradient(ellipse at 60% 100%, #ffdf64 0 14%, #ff5a00 40%, transparent 70%),
-    radial-gradient(ellipse at 86% 100%, #fff09c 0 12%, #ff7a00 38%, transparent 68%);
-  filter: drop-shadow(0 -2px 5px rgba(255,88,0,0.85));
-  clip-path: polygon(0 100%,5% 68%,10% 10%,16% 76%,25% 100%,30% 64%,35% 0,42% 74%,52% 100%,56% 60%,61% 16%,68% 76%,78% 100%,82% 66%,87% 8%,93% 72%,100% 100%);
-  animation: revengeFlameDance 0.58s ease-in-out infinite alternate;
-}
-@keyframes revengeEmberBreathe {
-  0%,100% { opacity: 0.62; filter: blur(2px) brightness(0.9) drop-shadow(0 0 7px rgba(255,91,0,0.45)); }
-  50% { opacity: 0.92; filter: blur(2.5px) brightness(1.14) drop-shadow(0 0 11px rgba(255,123,0,0.62)); }
-}
-@keyframes revengeFlameDance {
-  0% { transform: translate(-1px,2px) scaleY(0.86) skewX(-1.5deg); opacity: 0.76; }
-  100% { transform: translate(1px,-2px) scaleY(1.08) skewX(1.5deg); opacity: 1; }
-}
-@property --fire-angle {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 15deg;
-}
-@keyframes revengeFireRing { to { --fire-angle: 375deg; } }
-@keyframes revengeFirePulse {
-  0% { filter: drop-shadow(0 0 6px rgba(255,70,0,0.82)) drop-shadow(0 0 13px rgba(255,130,0,0.48)); }
-  100% { filter: drop-shadow(0 0 9px rgba(255,91,0,1)) drop-shadow(0 0 19px rgba(255,160,0,0.68)); }
+@keyframes flameFlick3 {
+  0%, 100% { transform: scaleY(1.05) skewX(-3deg) translateY(-2px); opacity: 1; }
+  40% { transform: scaleY(0.92) skewX(4deg) translateY(1px); opacity: 0.85; }
+  70% { transform: scaleY(1.1) skewX(-2deg) translateY(-3px); opacity: 0.95; }
 }
 
 /* ===== Game screen ===== */
@@ -3367,7 +3353,7 @@ body.theme-aurora .card.just-drawn {
 
   <div class="player-bar">
     <div class="avatar-card hoverable" id="oppAvatarCard" onclick="showOpponentProfile()">
-      <span class="revenge-flame-layer" aria-hidden="true"></span>
+      <span class="revenge-flame-layer" aria-hidden="true"><svg class="flame-svg" viewBox="0 0 210 150" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><defs><linearGradient id="flameA-opp" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#ff2d00"/><stop offset="35%" stop-color="#ff7a00"/><stop offset="70%" stop-color="#ffb300"/><stop offset="100%" stop-color="#fff3b0"/></linearGradient><linearGradient id="flameB-opp" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#e01f00"/><stop offset="45%" stop-color="#ff6a00"/><stop offset="100%" stop-color="#ffd76a"/></linearGradient></defs><g class="flame-tongue ft1"><path d="M18 148 C4 122 10 100 22 84 C14 96 20 70 34 56 C26 74 40 60 36 42 C48 56 46 74 40 88 C52 76 50 96 40 112 C50 104 46 130 30 148 Z" fill="url(#flameA-opp)"/></g><g class="flame-tongue ft2"><path d="M55 148 C42 126 48 106 58 90 C50 102 56 78 68 64 C60 80 72 68 68 50 C80 64 78 82 72 94 C82 84 80 102 70 118 C78 110 76 132 62 148 Z" fill="url(#flameB-opp)"/></g><g class="flame-tongue ft3"><path d="M92 148 C76 120 84 96 98 78 C88 92 96 64 112 48 C102 68 118 52 114 32 C128 48 126 68 118 84 C132 72 130 94 118 112 C130 102 126 130 106 148 Z" fill="url(#flameA-opp)"/></g><g class="flame-tongue ft4"><path d="M132 148 C120 126 126 106 136 90 C128 102 134 78 146 64 C138 80 150 68 146 50 C158 64 156 82 150 94 C160 84 158 102 148 118 C156 110 154 132 140 148 Z" fill="url(#flameB-opp)"/></g><g class="flame-tongue ft5"><path d="M168 148 C154 122 160 100 172 84 C164 96 170 70 184 56 C176 74 190 60 186 42 C198 56 196 74 190 88 C202 76 200 96 190 112 C200 104 196 130 180 148 Z" fill="url(#flameA-opp)"/></g></svg></span>
       <span class="turn-halo-layer" aria-hidden="true"></span>
       <div class="avatar-emoji" id="oppAvatarEmoji">🐶<span class="face-overlay" id="oppFaceOverlay"></span></div>
       <div class="avatar-info">
@@ -3380,7 +3366,7 @@ body.theme-aurora .card.just-drawn {
     </div>
     <div class="vs-label">VS</div>
     <div class="avatar-card hoverable" id="myAvatarCard" onclick="showProfileModal()">
-      <span class="revenge-flame-layer" aria-hidden="true"></span>
+      <span class="revenge-flame-layer" aria-hidden="true"><svg class="flame-svg" viewBox="0 0 210 150" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><defs><linearGradient id="flameA-my" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#ff2d00"/><stop offset="35%" stop-color="#ff7a00"/><stop offset="70%" stop-color="#ffb300"/><stop offset="100%" stop-color="#fff3b0"/></linearGradient><linearGradient id="flameB-my" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#e01f00"/><stop offset="45%" stop-color="#ff6a00"/><stop offset="100%" stop-color="#ffd76a"/></linearGradient></defs><g class="flame-tongue ft1"><path d="M18 148 C4 122 10 100 22 84 C14 96 20 70 34 56 C26 74 40 60 36 42 C48 56 46 74 40 88 C52 76 50 96 40 112 C50 104 46 130 30 148 Z" fill="url(#flameA-my)"/></g><g class="flame-tongue ft2"><path d="M55 148 C42 126 48 106 58 90 C50 102 56 78 68 64 C60 80 72 68 68 50 C80 64 78 82 72 94 C82 84 80 102 70 118 C78 110 76 132 62 148 Z" fill="url(#flameB-my)"/></g><g class="flame-tongue ft3"><path d="M92 148 C76 120 84 96 98 78 C88 92 96 64 112 48 C102 68 118 52 114 32 C128 48 126 68 118 84 C132 72 130 94 118 112 C130 102 126 130 106 148 Z" fill="url(#flameA-my)"/></g><g class="flame-tongue ft4"><path d="M132 148 C120 126 126 106 136 90 C128 102 134 78 146 64 C138 80 150 68 146 50 C158 64 156 82 150 94 C160 84 158 102 148 118 C156 110 154 132 140 148 Z" fill="url(#flameB-my)"/></g><g class="flame-tongue ft5"><path d="M168 148 C154 122 160 100 172 84 C164 96 170 70 184 56 C176 74 190 60 186 42 C198 56 196 74 190 88 C202 76 200 96 190 112 C200 104 196 130 180 148 Z" fill="url(#flameA-my)"/></g></svg></span>
       <span class="turn-halo-layer" aria-hidden="true"></span>
       <div class="avatar-emoji" id="myAvatarEmoji">🐱<span class="face-overlay" id="myFaceOverlay"></span></div>
       <div class="avatar-info">
@@ -4211,6 +4197,7 @@ function getBestStreak() {
 function hasPromoThemes() { return supaProfile ? !!supaProfile.promo_themes : localStorage.getItem('grPromoThemes') === '1'; }
 function hasPromoBorders() { return supaProfile ? !!supaProfile.promo_borders : localStorage.getItem('grPromoBorders') === '1'; }
 function hasPromoChars() { return supaProfile ? !!supaProfile.promo_chars : localStorage.getItem('grPromoChars') === '1'; }
+function hasPromoTurtle() { return supaProfile ? !!supaProfile.promo_turtle : localStorage.getItem('grPromoTurtle') === '1'; }
 
 function isPinkUnlocked() { return hasPromoThemes() || getTotalWins() >= PINK_UNLOCK_WINS; }
 function isRainbowUnlocked() { return hasPromoThemes() || getTotalWins() >= RAINBOW_UNLOCK_WINS; }
@@ -4233,7 +4220,14 @@ const PROMO_CODES = {
   },
   'UNLOCKALLCHAR': {
     already: hasPromoChars, localKey: 'grPromoChars', column: 'promo_chars',
-    applied: () => renderCharGrid(), label: '모든 캐릭터',
+    applied: () => { renderCharGrid(); if (document.getElementById('profileCharGrid')) renderProfileCharGrid(); },
+    label: '모든 캐릭터',
+  },
+  // A tiny Easter-egg code: unlocks just the turtle, not everything.
+  'KOOBOOKI': {
+    already: hasPromoTurtle, localKey: 'grPromoTurtle', column: 'promo_turtle',
+    applied: () => { renderCharGrid(); if (document.getElementById('profileCharGrid')) renderProfileCharGrid(); },
+    label: '🐢 거북이 캐릭터',
   },
 };
 
@@ -5092,12 +5086,15 @@ function hideProfileModal() {
 }
 
 function renderProfileCharGrid() {
-  const wins = getTotalWins();
   const chars = ['🐱','🐶','🐰','🦊','🐻','🐼','🐨','🐯','🐢','🦁','🐸','🦄'];
   const grid = document.getElementById('profileCharGrid');
   grid.innerHTML = chars.map(function(ch) {
     const req = CHAR_UNLOCK_REQ[ch];
-    const locked = req && wins < req;
+    // Was computed as a raw `wins < req` check here, duplicating (and
+    // silently diverging from) isCharUnlocked() elsewhere — this is the
+    // character picker people actually use (their own profile modal), so
+    // promo codes like UNLOCKALLCHAR never had any effect on it.
+    const locked = req && !isCharUnlocked(ch);
     const selected = (supaProfile.char || '🐱') === ch;
     const reqTxt = locked ? '<div class="profile-char-req">' + req + '승</div>' : '';
     const cls = 'profile-char-opt' + (selected ? ' selected' : '') + (locked ? ' locked' : '');
@@ -6353,6 +6350,7 @@ const CHAR_UNLOCK_REQ = { '🐢': 3, '🦁': 7, '🐸': 15, '🦄': 30 };
 
 function isCharUnlocked(ch) {
   if (!CHAR_UNLOCK_REQ[ch]) return true; // base chars
+  if (ch === '🐢' && hasPromoTurtle()) return true;
   return hasPromoChars() || getTotalWins() >= CHAR_UNLOCK_REQ[ch];
 }
 
