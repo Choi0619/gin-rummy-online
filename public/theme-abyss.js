@@ -284,6 +284,26 @@ let _abyssFishEls = [];
 let _abyssFloraEls = [];
 let _abyssSeedTimers = [];
 let _abyssJellySpawnSeq = 0;
+let _abyssCursorBubblePool = [];
+let _abyssCursorBubbleIndex = 0;
+let _abyssCursorBubbleLast = { x: -100, y: -100, time: 0 };
+
+function _abyssEmitCursorBubble(x, y) {
+  if (!_abyssCursorBubblePool.length) return;
+  const bubble = _abyssCursorBubblePool[_abyssCursorBubbleIndex % _abyssCursorBubblePool.length];
+  _abyssCursorBubbleIndex += 1;
+  const size = abyssRandomBetween(4, 10);
+  bubble.style.width = size.toFixed(1) + 'px';
+  bubble.style.height = size.toFixed(1) + 'px';
+  bubble.style.setProperty('--bubble-x', (x - size * 0.5 + abyssRandomBetween(-3, 3)).toFixed(1) + 'px');
+  bubble.style.setProperty('--bubble-y', (y - size * 0.5 + abyssRandomBetween(-2, 2)).toFixed(1) + 'px');
+  bubble.style.setProperty('--bubble-drift', abyssRandomBetween(-13, 13).toFixed(1) + 'px');
+  bubble.style.setProperty('--bubble-rise', abyssRandomBetween(24, 46).toFixed(1) + 'px');
+  bubble.style.setProperty('--bubble-duration', abyssRandomBetween(0.9, 1.35).toFixed(2) + 's');
+  // The pool has an odd number of elements, so a reused node always receives
+  // the opposite animation name and restarts without a forced layout read.
+  bubble.style.animationName = _abyssCursorBubbleIndex % 2 ? 'abyssCursorBubbleA' : 'abyssCursorBubbleB';
+}
 
 function _abyssPointerMove(e) {
   _abyssGlowTarget.x = e.clientX;
@@ -292,6 +312,16 @@ function _abyssPointerMove(e) {
   // repositioned at most once per rendered frame, and only ever via
   // `transform` (never left/top), so this never triggers layout.
   if (!_abyssGlowRAF) _abyssGlowRAF = requestAnimationFrame(_abyssGlowTick);
+
+  if (e.pointerType !== 'touch' && _abyssCursorBubblePool.length) {
+    const now = Date.now();
+    const dx = e.clientX - _abyssCursorBubbleLast.x;
+    const dy = e.clientY - _abyssCursorBubbleLast.y;
+    if (now - _abyssCursorBubbleLast.time >= 85 && dx * dx + dy * dy >= 196) {
+      _abyssEmitCursorBubble(e.clientX, e.clientY);
+      _abyssCursorBubbleLast = { x: e.clientX, y: e.clientY, time: now };
+    }
+  }
 }
 function _abyssGlowTick() {
   _abyssGlowRAF = null;
@@ -302,6 +332,7 @@ function startAbyssTheme() {
   stopAbyssTheme();
   const layer = document.getElementById('abyssLayer');
   if (!layer) return;
+  const motion = abyssMotionProfile();
 
   // Underwater light-ray sweep across the whole board (see theme-abyss.css
   // for why this is transform-panned rather than the cheaper-looking but
@@ -314,9 +345,18 @@ function startAbyssTheme() {
   _abyssGlowEl = document.createElement('div');
   _abyssGlowEl.className = 'abyss-cursor-glow';
   layer.appendChild(_abyssGlowEl);
-  document.addEventListener('pointermove', _abyssPointerMove);
 
-  const motion = abyssMotionProfile();
+  const hasFinePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+  if (!motion.reduced && hasFinePointer) {
+    for (let i = 0; i < 13; i++) {
+      const bubble = document.createElement('i');
+      bubble.className = 'abyss-cursor-bubble';
+      bubble.setAttribute('aria-hidden', 'true');
+      layer.appendChild(bubble);
+      _abyssCursorBubblePool.push(bubble);
+    }
+  }
+  document.addEventListener('pointermove', _abyssPointerMove);
 
   // The detailed white jelly is a pre-rendered WebP sprite strip. The browser
   // decodes one texture; CSS loops its poses while this function only chooses
@@ -543,6 +583,9 @@ function stopAbyssTheme() {
   _abyssFishEls = [];
   _abyssFloraEls = [];
   _abyssJellySpawnSeq = 0;
+  _abyssCursorBubblePool = [];
+  _abyssCursorBubbleIndex = 0;
+  _abyssCursorBubbleLast = { x: -100, y: -100, time: 0 };
 }
 
 // ===== Win/lose celebration effects =====
