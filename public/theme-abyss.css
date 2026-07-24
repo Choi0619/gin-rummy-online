@@ -208,13 +208,27 @@ body.theme-abyss .result-box.pop-lose {
   position: fixed;
   pointer-events: none;
   z-index: 2;
-  filter: drop-shadow(0 0 14px var(--glow, rgba(110,230,255,0.5))) drop-shadow(0 0 30px var(--glow, rgba(110,230,255,0.25)));
-  /* Scale/mirror is set inline (JS) as a static transform on THIS element.
-     The float bob below animates transform on the inner <svg> instead of
-     here — a CSS animation's transform fully replaces (not composes with)
-     whatever transform was already on the element for its whole duration,
-     so putting both on the same node would silently wipe out the inline
-     scale/mirror every frame. */
+  opacity: 0;
+  filter: drop-shadow(0 0 16px var(--glow, rgba(110,230,255,0.65))) drop-shadow(0 0 34px var(--glow, rgba(110,230,255,0.4))) drop-shadow(0 0 60px var(--glow, rgba(110,230,255,0.18)));
+  /* Slow cross-screen drift, replacing the old "float in place forever"
+     behaviour — real jellyfish actually swim. Duration/direction/vertical
+     drift are all per-instance custom properties (set inline by JS), so
+     speed varies noticeably between individual jellies. This animates the
+     OUTER element; the bob below animates the inner <svg> instead, and
+     mirroring is baked into the SVG markup itself (not a CSS transform) —
+     three different mechanisms for three different concerns, specifically
+     so none of them can silently overwrite each other the way scale/mirror
+     kept getting wiped out before. */
+  animation: abyssJellyDrift var(--drift-dur, 50s) ease-in-out forwards;
+  animation-delay: var(--drift-delay, 0s);
+}
+@keyframes abyssJellyDrift {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  4%   { opacity: var(--jelly-opacity, 0.92); }
+  30%  { transform: translate(calc(var(--dx, 0px) * 0.3), calc(var(--dy, 0px) * 0.4)); }
+  60%  { transform: translate(calc(var(--dx, 0px) * 0.62), calc(var(--dy, 0px) * 0.7)); }
+  96%  { opacity: var(--jelly-opacity, 0.92); }
+  100% { transform: translate(var(--dx, 0px), var(--dy, 0px)); opacity: 0; }
 }
 .abyss-jelly > svg {
   display: block;
@@ -223,7 +237,7 @@ body.theme-abyss .result-box.pop-lose {
 }
 @keyframes abyssJellyFloat {
   0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-26px); }
+  50%      { transform: translateY(-22px); }
 }
 .abyss-jelly .bell {
   transform-origin: 50% 15%;
@@ -329,11 +343,16 @@ body.theme-abyss .card.in-meld {
   background:
     linear-gradient(150deg, #eafffd 0%, #d8f7ff 50%, #e3ecff 100%) padding-box,
     linear-gradient(135deg, #4dfff0 0%, #6fc9ff 50%, #8a6bff 100%) border-box !important;
+  /* Static (non-animated) border-hugging glow, on top of the ripple rings
+     below — so the meld is unmistakable even between ripple pulses, not
+     only when a ring happens to be mid-cycle. */
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.85),
     0 6px 14px rgba(0,10,25,0.35),
-    0 0 12px rgba(77,255,240,0.35),
-    0 0 22px rgba(138,107,255,0.22) !important;
+    0 0 10px rgba(77,255,240,0.55),
+    0 0 20px rgba(77,255,240,0.34),
+    0 0 34px rgba(138,107,255,0.28),
+    0 0 52px rgba(138,107,255,0.14) !important;
 }
 body.theme-abyss .card.in-meld .meld-dot {
   background: linear-gradient(135deg, #4dfff0, #8a6bff);

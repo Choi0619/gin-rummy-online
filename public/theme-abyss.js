@@ -9,62 +9,74 @@
 // itself (no per-frame JS at all).
 // ===================================================================
 
-// A real jellyfish silhouette: a domed, scalloped bell lit from within by a
-// layered glow (core hotspot + mid color + outer bloom, like the reference
-// photo), four long independently-swaying tentacles (each its own
-// <g class="tentacle"> with a naturally wavy pre-drawn curve — no path
-// morphing needed) with small bioluminescent dots strung along them, and
-// frilly oral arms underneath. `uid` makes every gradient id unique per
-// instance — reusing the same id ("bellGrad" etc.) across multiple jellies
-// on the same page is an SVG id collision, and every instance had silently
-// been resolving to the FIRST jelly's gradient regardless of its own colors.
+// A real jellyfish silhouette, redesigned for a smoother, softer, more
+// luminescent read (the scalloped bell edge + hard tentacle dots in the
+// previous version read as "spiky"/uncanny rather than glowing). Changes:
+// a single smooth dome (no notches), three stacked glow layers so the bell
+// looks lit from deep within rather than just tinted, and thin translucent
+// ribbon tentacles that taper (wide+soft near the bell, hairline by the tip)
+// instead of a uniform-width stroke with hard dots. `mirror` bakes the flip
+// as an SVG-internal <g transform> (not a CSS transform on the element),
+// which matters because the element itself may also carry an independent
+// CSS drift/bob animation — animated CSS transforms fully replace whatever
+// inline transform was on that same element, so mirroring at the DOM level
+// would keep getting silently discarded (this bit us twice already on the
+// fish/anglerfish). Baking it into the SVG's own markup sidesteps that
+// entirely. `uid` keeps gradient ids collision-free across instances.
 let _abyssJellyUidSeq = 0;
-function abyssJellySvg(bell, glow, core) {
+function abyssJellySvg(bell, glow, core, mirror) {
   core = core || '#ffffff';
   const uid = 'j' + (_abyssJellyUidSeq++);
+  const g = mirror ? `<g transform="translate(94,0) scale(-1,1)">` : `<g>`;
   return `
   <svg width="94" height="190" viewBox="0 0 94 190" xmlns="http://www.w3.org/2000/svg" overflow="visible">
     <defs>
-      <radialGradient id="bellGrad-${uid}" cx="44%" cy="26%" r="68%">
-        <stop offset="0%" stop-color="${core}" stop-opacity="0.98"/>
-        <stop offset="30%" stop-color="${bell}" stop-opacity="0.85"/>
-        <stop offset="68%" stop-color="${bell}" stop-opacity="0.42"/>
-        <stop offset="100%" stop-color="${bell}" stop-opacity="0.08"/>
+      <radialGradient id="bellGrad-${uid}" cx="46%" cy="24%" r="72%">
+        <stop offset="0%" stop-color="${core}" stop-opacity="1"/>
+        <stop offset="26%" stop-color="${core}" stop-opacity="0.75"/>
+        <stop offset="55%" stop-color="${bell}" stop-opacity="0.5"/>
+        <stop offset="100%" stop-color="${bell}" stop-opacity="0.1"/>
       </radialGradient>
-      <radialGradient id="coreGlow-${uid}" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="${core}" stop-opacity="0.9"/>
-        <stop offset="100%" stop-color="${core}" stop-opacity="0"/>
+      <radialGradient id="coreGlow-${uid}" cx="50%" cy="45%" r="50%">
+        <stop offset="0%" stop-color="${core}" stop-opacity="0.95"/>
+        <stop offset="60%" stop-color="${glow}" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="${glow}" stop-opacity="0"/>
       </radialGradient>
+      <linearGradient id="tentGrad-${uid}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${glow}" stop-opacity="0.85"/>
+        <stop offset="100%" stop-color="${glow}" stop-opacity="0"/>
+      </linearGradient>
     </defs>
-    <g class="bell">
-      <path d="M8 54 C8 20 30 3 47 3 C64 3 86 20 86 54 C86 70 74 78 62 81 C67 89 62 94 54 91 C57 99 48 102 44 94 C40 102 31 99 34 91 C26 94 21 89 26 81 C14 78 8 70 8 54 Z"
-            fill="url(#bellGrad-${uid})" stroke="${bell}" stroke-width="1.2" stroke-opacity="0.75"/>
-      <ellipse cx="47" cy="34" rx="30" ry="22" fill="url(#coreGlow-${uid})" opacity="0.55"/>
-      <path d="M18 26 C26 44 26 62 21 76" fill="none" stroke="${core}" stroke-opacity="0.4" stroke-width="1.1"/>
-      <path d="M47 10 C50 32 50 56 47 81" fill="none" stroke="${core}" stroke-opacity="0.5" stroke-width="1.2"/>
-      <path d="M76 26 C68 44 68 62 73 76" fill="none" stroke="${core}" stroke-opacity="0.35" stroke-width="1.1"/>
-      <ellipse cx="34" cy="22" rx="8" ry="12" fill="#ffffff" opacity="0.55"/>
-    </g>
-    <g class="tentacle" style="--sway-dur:4.1s;--sway-delay:0s" stroke="${glow}" stroke-opacity="0.62" stroke-width="2" fill="none" stroke-linecap="round">
-      <path d="M24 84 C13 108 34 124 21 146 C11 162 29 175 18 192"/>
-      <circle cx="18" cy="110" r="1.4" fill="${core}" opacity="0.85"/>
-      <circle cx="15" cy="150" r="1.2" fill="${core}" opacity="0.7"/>
-    </g>
-    <g class="tentacle" style="--sway-dur:5.2s;--sway-delay:0.6s" stroke="${glow}" stroke-opacity="0.55" stroke-width="1.8" fill="none" stroke-linecap="round">
-      <path d="M40 89 C35 114 51 128 40 152 C33 170 46 180 38 196"/>
-      <circle cx="42" cy="118" r="1.3" fill="${core}" opacity="0.8"/>
-    </g>
-    <g class="tentacle" style="--sway-dur:4.6s;--sway-delay:1.1s" stroke="${glow}" stroke-opacity="0.55" stroke-width="1.8" fill="none" stroke-linecap="round">
-      <path d="M55 89 C60 114 44 128 55 152 C62 170 49 180 57 196"/>
-      <circle cx="53" cy="122" r="1.3" fill="${core}" opacity="0.8"/>
-    </g>
-    <g class="tentacle" style="--sway-dur:4.9s;--sway-delay:0.3s" stroke="${glow}" stroke-opacity="0.62" stroke-width="2" fill="none" stroke-linecap="round">
-      <path d="M70 84 C81 108 60 124 73 146 C83 162 65 175 76 192"/>
-      <circle cx="76" cy="112" r="1.4" fill="${core}" opacity="0.85"/>
-      <circle cx="79" cy="152" r="1.2" fill="${core}" opacity="0.7"/>
-    </g>
-    <g class="tentacle" style="--sway-dur:3.8s;--sway-delay:0.8s" stroke="${glow}" stroke-opacity="0.4" stroke-width="1.2" fill="none" stroke-linecap="round">
-      <path d="M47 82 C44 96 50 106 47 122 C44 136 50 144 47 158"/>
+    ${g}
+      <!-- Outer soft bloom, sitting behind the bell for a "lit from within" halo -->
+      <ellipse cx="47" cy="42" rx="46" ry="46" fill="url(#coreGlow-${uid})" opacity="0.7"/>
+      <g class="bell">
+        <path d="M6 52 C6 16 24 2 47 2 C70 2 88 16 88 52 C88 66 78 76 66 80 C60 84 54 84 47 84 C40 84 34 84 28 80 C16 76 6 66 6 52 Z"
+              fill="url(#bellGrad-${uid})" stroke="${core}" stroke-width="0.8" stroke-opacity="0.55"/>
+        <ellipse cx="47" cy="30" rx="26" ry="19" fill="url(#coreGlow-${uid})" opacity="0.6"/>
+        <path d="M20 22 C27 38 27 54 23 70" fill="none" stroke="${core}" stroke-opacity="0.3" stroke-width="1"/>
+        <path d="M47 8 C49 30 49 54 47 76" fill="none" stroke="${core}" stroke-opacity="0.45" stroke-width="1.1"/>
+        <path d="M74 22 C67 38 67 54 71 70" fill="none" stroke="${core}" stroke-opacity="0.28" stroke-width="1"/>
+        <ellipse cx="33" cy="18" rx="9" ry="13" fill="#ffffff" opacity="0.4"/>
+      </g>
+      <!-- Ribbon tentacles: a tapered fill shape (wide at the bell, hairline at
+           the tip) filled with a top-to-bottom fade, instead of a uniform
+           stroke — reads as translucent membrane rather than a hard line. -->
+      <g class="tentacle" style="--sway-dur:6.5s;--sway-delay:0s">
+        <path d="M20 78 C10 104 30 122 16 150 C9 168 22 178 14 194 C13 194 12 193 12 192 C18 178 8 168 14 150 C26 122 8 104 16 78 Z" fill="url(#tentGrad-${uid})"/>
+      </g>
+      <g class="tentacle" style="--sway-dur:7.8s;--sway-delay:0.9s">
+        <path d="M38 82 C33 108 49 124 39 154 C33 172 44 182 37 196 C36 196 35 195 35 194 C41 182 31 172 36 154 C46 124 30 108 35 82 Z" fill="url(#tentGrad-${uid})" opacity="0.85"/>
+      </g>
+      <g class="tentacle" style="--sway-dur:6.9s;--sway-delay:1.6s">
+        <path d="M56 82 C61 108 45 124 55 154 C61 172 50 182 57 196 C58 196 59 195 59 194 C53 182 63 172 58 154 C48 124 64 108 59 82 Z" fill="url(#tentGrad-${uid})" opacity="0.85"/>
+      </g>
+      <g class="tentacle" style="--sway-dur:7.2s;--sway-delay:0.4s">
+        <path d="M74 78 C84 104 64 122 78 150 C85 168 72 178 80 194 C81 194 82 193 82 192 C76 178 86 168 80 150 C68 122 86 104 78 78 Z" fill="url(#tentGrad-${uid})"/>
+      </g>
+      <g class="tentacle" style="--sway-dur:5.6s;--sway-delay:1.1s">
+        <path d="M47 80 C45 96 51 108 47 126 C44 142 51 150 47 164 C46.5 164 46 163.5 46 163 C50 150 43 142 46 126 C50 108 44 96 46 80 Z" fill="url(#tentGrad-${uid})" opacity="0.55"/>
+      </g>
     </g>
   </svg>`;
 }
@@ -129,6 +141,26 @@ function abyssFishSvgLantern(color, lureColor) {
   </svg>`;
 }
 
+// Two more species: a manta/ray with wide sweeping fins, and a tiny curled
+// seahorse (which doesn't really "swim forward" horizontally in real life,
+// but drifting slowly sideways like the others reads fine here and adds
+// silhouette variety).
+function abyssFishSvgManta(color) {
+  return `
+  <svg width="46" height="22" viewBox="0 0 46 22" xmlns="http://www.w3.org/2000/svg">
+    <path d="M23 4 C14 -2 2 4 1 11 C2 9 10 6 20 10 C10 13 2 15 1 13 C4 19 16 22 23 16 C30 22 42 19 45 13 C44 15 36 13 26 10 C36 6 44 9 45 11 C44 4 32 -2 23 4 Z" fill="${color}" opacity="0.72"/>
+    <circle cx="23" cy="8" r="1" fill="#04121c"/>
+  </svg>`;
+}
+function abyssFishSvgSeahorse(color) {
+  return `
+  <svg width="18" height="30" viewBox="0 0 18 30" xmlns="http://www.w3.org/2000/svg">
+    <path d="M9 2 C14 2 15 6 12 8 C16 9 16 14 12 15 C15 17 14 22 10 22 C11 24 9 26 7 25 C4 24 5 21 7 21 C4 20 3 16 6 14 C3 13 3 9 6 8 C4 7 5 3 9 2 Z" fill="${color}" opacity="0.8"/>
+    <path d="M9 4 L6 1" fill="none" stroke="${color}" stroke-width="1" opacity="0.7"/>
+    <circle cx="10" cy="6" r="0.9" fill="#04121c"/>
+  </svg>`;
+}
+
 const ABYSS_JELLY_PALETTE = [
   { bell: '#6fe3ff', glow: '#4dfff0', core: '#eafcff' },
   { bell: '#a98bff', glow: '#8a6bff', core: '#f0e8ff' },
@@ -137,9 +169,13 @@ const ABYSS_JELLY_PALETTE = [
   { bell: '#ff9d4d', glow: '#ffb347', core: '#fff3c4' },
 ];
 const ABYSS_FISH_COLORS = ['#3fd8c8', '#6a8fff', '#4db8e8', '#ffb347'];
-const ABYSS_FISH_BUILDERS = [abyssFishSvgRound, abyssFishSvgRibbon, abyssFishSvgLantern];
+const ABYSS_FISH_BUILDERS = [
+  abyssFishSvgRound, abyssFishSvgRibbon, abyssFishSvgLantern,
+  abyssFishSvgManta, abyssFishSvgSeahorse,
+];
 
 let _abyssJellyEls = [];
+let _abyssJellyTimer = null;
 let _abyssBubbleTimer = null;
 let _abyssClusterTimer = null;
 let _abyssAnglerTimer = null;
@@ -179,37 +215,54 @@ function startAbyssTheme() {
   layer.appendChild(_abyssGlowEl);
   document.addEventListener('pointermove', _abyssPointerMove);
 
-  // 6 jellyfish, placed once and left to drift in place for as long as the
-  // theme is active — no re-creation, no per-frame cost, just a handful of
-  // long-running CSS loops on a handful of elements. Spread across more of
-  // the viewport (including a couple of mid-height spots, not just corners)
-  // and sized up a bit — 3 tucked at 0.6x in the edges read as "almost
-  // nothing" on a lobby screen where the eye is mostly on the center card.
-  const spots = [
-    { top: '10%', left: '6%' }, { top: '58%', left: '88%' }, { top: '72%', left: '14%' },
-    { top: '34%', left: '92%' }, { top: '46%', left: '3%' }, { top: '82%', left: '70%' },
-  ];
-  spots.forEach((pos, i) => {
-    const palette = ABYSS_JELLY_PALETTE[i % ABYSS_JELLY_PALETTE.length];
+  // Jellyfish now actually swim across the screen (slowly, real jellyfish
+  // aren't fast) instead of bobbing in place forever. Each one is spawned
+  // with a random start point, a random long-ish travel distance/duration
+  // (so speed visibly varies between individuals), and removes itself when
+  // its drift finishes — same self-cleaning spawn/schedule pattern as the
+  // fish/anglerfish. Size is set via the <svg>'s own width/height (a plain
+  // CSS box size, not a `transform`), so it can't collide with the drift
+  // animation on the outer element or the bob animation on the inner one.
+  const spawnJelly = () => {
+    const palette = ABYSS_JELLY_PALETTE[Math.floor(Math.random() * ABYSS_JELLY_PALETTE.length)];
     const el = document.createElement('div');
     el.className = 'abyss-jelly';
-    el.style.top = pos.top;
-    el.style.left = pos.left;
+    const startTop = 4 + Math.random() * 78;
+    const startLeft = 4 + Math.random() * 78;
+    el.style.top = startTop + '%';
+    el.style.left = startLeft + '%';
     el.style.setProperty('--glow', palette.glow + '59');
-    el.style.setProperty('--float-dur', (8 + i * 1.4) + 's');
-    el.style.setProperty('--float-delay', (i * 1.1) + 's');
-    el.style.setProperty('--pulse-dur', (3.2 + i * 0.35) + 's');
-    el.style.setProperty('--pulse-delay', (i * 0.4) + 's');
-    el.style.opacity = '0.9';
-    const scale = 0.72 + (i % 3) * 0.08;
-    // A single scale(x,y) call with a negative x mirrors horizontally without
-    // compounding two separate scale transforms (scaleX(-s) followed by
-    // scale(s) multiplies to s*-s, silently shrinking/warping it further).
-    el.style.transform = i % 2 ? `scale(${-scale}, ${scale})` : `scale(${scale})`;
-    el.innerHTML = abyssJellySvg(palette.bell, palette.glow, palette.core);
+    el.style.setProperty('--jelly-opacity', (0.75 + Math.random() * 0.2).toFixed(2));
+    // Long, slow, mostly-horizontal wander with a little vertical drift —
+    // real jellyfish pulse gently and mostly get pushed sideways by current.
+    const dx = (Math.random() < 0.5 ? -1 : 1) * (18 + Math.random() * 45); // vw
+    const dy = (Math.random() < 0.5 ? -1 : 1) * (6 + Math.random() * 18); // vh
+    el.style.setProperty('--dx', dx + 'vw');
+    el.style.setProperty('--dy', dy + 'vh');
+    const driftDur = 32 + Math.random() * 40; // 32-72s: visibly different speeds
+    el.style.setProperty('--drift-dur', driftDur + 's');
+    el.style.setProperty('--float-dur', (7 + Math.random() * 4) + 's');
+    el.style.setProperty('--pulse-dur', (3 + Math.random() * 1.4) + 's');
+    const px = Math.round(94 * (0.55 + Math.random() * 0.55));
+    const py = Math.round(190 * (0.55 + Math.random() * 0.55));
+    el.innerHTML = abyssJellySvg(palette.bell, palette.glow, palette.core, Math.random() < 0.5);
+    const svg = el.firstElementChild;
+    svg.setAttribute('width', px);
+    svg.setAttribute('height', py);
     layer.appendChild(el);
     _abyssJellyEls.push(el);
-  });
+    setTimeout(() => { el.remove(); _abyssJellyEls = _abyssJellyEls.filter(j => j !== el); }, driftDur * 1000 + 500);
+  };
+  // Seed a handful right away, staggered, so the screen doesn't start empty
+  // while waiting for the first scheduled spawn.
+  for (let i = 0; i < 4; i++) setTimeout(spawnJelly, i * 900);
+  const scheduleJelly = () => {
+    _abyssJellyTimer = setTimeout(() => {
+      if (document.body.classList.contains('theme-abyss')) spawnJelly();
+      scheduleJelly();
+    }, 5000 + Math.random() * 6000);
+  };
+  scheduleJelly();
 
   // Rising bubbles, one-shot elements that self-remove after their CSS
   // animation finishes.
@@ -260,9 +313,12 @@ function startAbyssTheme() {
     el.style.setProperty('--y', (15 + Math.random() * 55) + '%');
     el.style.setProperty('--swim-dur', (18 + Math.random() * 8) + 's');
     el.innerHTML = abyssAnglerSvg();
-    // Same reasoning as the fish above: mirror the inner <svg>, since `el`'s
-    // transform belongs to the abyssAnglerSwim animation.
-    if (Math.random() < 0.5) el.firstElementChild.style.transform = 'scaleX(-1)';
+    // abyssAnglerSwim always moves left-to-right (there's no rtl variant),
+    // and the artwork's mouth/head is drawn facing left by default — so it
+    // must always be mirrored to actually face the direction it swims.
+    // Previously this was a coin flip unrelated to the real (fixed) travel
+    // direction, so it was facing backward about half the time.
+    el.firstElementChild.style.transform = 'scaleX(-1)';
     document.getElementById('abyssLayer')?.appendChild(el);
     setTimeout(() => el.remove(), 30000);
   };
@@ -293,7 +349,11 @@ function startAbyssTheme() {
     // the abyssFishSwim CSS animation (translateX), and an animated
     // transform fully replaces any inline transform on the same element for
     // its whole run, so setting the flip on `el` would just be discarded.
-    if (rtl) el.firstElementChild.style.transform = 'scaleX(-1)';
+    // The fish artwork is drawn facing LEFT by default (eye/head on the
+    // left, tail fin on the right) — so it only needs flipping when it's
+    // actually swimming RIGHT (rtl === false). Previously this condition
+    // was backwards, so every fish visibly swam tail-first.
+    if (!rtl) el.firstElementChild.style.transform = 'scaleX(-1)';
     document.getElementById('abyssLayer')?.appendChild(el);
     setTimeout(() => el.remove(), 26000);
   };
@@ -307,6 +367,7 @@ function startAbyssTheme() {
 }
 
 function stopAbyssTheme() {
+  clearTimeout(_abyssJellyTimer); _abyssJellyTimer = null;
   clearTimeout(_abyssBubbleTimer); _abyssBubbleTimer = null;
   clearTimeout(_abyssClusterTimer); _abyssClusterTimer = null;
   clearTimeout(_abyssAnglerTimer); _abyssAnglerTimer = null;
