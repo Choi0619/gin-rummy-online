@@ -1586,11 +1586,19 @@ body.theme-aurora .sort-btn.active {
 .hint-txt { font-size: 11px; color: rgba(255,255,255,0.4); }
 .action-row { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 4px; }
 .act-btn {
+  position: relative;
   padding: 9px 16px; border-radius: 9px; border: none;
   font-size: 13px; font-weight: bold; cursor: pointer; transition: all 0.15s;
 }
 .act-btn:hover:not(:disabled) { transform: scale(1.06); filter: brightness(1.1); }
 .act-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none !important; }
+.act-hotkey {
+  position: absolute; top: -6px; right: -6px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.4);
+  color: #fff; font-size: 9px; font-weight: 800; line-height: 14px; text-align: center;
+  pointer-events: none;
+}
 .btn-discard-act { background: #ef5350; color: white; }
 .btn-knock-act { background: #ff9800; color: white; }
 .btn-gin-act { background: #4caf50; color: white; }
@@ -2016,7 +2024,18 @@ body.theme-aurora .avatar-card.my-turn > .turn-halo-layer {
   border: 1px solid #dfe1e5; border-radius: 24px; padding: 10px 18px; box-shadow: 0 1px 6px rgba(32,33,36,0.12);
 }
 .disguise-search-icon, .disguise-mic { font-size: 15px; opacity: 0.6; }
-.disguise-search-input { flex: 1; border: none; outline: none; font-size: 15px; color: #202124; }
+/* The app-wide `input[type="text"]` rule (dark translucent bg, white text —
+   correct everywhere else in the app) has higher specificity than
+   .disguise-search-input's own color, and sets a background this element
+   doesn't declare at all, so it was leaking through: the "Google" search
+   box rendered with a dark-tinted background and white-on-white text
+   instead of looking like real Google. This disguise screen has to look
+   identical to the real thing regardless of which site theme is active, so
+   it's pinned here rather than left to inherit. */
+#autopilotOverlay input[type="text"].disguise-search-input {
+  flex: 1; border: none; outline: none; font-size: 15px;
+  background: #fff !important; color: #202124 !important;
+}
 .disguise-btn-row { display: flex; gap: 10px; }
 .disguise-btn {
   background: #f8f9fa; border: 1px solid #f8f9fa; border-radius: 4px;
@@ -3429,9 +3448,9 @@ body.theme-aurora .card.just-drawn {
           <button class="act-btn btn-discard-act" id="btnPassUpcard" onclick="actPassUpcard()" data-i18n="passUpcardBtn">❌ 패스</button>
         </div>
         <div class="action-row" id="normalActions">
-          <button class="act-btn btn-discard-act" id="btnDiscard" onclick="actDiscard()" disabled data-i18n="discardBtn">버리기</button>
-          <button class="act-btn btn-knock-act" id="btnKnock" onclick="actKnock()" disabled data-i18n="knockBtn">🤜 녹</button>
-          <button class="act-btn btn-gin-act" id="btnGin" onclick="actGin()" disabled data-i18n="ginBtn">✨ 진</button>
+          <button class="act-btn btn-discard-act" id="btnDiscard" onclick="actDiscard()" disabled><span data-i18n="discardBtn">버리기</span><span class="act-hotkey">T</span></button>
+          <button class="act-btn btn-knock-act" id="btnKnock" onclick="actKnock()" disabled><span data-i18n="knockBtn">🤜 녹</span><span class="act-hotkey">N</span></button>
+          <button class="act-btn btn-gin-act" id="btnGin" onclick="actGin()" disabled><span data-i18n="ginBtn">✨ 진</span><span class="act-hotkey">G</span></button>
           <button class="act-btn btn-biggin-act" id="btnBigGin" onclick="actBigGin()" disabled style="display:none" data-i18n="bigGinBtn">💎 빅진</button>
         </div>
       </div>
@@ -7338,14 +7357,25 @@ function initSocket() {
     matchTurns = 0;
     lastRoundType = '';
     prevMeldIds = null; // fresh hand this round — don't treat its starting melds as "just completed"
-    // game-started fires at the start of every round within a match, not just the first —
-    // only wipe the round log when scores are both 0 (i.e. this is genuinely a new match).
-    if (!data.scores || (data.scores[0] === 0 && data.scores[1] === 0)) matchRoundLog = [];
-    secretMode = [false, false];
-    fullAutoMode = false;
-    clearTimeout(_fullAutoTimer);
-    const overlay = document.getElementById('autopilotOverlay');
-    if (overlay) overlay.classList.remove('show');
+    // game-started fires at the start of every round within a match, not just
+    // the first. matchRoundLog was already fixed to only reset on a genuine
+    // new match (scores both 0) — secretMode/fullAutoMode/the disguise
+    // overlay had the exact same bug: they were force-reset every single
+    // round, so using Secret Mode to hide the game meant getting silently
+    // dumped back to the visible game screen the moment a new round started
+    // mid-match. The server-side room.secretMode is never reset between
+    // rounds (only ever changed by the set-secret-mode event itself), so
+    // there's nothing to resync here — the client just needs to stop
+    // clobbering its own state to match.
+    const isNewMatch = !data.scores || (data.scores[0] === 0 && data.scores[1] === 0);
+    if (isNewMatch) {
+      matchRoundLog = [];
+      secretMode = [false, false];
+      fullAutoMode = false;
+      clearTimeout(_fullAutoTimer);
+      const overlay = document.getElementById('autopilotOverlay');
+      if (overlay) overlay.classList.remove('show');
+    }
     myIdx = data.playerIndex;
     vsAI = !!data.vsAI;
     myHand = data.hand;
@@ -8065,7 +8095,17 @@ document.addEventListener('keydown', e => {
   if (plainH || comboH) {
     if (comboH) e.preventDefault();
     toggleSecretMode();
+    return;
   }
+  if (typing || e.ctrlKey || e.altKey || e.metaKey) return;
+  // Discard/Knock/Gin hotkeys — just call the same functions the buttons
+  // use, so all the existing phase/selection/AI-control guards inside them
+  // still apply; a key press when the action isn't actually available yet
+  // is a harmless no-op exactly like clicking a disabled-looking button.
+  const key = e.key.toLowerCase();
+  if (key === 't') { e.preventDefault(); actDiscard(); }
+  else if (key === 'n') { e.preventDefault(); actKnock(); }
+  else if (key === 'g') { e.preventDefault(); actGin(); }
 });
 
 function confirmSurrender() {

@@ -978,12 +978,22 @@ function autoPlayOnTimeout(room) {
 
   if (g.phase === 'discard') {
     const hand = g.hands[idx];
-    const { melds } = bestMelds(hand);
+    const { melds, dw } = bestMelds(hand);
     const meldIds = new Set(melds.flat().map(c => c.id));
     const deadwood = hand.filter(c => !meldIds.has(c.id));
-    const toDiscard = deadwood.length > 0
-      ? deadwood.reduce((a, b) => b.val > a.val ? b : a)
-      : hand.reduce((a, b) => b.val > a.val ? b : a);
+
+    // If every card in hand is already part of a meld, there's no card that
+    // ISN'T a meld card — the old fallback picked the highest-value card
+    // from the whole hand anyway, which meant "discard" here always broke
+    // a meld apart for no reason. This is exactly the Big Gin condition
+    // (all 11 cards melded, dw === 0), so resolve that instead of forcing a
+    // nonsensical discard.
+    if (deadwood.length === 0 && dw === 0) {
+      resolveBigGin(room, idx);
+      return;
+    }
+
+    const toDiscard = deadwood.reduce((a, b) => b.val > a.val ? b : a);
 
     g.hands[idx] = hand.filter(c => c.id !== toDiscard.id);
     g.discardPile.push(toDiscard);

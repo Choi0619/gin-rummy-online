@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Abyss 생물 갤러리 (검토용)</title>
+<link rel="stylesheet" href="/theme-abyss.css">
+<script src="/theme-abyss.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 24px 100px;
+    background: linear-gradient(180deg, #010509 0%, #041220 55%, #062038 100%);
+    color: #eafdff; font-family: 'Segoe UI', sans-serif;
+  }
+  h1 { text-align: center; font-size: 26px; margin-bottom: 6px; }
+  p.sub { text-align: center; color: rgba(210,245,255,0.6); margin-bottom: 40px; font-size: 13px; }
+  h2 {
+    font-size: 16px; color: #9fe9ff; border-bottom: 1px solid rgba(110,220,255,0.2);
+    padding-bottom: 8px; margin: 48px 0 20px;
+  }
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    background: rgba(4,16,26,0.6); border: 1px solid rgba(110,220,255,0.2);
+    border-radius: 14px; padding: 18px 12px 14px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    min-height: 220px; position: relative; overflow: visible;
+  }
+  .card .stage {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    width: 100%; min-height: 140px;
+  }
+  .card .label { font-size: 12.5px; font-weight: 700; color: #eafdff; text-align: center; }
+  .card .sub-label { font-size: 10.5px; color: rgba(210,245,255,0.5); text-align: center; }
+  .card.candidate { border-color: rgba(255,180,90,0.4); background: rgba(30,20,4,0.35); }
+  .card.candidate .label { color: #ffcf7a; }
+  .badge {
+    position: absolute; top: -9px; right: 10px; font-size: 10px; font-weight: 800;
+    background: #ff9d4d; color: #1a0e02; padding: 3px 8px; border-radius: 10px;
+  }
+  .note { font-size: 11px; color: rgba(210,245,255,0.45); text-align: center; max-width: 640px; margin: 0 auto 30px; line-height: 1.6; }
+</style>
+</head>
+<body>
+  <h1>🌊 Abyss 생물 디자인 갤러리</h1>
+  <p class="sub">실제 게임에 쓰이는 컴포넌트를 그대로 불러와서 보여주는 검토용 페이지입니다 (게임 본체와 무관, 링크 없음)</p>
+
+  <h2>현재 사용 중 — 해파리 (2종)</h2>
+  <p class="note">현재 게임에 실제로 스폰되는 두 가지 해파리 형태입니다. 색상은 4가지 팔레트(청록/보라/하늘/골드) 중 랜덤으로 입혀집니다.</p>
+  <div class="grid" id="jellyCurrentGrid"></div>
+
+  <h2>후보 — 새 해파리 디자인 (아직 게임에 적용 안 됨)</h2>
+  <p class="note">방향성 참고용으로 몇 가지 다르게 그려봤습니다. 마음에 드는 걸 골라주시면 그걸로 다듬어서 실제 게임에 넣을게요.</p>
+  <div class="grid" id="jellyCandidateGrid"></div>
+
+  <h2>배경 물고기 (5종)</h2>
+  <div class="grid" id="fishGrid"></div>
+
+  <h2>앵글러피시</h2>
+  <div class="grid" id="anglerGrid"></div>
+
+  <script>
+    const PALETTE = [
+      { name: '청록', bell: '#6fe3ff', glow: '#4dfff0', core: '#eafcff' },
+      { name: '보라', bell: '#a98bff', glow: '#8a6bff', core: '#f0e8ff' },
+      { name: '하늘', bell: '#7fd9ff', glow: '#6fc9ff', core: '#ffffff' },
+      { name: '골드', bell: '#ff9d4d', glow: '#ffb347', core: '#fff3c4' },
+    ];
+
+    function addCard(gridId, label, subLabel, svgHtml, candidate) {
+      const grid = document.getElementById(gridId);
+      const card = document.createElement('div');
+      card.className = 'card' + (candidate ? ' candidate' : '');
+      if (candidate) card.innerHTML = '<div class="badge">후보</div>';
+      const stage = document.createElement('div');
+      stage.className = 'stage';
+      stage.innerHTML = svgHtml;
+      const l = document.createElement('div');
+      l.className = 'label';
+      l.textContent = label;
+      card.appendChild(stage);
+      card.appendChild(l);
+      if (subLabel) {
+        const sl = document.createElement('div');
+        sl.className = 'sub-label';
+        sl.textContent = subLabel;
+        card.appendChild(sl);
+      }
+      grid.appendChild(card);
+    }
+
+    // ---- Current jellyfish (both shapes, one palette each for a clean look) ----
+    addCard('jellyCurrentGrid', '벨(Bell) 해파리', '길게 늘어진 리본 촉수, 돔형 갓', abyssJellySvgBell(PALETTE[0].bell, PALETTE[0].glow, PALETTE[0].core, false));
+    addCard('jellyCurrentGrid', '벨 해파리 (골드)', '따뜻한 발광 팔레트', abyssJellySvgBell(PALETTE[3].bell, PALETTE[3].glow, PALETTE[3].core, false));
+    addCard('jellyCurrentGrid', '문(Moon) 해파리', '납작한 원반형, 클로버 무늬', abyssJellySvgMoon(PALETTE[1].bell, PALETTE[1].glow, PALETTE[1].core, false));
+    addCard('jellyCurrentGrid', '문 해파리 (하늘)', '짧은 프릴 촉수', abyssJellySvgMoon(PALETTE[2].bell, PALETTE[2].glow, PALETTE[2].core, false));
+
+    // ---- Candidate #1: "Photo-real umbrella" — wider mushroom-cap bell,
+    // stronger rim highlight ring, many thin flowing tentacles (closer to the
+    // reference photo the user shared: warm core, cool rim, dense tentacle fall) ----
+    function candidateUmbrella(bell, glow, core) {
+      const uid = 'cu' + Math.floor(Math.random() * 99999);
+      const tentacles = [];
+      const n = 9;
+      for (let i = 0; i < n; i++) {
+        const x = 10 + (i * (80 / (n - 1)));
+        const wobble = (i % 2 ? 6 : -6);
+        tentacles.push(`<path d="M${x} 70 C${x - 4} 100 ${x + wobble} 120 ${x - 3} 155 C${x - 8} 178 ${x + 4} 190 ${x - 2} 210"
+          fill="none" stroke="url(#ct-${uid})" stroke-width="${1.6 - i % 3 * 0.3}" stroke-linecap="round" opacity="${0.85 - (i % 3) * 0.15}"
+          class="tentacle" style="--sway-dur:${5 + i % 4}s;--sway-delay:${i * 0.3}s"/>`);
+      }
+      return `
+      <svg width="110" height="220" viewBox="0 0 110 220" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        <defs>
+          <radialGradient id="cb-${uid}" cx="50%" cy="30%" r="65%">
+            <stop offset="0%" stop-color="${core}" stop-opacity="1"/>
+            <stop offset="35%" stop-color="${core}" stop-opacity="0.8"/>
+            <stop offset="70%" stop-color="${bell}" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="${glow}" stop-opacity="0.05"/>
+          </radialGradient>
+          <radialGradient id="cg-${uid}" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="${core}" stop-opacity="1"/>
+            <stop offset="60%" stop-color="${glow}" stop-opacity="0.45"/>
+            <stop offset="100%" stop-color="${glow}" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="ct-${uid}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${glow}" stop-opacity="0.95"/>
+            <stop offset="100%" stop-color="${glow}" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <ellipse cx="55" cy="45" rx="58" ry="58" fill="url(#cg-${uid})" opacity="0.9"/>
+        <path d="M2 55 C2 15 25 0 55 0 C85 0 108 15 108 55 C108 72 96 82 84 86 L84 90 C70 96 40 96 26 90 L26 86 C14 82 2 72 2 55 Z"
+              fill="url(#cb-${uid})" stroke="${core}" stroke-width="1" stroke-opacity="0.75"/>
+        <ellipse cx="55" cy="30" rx="30" ry="20" fill="url(#cg-${uid})" opacity="0.8"/>
+        <ellipse cx="38" cy="20" rx="10" ry="14" fill="#ffffff" opacity="0.5"/>
+        ${tentacles.join('')}
+      </svg>`;
+    }
+    addCard('jellyCandidateGrid', '후보 A — 우산형 (촉수 9가닥)', '사진 레퍼런스에 가장 가까움', candidateUmbrella(PALETTE[3].bell, PALETTE[3].glow, PALETTE[3].core), true);
+    addCard('jellyCandidateGrid', '후보 A (청록)', '', candidateUmbrella(PALETTE[0].bell, PALETTE[0].glow, PALETTE[0].core), true);
+
+    // ---- Candidate #2: "Box jelly" — small cube-ish bell, 4 long single tentacles from corners ----
+    function candidateBox(bell, glow, core) {
+      const uid = 'cx' + Math.floor(Math.random() * 99999);
+      return `
+      <svg width="90" height="200" viewBox="0 0 90 200" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        <defs>
+          <linearGradient id="xb-${uid}" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="${core}" stop-opacity="0.95"/>
+            <stop offset="100%" stop-color="${bell}" stop-opacity="0.35"/>
+          </linearGradient>
+          <radialGradient id="xg-${uid}" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="${core}" stop-opacity="1"/>
+            <stop offset="100%" stop-color="${glow}" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="xt-${uid}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${glow}" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="${glow}" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <ellipse cx="45" cy="35" rx="40" ry="40" fill="url(#xg-${uid})" opacity="0.85"/>
+        <path d="M10 15 C10 5 20 0 45 0 C70 0 80 5 80 15 L80 55 C80 65 70 70 45 70 C20 70 10 65 10 55 Z"
+              fill="url(#xb-${uid})" stroke="${core}" stroke-width="1" stroke-opacity="0.7"/>
+        <g class="tentacle" style="--sway-dur:4.8s;--sway-delay:0s"><path d="M14 65 C8 100 18 130 10 170 C6 190 14 195 10 200" fill="none" stroke="url(#xt-${uid})" stroke-width="1.8" stroke-linecap="round"/></g>
+        <g class="tentacle" style="--sway-dur:5.6s;--sway-delay:0.4s"><path d="M32 68 C28 105 36 135 30 175" fill="none" stroke="url(#xt-${uid})" stroke-width="1.6" stroke-linecap="round"/></g>
+        <g class="tentacle" style="--sway-dur:5.1s;--sway-delay:0.8s"><path d="M58 68 C62 105 54 135 60 175" fill="none" stroke="url(#xt-${uid})" stroke-width="1.6" stroke-linecap="round"/></g>
+        <g class="tentacle" style="--sway-dur:4.6s;--sway-delay:0.2s"><path d="M76 65 C82 100 72 130 80 170 C84 190 76 195 80 200" fill="none" stroke="url(#xt-${uid})" stroke-width="1.8" stroke-linecap="round"/></g>
+      </svg>`;
+    }
+    addCard('jellyCandidateGrid', '후보 B — 박스 해파리', '네모난 갓 + 굵은 촉수 4가닥', candidateBox(PALETTE[1].bell, PALETTE[1].glow, PALETTE[1].core), true);
+    addCard('jellyCandidateGrid', '후보 B (하늘)', '', candidateBox(PALETTE[2].bell, PALETTE[2].glow, PALETTE[2].core), true);
+
+    // ---- Fish species ----
+    addCard('fishGrid', '둥근 물고기', '', abyssFishSvgRound('#3fd8c8'));
+    addCard('fishGrid', '리본 뱀장어', '', abyssFishSvgRibbon('#6a8fff'));
+    addCard('fishGrid', '랜턴피시', '', abyssFishSvgLantern('#4db8e8', '#fff3c4'));
+    addCard('fishGrid', '만타가오리', '', abyssFishSvgManta('#ffb347'));
+    addCard('fishGrid', '해마', '', abyssFishSvgSeahorse('#3fd8c8'));
+
+    // ---- Anglerfish ----
+    addCard('anglerGrid', '앵글러피시', '발광하는 루어', abyssAnglerSvg());
+  </script>
+</body>
+</html>

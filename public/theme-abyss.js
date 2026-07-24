@@ -24,7 +24,7 @@
 // fish/anglerfish). Baking it into the SVG's own markup sidesteps that
 // entirely. `uid` keeps gradient ids collision-free across instances.
 let _abyssJellyUidSeq = 0;
-function abyssJellySvg(bell, glow, core, mirror) {
+function abyssJellySvgBell(bell, glow, core, mirror) {
   core = core || '#ffffff';
   const uid = 'j' + (_abyssJellyUidSeq++);
   const g = mirror ? `<g transform="translate(94,0) scale(-1,1)">` : `<g>`;
@@ -33,31 +33,31 @@ function abyssJellySvg(bell, glow, core, mirror) {
     <defs>
       <radialGradient id="bellGrad-${uid}" cx="46%" cy="24%" r="72%">
         <stop offset="0%" stop-color="${core}" stop-opacity="1"/>
-        <stop offset="26%" stop-color="${core}" stop-opacity="0.75"/>
-        <stop offset="55%" stop-color="${bell}" stop-opacity="0.5"/>
-        <stop offset="100%" stop-color="${bell}" stop-opacity="0.1"/>
+        <stop offset="22%" stop-color="${core}" stop-opacity="0.92"/>
+        <stop offset="50%" stop-color="${bell}" stop-opacity="0.68"/>
+        <stop offset="100%" stop-color="${bell}" stop-opacity="0.16"/>
       </radialGradient>
       <radialGradient id="coreGlow-${uid}" cx="50%" cy="45%" r="50%">
-        <stop offset="0%" stop-color="${core}" stop-opacity="0.95"/>
-        <stop offset="60%" stop-color="${glow}" stop-opacity="0.35"/>
+        <stop offset="0%" stop-color="${core}" stop-opacity="1"/>
+        <stop offset="55%" stop-color="${glow}" stop-opacity="0.5"/>
         <stop offset="100%" stop-color="${glow}" stop-opacity="0"/>
       </radialGradient>
       <linearGradient id="tentGrad-${uid}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${glow}" stop-opacity="0.85"/>
+        <stop offset="0%" stop-color="${glow}" stop-opacity="0.95"/>
         <stop offset="100%" stop-color="${glow}" stop-opacity="0"/>
       </linearGradient>
     </defs>
     ${g}
       <!-- Outer soft bloom, sitting behind the bell for a "lit from within" halo -->
-      <ellipse cx="47" cy="42" rx="46" ry="46" fill="url(#coreGlow-${uid})" opacity="0.7"/>
+      <ellipse cx="47" cy="42" rx="52" ry="52" fill="url(#coreGlow-${uid})" opacity="0.85"/>
       <g class="bell">
         <path d="M6 52 C6 16 24 2 47 2 C70 2 88 16 88 52 C88 66 78 76 66 80 C60 84 54 84 47 84 C40 84 34 84 28 80 C16 76 6 66 6 52 Z"
-              fill="url(#bellGrad-${uid})" stroke="${core}" stroke-width="0.8" stroke-opacity="0.55"/>
-        <ellipse cx="47" cy="30" rx="26" ry="19" fill="url(#coreGlow-${uid})" opacity="0.6"/>
-        <path d="M20 22 C27 38 27 54 23 70" fill="none" stroke="${core}" stroke-opacity="0.3" stroke-width="1"/>
-        <path d="M47 8 C49 30 49 54 47 76" fill="none" stroke="${core}" stroke-opacity="0.45" stroke-width="1.1"/>
-        <path d="M74 22 C67 38 67 54 71 70" fill="none" stroke="${core}" stroke-opacity="0.28" stroke-width="1"/>
-        <ellipse cx="33" cy="18" rx="9" ry="13" fill="#ffffff" opacity="0.4"/>
+              fill="url(#bellGrad-${uid})" stroke="${core}" stroke-width="0.9" stroke-opacity="0.7"/>
+        <ellipse cx="47" cy="30" rx="26" ry="19" fill="url(#coreGlow-${uid})" opacity="0.75"/>
+        <path d="M20 22 C27 38 27 54 23 70" fill="none" stroke="${core}" stroke-opacity="0.35" stroke-width="1"/>
+        <path d="M47 8 C49 30 49 54 47 76" fill="none" stroke="${core}" stroke-opacity="0.55" stroke-width="1.2"/>
+        <path d="M74 22 C67 38 67 54 71 70" fill="none" stroke="${core}" stroke-opacity="0.32" stroke-width="1"/>
+        <ellipse cx="33" cy="18" rx="9" ry="13" fill="#ffffff" opacity="0.55"/>
       </g>
       <!-- Ribbon tentacles: a tapered fill shape (wide at the bell, hairline at
            the tip) filled with a top-to-bottom fade, instead of a uniform
@@ -75,10 +75,67 @@ function abyssJellySvg(bell, glow, core, mirror) {
         <path d="M74 78 C84 104 64 122 78 150 C85 168 72 178 80 194 C81 194 82 193 82 192 C76 178 86 168 80 150 C68 122 86 104 78 78 Z" fill="url(#tentGrad-${uid})"/>
       </g>
       <g class="tentacle" style="--sway-dur:5.6s;--sway-delay:1.1s">
-        <path d="M47 80 C45 96 51 108 47 126 C44 142 51 150 47 164 C46.5 164 46 163.5 46 163 C50 150 43 142 46 126 C50 108 44 96 46 80 Z" fill="url(#tentGrad-${uid})" opacity="0.55"/>
+        <path d="M47 80 C45 96 51 108 47 126 C44 142 51 150 47 164 C46.5 164 46 163.5 46 163 C50 150 43 142 46 126 C50 108 44 96 46 80 Z" fill="url(#tentGrad-${uid})" opacity="0.6"/>
       </g>
     </g>
   </svg>`;
+}
+
+// A second, visually distinct species: a flatter, wider "moon jelly" — real
+// moon jellies are famous for a near-flat saucer bell with a visible
+// four-leaf-clover gonad pattern showing through the translucent top, and
+// only short frilly oral arms (no long trailing tentacles). Deliberately
+// a different silhouette, not just a recolor of the bell-jelly above.
+function abyssJellySvgMoon(bell, glow, core, mirror) {
+  core = core || '#ffffff';
+  const uid = 'm' + (_abyssJellyUidSeq++);
+  const g = mirror ? `<g transform="translate(120,0) scale(-1,1)">` : `<g>`;
+  return `
+  <svg width="120" height="70" viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+    <defs>
+      <radialGradient id="mBellGrad-${uid}" cx="50%" cy="38%" r="60%">
+        <stop offset="0%" stop-color="${core}" stop-opacity="1"/>
+        <stop offset="30%" stop-color="${core}" stop-opacity="0.85"/>
+        <stop offset="62%" stop-color="${bell}" stop-opacity="0.55"/>
+        <stop offset="100%" stop-color="${bell}" stop-opacity="0.12"/>
+      </radialGradient>
+      <radialGradient id="mCoreGlow-${uid}" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="${core}" stop-opacity="1"/>
+        <stop offset="55%" stop-color="${glow}" stop-opacity="0.5"/>
+        <stop offset="100%" stop-color="${glow}" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    ${g}
+      <ellipse cx="60" cy="34" rx="62" ry="42" fill="url(#mCoreGlow-${uid})" opacity="0.8"/>
+      <ellipse cx="60" cy="30" rx="56" ry="26" fill="url(#mBellGrad-${uid})" stroke="${core}" stroke-width="0.8" stroke-opacity="0.6"/>
+      <!-- Four-leaf-clover gonad pattern, the moon jelly's signature marking -->
+      <g opacity="0.55" fill="${glow}">
+        <ellipse cx="46" cy="24" rx="8" ry="6"/>
+        <ellipse cx="74" cy="24" rx="8" ry="6"/>
+        <ellipse cx="46" cy="36" rx="8" ry="6"/>
+        <ellipse cx="74" cy="36" rx="8" ry="6"/>
+      </g>
+      <!-- Short frilly oral arms instead of long tentacles -->
+      <g class="tentacle" style="--sway-dur:5.4s;--sway-delay:0s" stroke="${glow}" stroke-opacity="0.6" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M40 50 C36 60 42 66 38 74"/>
+      </g>
+      <g class="tentacle" style="--sway-dur:6.1s;--sway-delay:0.5s" stroke="${glow}" stroke-opacity="0.55" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M52 54 C49 63 54 68 51 76"/>
+      </g>
+      <g class="tentacle" style="--sway-dur:5.8s;--sway-delay:0.9s" stroke="${glow}" stroke-opacity="0.55" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M68 54 C71 63 66 68 69 76"/>
+      </g>
+      <g class="tentacle" style="--sway-dur:6.4s;--sway-delay:0.3s" stroke="${glow}" stroke-opacity="0.6" stroke-width="2.2" fill="none" stroke-linecap="round">
+        <path d="M80 50 C84 60 78 66 82 74"/>
+      </g>
+    </g>
+  </svg>`;
+}
+
+const ABYSS_JELLY_BUILDERS = [abyssJellySvgBell, abyssJellySvgMoon];
+function abyssJellySvg(bell, glow, core, mirror) {
+  const builder = ABYSS_JELLY_BUILDERS[Math.floor(Math.random() * ABYSS_JELLY_BUILDERS.length)];
+  return builder(bell, glow, core, mirror);
 }
 
 // A simplified anglerfish: bulbous body, jagged teeth line, and the
@@ -231,7 +288,7 @@ function startAbyssTheme() {
     const startLeft = 4 + Math.random() * 78;
     el.style.top = startTop + '%';
     el.style.left = startLeft + '%';
-    el.style.setProperty('--glow', palette.glow + '59');
+    el.style.setProperty('--glow', palette.glow + 'a8'); // stronger glow alpha (was ~35%, now ~66%)
     el.style.setProperty('--jelly-opacity', (0.75 + Math.random() * 0.2).toFixed(2));
     // Long, slow, mostly-horizontal wander with a little vertical drift —
     // real jellyfish pulse gently and mostly get pushed sideways by current.
@@ -243,19 +300,23 @@ function startAbyssTheme() {
     el.style.setProperty('--drift-dur', driftDur + 's');
     el.style.setProperty('--float-dur', (7 + Math.random() * 4) + 's');
     el.style.setProperty('--pulse-dur', (3 + Math.random() * 1.4) + 's');
-    const px = Math.round(94 * (0.55 + Math.random() * 0.55));
-    const py = Math.round(190 * (0.55 + Math.random() * 0.55));
     el.innerHTML = abyssJellySvg(palette.bell, palette.glow, palette.core, Math.random() < 0.5);
     const svg = el.firstElementChild;
-    svg.setAttribute('width', px);
-    svg.setAttribute('height', py);
+    // Scale from the SVG's own native viewBox size rather than a hardcoded
+    // base — the bell-jelly (94x190) and moon-jelly (120x70) builders have
+    // very different native aspect ratios, so a one-size-fits-all base
+    // would badly stretch/squash whichever one wasn't picked.
+    const [, , vbW, vbH] = (svg.getAttribute('viewBox') || '0 0 94 190').split(' ').map(Number);
+    const scale = 0.55 + Math.random() * 0.55;
+    svg.setAttribute('width', Math.round(vbW * scale));
+    svg.setAttribute('height', Math.round(vbH * scale));
     layer.appendChild(el);
     _abyssJellyEls.push(el);
     setTimeout(() => { el.remove(); _abyssJellyEls = _abyssJellyEls.filter(j => j !== el); }, driftDur * 1000 + 500);
   };
   // Seed a handful right away, staggered, so the screen doesn't start empty
   // while waiting for the first scheduled spawn.
-  for (let i = 0; i < 4; i++) setTimeout(spawnJelly, i * 900);
+  for (let i = 0; i < 6; i++) setTimeout(spawnJelly, i * 400);
   const scheduleJelly = () => {
     _abyssJellyTimer = setTimeout(() => {
       if (document.body.classList.contains('theme-abyss')) spawnJelly();
