@@ -32,6 +32,11 @@ body.theme-abyss #lobbyScreen {
     url('https://images.unsplash.com/photo-1632061684048-34a67dc24372?fm=jpg&q=60&w=1600&auto=format&fit=crop') center / cover no-repeat fixed,
     var(--lobby-grad);
 }
+/* The global Abyss layer sits behind screens. On the lobby, remove the
+   duplicate opaque photo layer so the living ecosystem can actually show
+   through; body keeps the same dark photo base underneath it. */
+body.theme-abyss #lobbyScreen.active { background: transparent; }
+body.theme-abyss #lobbyScreen.active::before { opacity: 0.34; }
 
 .abyss-layer {
   display: none;
@@ -39,6 +44,91 @@ body.theme-abyss #lobbyScreen {
   overflow: hidden;
 }
 body.theme-abyss .abyss-layer { display: block; }
+
+/* ---------- Lobby-only sanctuary and schooling fish ---------- */
+.abyss-lobby-sanctuary,
+.abyss-lobby-school { display: none; }
+body.theme-abyss:has(#lobbyScreen.active) .abyss-lobby-sanctuary {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 5vh;
+  pointer-events: none;
+  z-index: 0;
+}
+.abyss-lobby-sanctuary::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: min(64vw, 780px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(120,235,255,0.12) 0%, rgba(90,190,240,0.055) 35%, transparent 70%);
+  animation: abyssLobbyHalo 8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.abyss-lobby-sanctuary img {
+  display: block;
+  width: min(64vw, 800px);
+  max-height: 88vh;
+  object-fit: contain;
+  opacity: 0.24;
+  animation: abyssLobbySanctuaryBreathe 9s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+@keyframes abyssLobbyHalo {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.94); opacity: 0.45; }
+  50%      { transform: translate(-50%, -50%) scale(1.04); opacity: 0.82; }
+}
+@keyframes abyssLobbySanctuaryBreathe {
+  0%, 100% { transform: translateY(4px) scale(0.985); opacity: 0.20; }
+  50%      { transform: translateY(-5px) scale(1.015); opacity: 0.30; }
+}
+body.theme-abyss:has(#lobbyScreen.active) .abyss-lobby-school {
+  position: fixed;
+  top: var(--school-top, 20%);
+  left: -230px;
+  display: block;
+  width: 190px;
+  height: 92px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transform-origin: center;
+  animation: abyssLobbySchoolLTR var(--school-duration, 36s) linear infinite;
+  animation-delay: var(--school-delay, 0s);
+  will-change: transform, opacity;
+}
+body.theme-abyss:has(#lobbyScreen.active) .abyss-lobby-school.rtl {
+  left: auto;
+  right: -230px;
+  animation-name: abyssLobbySchoolRTL;
+}
+.abyss-lobby-school img { position: absolute; height: auto; }
+.abyss-lobby-school.rtl img { transform: scaleX(-1); }
+@keyframes abyssLobbySchoolLTR {
+  0%   { transform: translate3d(0, 0, 0) scale(var(--school-scale, 1)); opacity: 0; }
+  8%   { opacity: 0.42; }
+  48%  { transform: translate3d(calc(50vw + 115px), -10px, 0) scale(var(--school-scale, 1)); }
+  92%  { opacity: 0.42; }
+  100% { transform: translate3d(calc(100vw + 460px), 6px, 0) scale(var(--school-scale, 1)); opacity: 0; }
+}
+@keyframes abyssLobbySchoolRTL {
+  0%   { transform: translate3d(0, 0, 0) scale(var(--school-scale, 1)); opacity: 0; }
+  8%   { opacity: 0.34; }
+  48%  { transform: translate3d(calc(-50vw - 115px), 10px, 0) scale(var(--school-scale, 1)); }
+  92%  { opacity: 0.34; }
+  100% { transform: translate3d(calc(-100vw - 460px), -6px, 0) scale(var(--school-scale, 1)); opacity: 0; }
+}
+
+@media (max-width: 720px) {
+  body.theme-abyss:has(#lobbyScreen.active) .abyss-lobby-sanctuary { padding-top: 1vh; }
+  .abyss-lobby-sanctuary img { width: min(124vw, 620px); opacity: 0.20; }
+  .abyss-lobby-sanctuary::before { width: min(116vw, 580px); }
+  body.theme-abyss:has(#lobbyScreen.active) .abyss-lobby-school { display: none; }
+}
 
 /* Static baked bubble-field texture behind everything — painted once, never
    re-painted. This is what gives the water depth without costing anything. */

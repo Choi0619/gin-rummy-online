@@ -341,6 +341,52 @@ function startAbyssTheme() {
   caustics.className = 'abyss-caustics';
   layer.appendChild(caustics);
 
+  // Lobby-only sanctuary: the generated coral gate frames the logo/card while
+  // two compact schools cross at different depths. CSS :has() hides these
+  // nodes completely as soon as another screen becomes active.
+  const sanctuary = document.createElement('div');
+  sanctuary.className = 'abyss-lobby-sanctuary';
+  const sanctuaryImg = document.createElement('img');
+  sanctuaryImg.src = ABYSS_ASSET_ROOT + 'lobby-sanctuary.webp';
+  sanctuaryImg.alt = '';
+  sanctuaryImg.decoding = 'async';
+  sanctuaryImg.draggable = false;
+  sanctuary.appendChild(sanctuaryImg);
+  layer.appendChild(sanctuary);
+
+  const createLobbySchool = (rtl, top, duration, delay, scale) => {
+    const school = document.createElement('div');
+    school.className = 'abyss-lobby-school' + (rtl ? ' rtl' : '');
+    school.style.setProperty('--school-top', top + '%');
+    school.style.setProperty('--school-duration', duration + 's');
+    school.style.setProperty('--school-delay', delay + 's');
+    school.style.setProperty('--school-scale', scale);
+    const fishLayout = [
+      { x: 0, y: 28, size: 52, file: 'hatchetfish.webp' },
+      { x: 48, y: 5, size: 42, file: 'lanternfish.webp' },
+      { x: 82, y: 42, size: 38, file: 'hatchetfish.webp' },
+      { x: 120, y: 14, size: 34, file: 'lanternfish.webp' },
+      { x: 150, y: 48, size: 28, file: 'hatchetfish.webp' },
+    ];
+    fishLayout.forEach((fish, index) => {
+      const img = document.createElement('img');
+      img.src = ABYSS_ASSET_ROOT + fish.file;
+      img.alt = '';
+      img.decoding = 'async';
+      img.draggable = false;
+      img.style.left = fish.x + 'px';
+      img.style.top = fish.y + 'px';
+      img.style.width = fish.size + 'px';
+      img.style.opacity = (0.74 - index * 0.08).toFixed(2);
+      school.appendChild(img);
+    });
+    layer.appendChild(school);
+  };
+  if (!motion.reduced) {
+    createLobbySchool(false, 17, 34, -7, 1);
+    createLobbySchool(true, 63, 42, -24, 0.82);
+  }
+
   // Cursor glow trail — one element, repositioned via JS on pointermove.
   _abyssGlowEl = document.createElement('div');
   _abyssGlowEl.className = 'abyss-cursor-glow';
