@@ -4204,16 +4204,20 @@ function getBestStreak() {
   return best;
 }
 
-// Logged-in users: Supabase profile is the source of truth (syncs across devices).
-// Guests (no account): falls back to this device's localStorage only.
+// Logged-in users: Supabase profile is the source of truth (syncs across devices),
+// but ALSO OR'd against localStorage — if the DB write ever silently fails (e.g. a
+// promo_* column missing on the profiles table, or an RLS error swallowed in
+// redeemPromoCode), the local flag still unlocks it immediately instead of the
+// account looking permanently un-redeemed despite the "success" message.
+// Guests (no account): localStorage only.
 // Promo unlocks are stored as an "active" boolean flag (per account when logged
 // in, else per device). Because every unlock check ORs against this flag, any
 // future theme/border/character added later is automatically unlocked too — the
 // account simply stays permanently in the promo-active state.
-function hasPromoThemes() { return supaProfile ? !!supaProfile.promo_themes : localStorage.getItem('grPromoThemes') === '1'; }
-function hasPromoBorders() { return supaProfile ? !!supaProfile.promo_borders : localStorage.getItem('grPromoBorders') === '1'; }
-function hasPromoChars() { return supaProfile ? !!supaProfile.promo_chars : localStorage.getItem('grPromoChars') === '1'; }
-function hasPromoTurtle() { return supaProfile ? !!supaProfile.promo_turtle : localStorage.getItem('grPromoTurtle') === '1'; }
+function hasPromoThemes() { return (supaProfile && !!supaProfile.promo_themes) || localStorage.getItem('grPromoThemes') === '1'; }
+function hasPromoBorders() { return (supaProfile && !!supaProfile.promo_borders) || localStorage.getItem('grPromoBorders') === '1'; }
+function hasPromoChars() { return (supaProfile && !!supaProfile.promo_chars) || localStorage.getItem('grPromoChars') === '1'; }
+function hasPromoTurtle() { return (supaProfile && !!supaProfile.promo_turtle) || localStorage.getItem('grPromoTurtle') === '1'; }
 
 function isPinkUnlocked() { return hasPromoThemes() || getTotalWins() >= PINK_UNLOCK_WINS; }
 function isRainbowUnlocked() { return hasPromoThemes() || getTotalWins() >= RAINBOW_UNLOCK_WINS; }
@@ -4267,8 +4271,14 @@ async function redeemPromoCode() {
   }
   localStorage.setItem(promo.localKey, '1');
   if (supaUser) {
-    const { data } = await supa.from('profiles').update({ [promo.column]: true }).eq('id', supaUser.id).select().single();
+    const { data, error } = await supa.from('profiles').update({ [promo.column]: true }).eq('id', supaUser.id).select().single();
     if (data) supaProfile = data;
+    // The localStorage flag above already unlocks it for this session/device
+    // regardless (see hasPromoX() functions), so this is non-fatal — but log
+    // it loudly, since a silently-missing DB column looks identical to "it
+    // worked" until a second device or a cache-cleared session shows it's
+    // still locked there.
+    if (error) console.error('[promo] Supabase sync failed for', promo.column, '— unlock is only local until this is fixed:', error);
   }
   promo.applied();
   msg.style.color = '#69f0ae';
