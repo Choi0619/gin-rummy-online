@@ -221,7 +221,8 @@ body.theme-abyss .result-box.pop-lose {
   pointer-events: none;
   z-index: 2;
   opacity: 0;
-  filter: drop-shadow(0 0 16px var(--glow, rgba(110,230,255,0.65))) drop-shadow(0 0 34px var(--glow, rgba(110,230,255,0.4))) drop-shadow(0 0 60px var(--glow, rgba(110,230,255,0.18)));
+  width: var(--jelly-width, 150px);
+  will-change: transform, opacity;
   /* Slow cross-screen drift, replacing the old "float in place forever"
      behaviour — real jellyfish actually swim. Duration/direction/vertical
      drift are all per-instance custom properties (set inline by JS), so
@@ -251,6 +252,29 @@ body.theme-abyss .result-box.pop-lose {
   animation: abyssJellyFloat var(--float-dur, 10s) ease-in-out infinite;
   animation-delay: var(--float-delay, 0s);
 }
+.abyss-jelly-viewport {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 5;
+  overflow: hidden;
+  animation: abyssJellyFloat var(--float-dur, 9s) ease-in-out infinite;
+  transform-origin: 50% 34%;
+  will-change: transform;
+}
+.abyss-raster-jelly .abyss-jelly-art {
+  display: block;
+  width: 1300%;
+  max-width: none;
+  height: auto;
+  animation: abyssJellyFrames 2.2s steps(12, end) infinite;
+  will-change: transform;
+}
+@keyframes abyssJellyFrames {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-92.307692%); }
+}
+.abyss-raster-jelly.depth-far { z-index: 1; }
+.abyss-raster-jelly.depth-near { z-index: 2; }
 @keyframes abyssJellyFloat {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-22px); }
@@ -281,11 +305,13 @@ body.theme-abyss .result-box.pop-lose {
 .abyss-anglerfish {
   position: fixed;
   top: var(--y, 30%);
-  left: -140px;
+  left: calc(-1 * var(--angler-width, 220px) - 30px);
+  width: var(--angler-width, 220px);
   pointer-events: none;
   z-index: 2;
   opacity: 0;
   animation: abyssAnglerSwim var(--swim-dur, 26s) linear forwards;
+  will-change: transform, opacity;
 }
 @keyframes abyssAnglerSwim {
   0%   { transform: translateX(0) translateY(0); opacity: 0; }
@@ -297,6 +323,14 @@ body.theme-abyss .result-box.pop-lose {
 .abyss-anglerfish .lure {
   animation: abyssLurePulse 1.4s ease-in-out infinite;
   transform-origin: center;
+}
+.abyss-angler-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  animation: abyssFishBob 7.4s ease-in-out infinite;
+  will-change: transform;
 }
 @keyframes abyssLurePulse {
   0%, 100% { opacity: 0.55; }
@@ -310,12 +344,77 @@ body.theme-abyss .result-box.pop-lose {
   z-index: 1;
   opacity: 0;
   animation: abyssFishSwim var(--swim-dur, 16s) linear forwards;
+  will-change: transform, opacity;
 }
 @keyframes abyssFishSwim {
   0%   { transform: translateX(0); opacity: 0; }
-  10%  { opacity: 0.55; }
-  90%  { opacity: 0.55; }
+  8%   { opacity: var(--fish-opacity, 0.5); }
+  92%  { opacity: var(--fish-opacity, 0.5); }
   100% { transform: translateX(var(--dx, 60vw)); opacity: 0; }
+}
+.abyss-fish-orient {
+  display: block;
+  width: var(--fish-width, 100px);
+}
+.abyss-fish-orient.rtl { transform: scaleX(-1); }
+.abyss-fish-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  animation: abyssFishBob var(--bob-dur, 6s) ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes abyssFishBob {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50%      { transform: translateY(-7px) rotate(1deg); }
+}
+.fish-ribbon-eel .abyss-fish-art { animation-name: abyssEelGlide; }
+@keyframes abyssEelGlide {
+  0%, 100% { transform: translateY(0) rotate(-1.2deg) scaleY(1); }
+  50%      { transform: translateY(-9px) rotate(1.2deg) scaleY(0.96); }
+}
+.fish-manta .abyss-fish-art { animation-name: abyssMantaGlide; }
+@keyframes abyssMantaGlide {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50%      { transform: translateY(-10px) scaleY(0.91); }
+}
+.fish-seahorse .abyss-fish-art { animation-name: abyssSeahorseDrift; }
+@keyframes abyssSeahorseDrift {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%      { transform: translateY(-12px) rotate(3deg); }
+}
+
+/* ---------- Benthic flora: one fixed set, no spawn loop ---------- */
+.abyss-flora {
+  position: fixed;
+  bottom: -12px;
+  height: var(--flora-height, 160px);
+  pointer-events: none;
+  z-index: 1;
+  opacity: var(--flora-opacity, 0.24);
+  transform-origin: 50% 100%;
+  animation: abyssFloraSway var(--sway-dur, 11s) ease-in-out infinite;
+  animation-delay: var(--sway-delay, 0s);
+  will-change: transform;
+}
+.abyss-flora.depth-far { z-index: 0; }
+.abyss-flora.depth-near { z-index: 1; }
+.abyss-flora img {
+  display: block;
+  width: auto;
+  height: 100%;
+}
+@keyframes abyssFloraSway {
+  0%, 100% { transform: rotate(-1.4deg) translateY(0); }
+  50%      { transform: rotate(1.6deg) translateY(3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .abyss-fish-art,
+  .abyss-angler-art,
+  .abyss-flora { animation-duration: 18s; }
+  .abyss-raster-jelly .abyss-jelly-art { animation-play-state: paused; }
 }
 
 /* ===================================================================

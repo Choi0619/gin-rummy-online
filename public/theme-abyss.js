@@ -231,6 +231,46 @@ const ABYSS_FISH_BUILDERS = [
   abyssFishSvgManta, abyssFishSvgSeahorse,
 ];
 
+// Premium raster creatures are generated once, compressed as WebP, and then
+// moved exclusively with compositor transforms. The animated jelly contains
+// 12 pre-rendered poses plus a repeated loop frame; CSS advances the single
+// texture in exact steps while the slow drift remains continuous. CSS
+// still moves the whole creature at the display refresh rate, so drifting is
+// smooth without any per-frame JavaScript or SVG path repainting.
+const ABYSS_ASSET_ROOT = '/assets/abyss/';
+const ABYSS_JELLY_ASSET = ABYSS_ASSET_ROOT + 'white-jellyfish-sprite.webp';
+const ABYSS_FISH_SPECIES = [
+  { id: 'hatchetfish', file: 'hatchetfish.webp', width: [72, 112], duration: [22, 34], opacity: [0.34, 0.58] },
+  { id: 'ribbon-eel', file: 'ribbon-eel.webp', width: [150, 225], duration: [28, 42], opacity: [0.28, 0.48] },
+  { id: 'lanternfish', file: 'lanternfish.webp', width: [82, 128], duration: [20, 32], opacity: [0.38, 0.62] },
+  { id: 'manta', file: 'manta.webp', width: [145, 220], duration: [32, 48], opacity: [0.24, 0.43] },
+  { id: 'seahorse', file: 'seahorse.webp', width: [48, 76], duration: [38, 54], opacity: [0.34, 0.56] },
+];
+const ABYSS_FLORA_SPECIES = [
+  { id: 'kelp', file: 'kelp.webp', height: [150, 235], left: [0, 8], opacity: [0.18, 0.30] },
+  { id: 'fan-coral', file: 'fan-coral.webp', height: [135, 205], left: [10, 22], opacity: [0.16, 0.27] },
+  { id: 'tube-worms', file: 'tube-worms.webp', height: [110, 170], left: [24, 35], opacity: [0.18, 0.30] },
+  { id: 'glow-grass', file: 'glow-grass.webp', height: [95, 150], left: [65, 76], opacity: [0.17, 0.29] },
+  { id: 'feather-coral', file: 'feather-coral.webp', height: [145, 220], left: [78, 87], opacity: [0.16, 0.27] },
+  { id: 'anemones', file: 'anemones.webp', height: [90, 135], left: [88, 95], opacity: [0.19, 0.32] },
+];
+
+function abyssRandomBetween(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function abyssMotionProfile() {
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const compact = window.innerWidth < 720;
+  return {
+    reduced,
+    compact,
+    jellyLimit: reduced ? 1 : (compact ? 2 : 3),
+    fishLimit: reduced ? 2 : (compact ? 3 : 6),
+    floraLimit: reduced ? 2 : (compact ? 3 : 6),
+  };
+}
+
 let _abyssJellyEls = [];
 let _abyssJellyTimer = null;
 let _abyssBubbleTimer = null;
@@ -240,6 +280,10 @@ let _abyssFishTimer = null;
 let _abyssGlowEl = null;
 let _abyssGlowRAF = null;
 let _abyssGlowTarget = { x: -100, y: -100 };
+let _abyssFishEls = [];
+let _abyssFloraEls = [];
+let _abyssSeedTimers = [];
+let _abyssJellySpawnSeq = 0;
 
 function _abyssPointerMove(e) {
   _abyssGlowTarget.x = e.clientX;
@@ -272,56 +316,64 @@ function startAbyssTheme() {
   layer.appendChild(_abyssGlowEl);
   document.addEventListener('pointermove', _abyssPointerMove);
 
-  // Jellyfish now actually swim across the screen (slowly, real jellyfish
-  // aren't fast) instead of bobbing in place forever. Each one is spawned
-  // with a random start point, a random long-ish travel distance/duration
-  // (so speed visibly varies between individuals), and removes itself when
-  // its drift finishes — same self-cleaning spawn/schedule pattern as the
-  // fish/anglerfish. Size is set via the <svg>'s own width/height (a plain
-  // CSS box size, not a `transform`), so it can't collide with the drift
-  // animation on the outer element or the bob animation on the inner one.
+  const motion = abyssMotionProfile();
+
+  // The detailed white jelly is a pre-rendered WebP sprite strip. The browser
+  // decodes one texture; CSS loops its poses while this function only chooses
+  // travel path. Restricting the live count is important because each jelly
+  // is visually large even though it is just one DOM node and one image.
   const spawnJelly = () => {
-    const palette = ABYSS_JELLY_PALETTE[Math.floor(Math.random() * ABYSS_JELLY_PALETTE.length)];
+    if (_abyssJellyEls.length >= motion.jellyLimit) return;
     const el = document.createElement('div');
-    el.className = 'abyss-jelly';
-    const startTop = 4 + Math.random() * 78;
-    const startLeft = 4 + Math.random() * 78;
+    const far = Math.random() < 0.58;
+    el.className = 'abyss-jelly abyss-raster-jelly' + (far ? ' depth-far' : ' depth-near');
+    // Discrete edge lanes prevent the initial seed creatures from stacking on
+    // top of one another while still leaving enough randomness for later runs.
+    const lanes = [
+      { left: [-5, 5], top: [7, 28] },
+      { left: [82, 94], top: [18, 43] },
+      { left: [0, 11], top: [55, 72] },
+    ];
+    const lane = lanes[_abyssJellySpawnSeq++ % lanes.length];
+    const startTop = abyssRandomBetween(lane.top[0], lane.top[1]);
+    const startLeft = abyssRandomBetween(lane.left[0], lane.left[1]);
     el.style.top = startTop + '%';
     el.style.left = startLeft + '%';
-    el.style.setProperty('--glow', palette.glow + 'a8'); // stronger glow alpha (was ~35%, now ~66%)
-    el.style.setProperty('--jelly-opacity', (0.75 + Math.random() * 0.2).toFixed(2));
-    // Long, slow, mostly-horizontal wander with a little vertical drift —
-    // real jellyfish pulse gently and mostly get pushed sideways by current.
-    const dx = (Math.random() < 0.5 ? -1 : 1) * (18 + Math.random() * 45); // vw
-    const dy = (Math.random() < 0.5 ? -1 : 1) * (6 + Math.random() * 18); // vh
+    const widthRange = far ? [92, 148] : [150, 225];
+    const compactScale = motion.compact ? 0.76 : 1;
+    el.style.setProperty('--jelly-width', Math.round(abyssRandomBetween(widthRange[0], widthRange[1]) * compactScale) + 'px');
+    el.style.setProperty('--jelly-opacity', (far ? abyssRandomBetween(0.24, 0.42) : abyssRandomBetween(0.42, 0.64)).toFixed(2));
+    const dx = (Math.random() < 0.5 ? -1 : 1) * abyssRandomBetween(8, 24);
+    const dy = (Math.random() < 0.5 ? -1 : 1) * abyssRandomBetween(7, 18);
     el.style.setProperty('--dx', dx + 'vw');
     el.style.setProperty('--dy', dy + 'vh');
-    const driftDur = 32 + Math.random() * 40; // 32-72s: visibly different speeds
+    const driftDur = abyssRandomBetween(48, 82);
     el.style.setProperty('--drift-dur', driftDur + 's');
-    el.style.setProperty('--float-dur', (7 + Math.random() * 4) + 's');
-    el.style.setProperty('--pulse-dur', (3 + Math.random() * 1.4) + 's');
-    el.innerHTML = abyssJellySvg(palette.bell, palette.glow, palette.core, Math.random() < 0.5);
-    const svg = el.firstElementChild;
-    // Scale from the SVG's own native viewBox size rather than a hardcoded
-    // base — the bell-jelly (94x190) and moon-jelly (120x70) builders have
-    // very different native aspect ratios, so a one-size-fits-all base
-    // would badly stretch/squash whichever one wasn't picked.
-    const [, , vbW, vbH] = (svg.getAttribute('viewBox') || '0 0 94 190').split(' ').map(Number);
-    const scale = 0.55 + Math.random() * 0.55;
-    svg.setAttribute('width', Math.round(vbW * scale));
-    svg.setAttribute('height', Math.round(vbH * scale));
+    el.style.setProperty('--float-dur', abyssRandomBetween(7.5, 11.5) + 's');
+    const viewport = document.createElement('span');
+    viewport.className = 'abyss-jelly-viewport';
+    const img = document.createElement('img');
+    img.className = 'abyss-jelly-art';
+    img.src = ABYSS_JELLY_ASSET;
+    img.alt = '';
+    img.decoding = 'async';
+    img.draggable = false;
+    viewport.appendChild(img);
+    el.appendChild(viewport);
     layer.appendChild(el);
     _abyssJellyEls.push(el);
     setTimeout(() => { el.remove(); _abyssJellyEls = _abyssJellyEls.filter(j => j !== el); }, driftDur * 1000 + 500);
   };
-  // Seed a handful right away, staggered, so the screen doesn't start empty
-  // while waiting for the first scheduled spawn.
-  for (let i = 0; i < 6; i++) setTimeout(spawnJelly, i * 400);
+  for (let i = 0; i < motion.jellyLimit; i++) {
+    _abyssSeedTimers.push(setTimeout(() => {
+      if (document.body.classList.contains('theme-abyss')) spawnJelly();
+    }, i * 650));
+  }
   const scheduleJelly = () => {
     _abyssJellyTimer = setTimeout(() => {
       if (document.body.classList.contains('theme-abyss')) spawnJelly();
       scheduleJelly();
-    }, 5000 + Math.random() * 6000);
+    }, 9000 + Math.random() * 9000);
   };
   scheduleJelly();
 
@@ -372,59 +424,107 @@ function startAbyssTheme() {
     const el = document.createElement('div');
     el.className = 'abyss-anglerfish';
     el.style.setProperty('--y', (15 + Math.random() * 55) + '%');
-    el.style.setProperty('--swim-dur', (18 + Math.random() * 8) + 's');
-    el.innerHTML = abyssAnglerSvg();
-    // abyssAnglerSwim always moves left-to-right (there's no rtl variant),
-    // and the artwork's mouth/head is drawn facing left by default — so it
-    // must always be mirrored to actually face the direction it swims.
-    // Previously this was a coin flip unrelated to the real (fixed) travel
-    // direction, so it was facing backward about half the time.
-    el.firstElementChild.style.transform = 'scaleX(-1)';
-    document.getElementById('abyssLayer')?.appendChild(el);
-    setTimeout(() => el.remove(), 30000);
+    const swimDur = abyssRandomBetween(26, 38);
+    el.style.setProperty('--swim-dur', swimDur + 's');
+    el.style.setProperty('--angler-width', (motion.compact ? abyssRandomBetween(145, 185) : abyssRandomBetween(190, 255)) + 'px');
+    const img = document.createElement('img');
+    img.className = 'abyss-angler-art';
+    img.src = ABYSS_ASSET_ROOT + 'anglerfish.webp';
+    img.alt = '';
+    img.decoding = 'async';
+    img.draggable = false;
+    el.appendChild(img);
+    layer.appendChild(el);
+    setTimeout(() => el.remove(), swimDur * 1000 + 800);
   };
   const scheduleAngler = () => {
     _abyssAnglerTimer = setTimeout(() => {
-      if (document.body.classList.contains('theme-abyss')) spawnAngler();
+      if (document.body.classList.contains('theme-abyss') && !motion.reduced) spawnAngler();
       scheduleAngler();
     }, 16000 + Math.random() * 14000);
   };
   scheduleAngler();
   // Also fire one shortly after the theme is switched on, instead of making
   // the first sighting wait a full 16-30s.
-  setTimeout(() => { if (document.body.classList.contains('theme-abyss')) spawnAngler(); }, 3000);
+  _abyssSeedTimers.push(setTimeout(() => {
+    if (document.body.classList.contains('theme-abyss') && !motion.reduced) spawnAngler();
+  }, 4200));
 
-  // Occasional small background fish, cheap and frequent.
+  // Each swimmer is a single image with a species-specific pixel range.
+  // Direction lives on a wrapper, body bob lives on the image, and travel
+  // lives on the outer node so their transforms never overwrite one another.
   const spawnFish = () => {
+    if (_abyssFishEls.length >= motion.fishLimit) return;
     const el = document.createElement('div');
-    const color = ABYSS_FISH_COLORS[Math.floor(Math.random() * ABYSS_FISH_COLORS.length)];
+    const species = ABYSS_FISH_SPECIES[Math.floor(Math.random() * ABYSS_FISH_SPECIES.length)];
     const rtl = Math.random() < 0.5;
-    el.className = 'abyss-fish';
-    el.style.top = (10 + Math.random() * 70) + '%';
-    el.style.left = rtl ? '100%' : '-40px';
-    el.style.setProperty('--dx', (rtl ? -1 : 1) * (window.innerWidth + 80) + 'px');
-    el.style.setProperty('--swim-dur', (14 + Math.random() * 10) + 's');
-    const builder = ABYSS_FISH_BUILDERS[Math.floor(Math.random() * ABYSS_FISH_BUILDERS.length)];
-    el.innerHTML = builder(color, '#fff3c4');
-    // Mirror the inner <svg>, not `el` itself — `el`'s transform is owned by
-    // the abyssFishSwim CSS animation (translateX), and an animated
-    // transform fully replaces any inline transform on the same element for
-    // its whole run, so setting the flip on `el` would just be discarded.
-    // The fish artwork is drawn facing LEFT by default (eye/head on the
-    // left, tail fin on the right) — so it only needs flipping when it's
-    // actually swimming RIGHT (rtl === false). Previously this condition
-    // was backwards, so every fish visibly swam tail-first.
-    if (!rtl) el.firstElementChild.style.transform = 'scaleX(-1)';
-    document.getElementById('abyssLayer')?.appendChild(el);
-    setTimeout(() => el.remove(), 26000);
+    el.className = 'abyss-fish fish-' + species.id;
+    el.style.top = abyssRandomBetween(10, 73) + '%';
+    const compactScale = motion.compact ? 0.76 : 1;
+    const fishWidth = abyssRandomBetween(species.width[0], species.width[1]) * compactScale;
+    const swimDur = abyssRandomBetween(species.duration[0], species.duration[1]);
+    el.style.left = rtl ? `calc(100% + ${fishWidth}px)` : (-fishWidth - 20) + 'px';
+    el.style.setProperty('--dx', (rtl ? -1 : 1) * (window.innerWidth + fishWidth * 2 + 40) + 'px');
+    el.style.setProperty('--swim-dur', swimDur + 's');
+    el.style.setProperty('--fish-width', Math.round(fishWidth) + 'px');
+    el.style.setProperty('--fish-opacity', abyssRandomBetween(species.opacity[0], species.opacity[1]).toFixed(2));
+    el.style.setProperty('--bob-dur', abyssRandomBetween(4.8, 8.5) + 's');
+
+    const orient = document.createElement('span');
+    orient.className = 'abyss-fish-orient' + (rtl ? ' rtl' : '');
+    const img = document.createElement('img');
+    img.className = 'abyss-fish-art';
+    img.src = ABYSS_ASSET_ROOT + species.file;
+    img.alt = '';
+    img.decoding = 'async';
+    img.draggable = false;
+    orient.appendChild(img);
+    el.appendChild(orient);
+    layer.appendChild(el);
+    _abyssFishEls.push(el);
+    setTimeout(() => {
+      el.remove();
+      _abyssFishEls = _abyssFishEls.filter(fish => fish !== el);
+    }, swimDur * 1000 + 800);
   };
   const scheduleFish = () => {
     _abyssFishTimer = setTimeout(() => {
       if (document.body.classList.contains('theme-abyss')) spawnFish();
       scheduleFish();
-    }, 6000 + Math.random() * 9000);
+    }, 4200 + Math.random() * 7200);
   };
   scheduleFish();
+
+  for (let i = 0; i < motion.fishLimit; i++) {
+    _abyssSeedTimers.push(setTimeout(() => {
+      if (document.body.classList.contains('theme-abyss')) spawnFish();
+    }, 900 + i * 1050));
+  }
+
+  // A fixed benthic layer adds depth without a spawn loop. On compact and
+  // reduced-motion layouts only a subset is created, avoiding hidden image
+  // decodes and keeping the bottom edge from becoming visually crowded.
+  const floraSpecies = motion.floraLimit < ABYSS_FLORA_SPECIES.length
+    ? [ABYSS_FLORA_SPECIES[0], ABYSS_FLORA_SPECIES[3], ABYSS_FLORA_SPECIES[5]].slice(0, motion.floraLimit)
+    : ABYSS_FLORA_SPECIES;
+  floraSpecies.forEach((species, index) => {
+    const el = document.createElement('div');
+    el.className = 'abyss-flora flora-' + species.id + (index % 2 ? ' depth-near' : ' depth-far');
+    el.style.left = abyssRandomBetween(species.left[0], species.left[1]) + '%';
+    const compactScale = motion.compact ? 0.74 : 1;
+    el.style.setProperty('--flora-height', Math.round(abyssRandomBetween(species.height[0], species.height[1]) * compactScale) + 'px');
+    el.style.setProperty('--flora-opacity', abyssRandomBetween(species.opacity[0], species.opacity[1]).toFixed(2));
+    el.style.setProperty('--sway-dur', abyssRandomBetween(8, 14) + 's');
+    el.style.setProperty('--sway-delay', (-Math.random() * 8).toFixed(2) + 's');
+    const img = document.createElement('img');
+    img.src = ABYSS_ASSET_ROOT + species.file;
+    img.alt = '';
+    img.decoding = 'async';
+    img.draggable = false;
+    el.appendChild(img);
+    layer.appendChild(el);
+    _abyssFloraEls.push(el);
+  });
 }
 
 function stopAbyssTheme() {
@@ -433,12 +533,16 @@ function stopAbyssTheme() {
   clearTimeout(_abyssClusterTimer); _abyssClusterTimer = null;
   clearTimeout(_abyssAnglerTimer); _abyssAnglerTimer = null;
   clearTimeout(_abyssFishTimer); _abyssFishTimer = null;
+  _abyssSeedTimers.forEach(clearTimeout); _abyssSeedTimers = [];
   document.removeEventListener('pointermove', _abyssPointerMove);
   if (_abyssGlowRAF) { cancelAnimationFrame(_abyssGlowRAF); _abyssGlowRAF = null; }
   _abyssGlowEl = null;
   const layer = document.getElementById('abyssLayer');
   if (layer) layer.innerHTML = '';
   _abyssJellyEls = [];
+  _abyssFishEls = [];
+  _abyssFloraEls = [];
+  _abyssJellySpawnSeq = 0;
 }
 
 // ===== Win/lose celebration effects =====
