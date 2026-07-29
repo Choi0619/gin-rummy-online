@@ -13,6 +13,8 @@
      be as detailed as it needs without bloating this file further. -->
 <link rel="stylesheet" href="/theme-abyss.css">
 <script src="/theme-abyss.js"></script>
+<link rel="stylesheet" href="/theme-angel.css">
+<script src="/theme-angel.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { overflow-x: hidden; }
@@ -2907,6 +2909,9 @@ body.theme-aurora .card.just-drawn {
      theme-abyss.js with jellyfish/anglerfish/bubbles/fish -->
 <div class="abyss-layer" id="abyssLayer"></div>
 
+<!-- Angel background layer (shown only with theme-angel) -->
+<div class="angel-layer" id="angelLayer"></div>
+
 <!-- ===== ROOM SETTINGS MODAL ===== -->
 <div class="overlay" id="roomSettingsOverlay">
   <div class="howto-box" style="max-width:420px">
@@ -3704,8 +3709,11 @@ body.theme-aurora .card.just-drawn {
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="dark" onclick="setTheme('dark')" style="background:linear-gradient(135deg,#3e4a52,#0e1316)"></button><div class="swatch-tip"><strong>다크</strong>집중력을 높이는 어둠</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="pink" onclick="setTheme('pink')" style="background:linear-gradient(135deg,#c0397a,#4a0d2e)"></button><div class="swatch-tip"><strong>핑크</strong>화려하고 샤랄라한 분위기<br>1승 달성 시 해금</div></div>
           <div class="swatch-wrap"><button class="theme-swatch" data-theme="rainbow" onclick="setTheme('rainbow')" style="background:conic-gradient(#ff4e4e,#ff9c00,#ffe000,#4cff72,#00cfff,#9b4fff,#ff4e4e)">🌈</button><div class="swatch-tip"><strong>🌈 무지개</strong>누적 10승 달성 시 해금</div></div>
-          <div class="swatch-wrap"><button class="theme-swatch" data-theme="aurora" onclick="setTheme('aurora')" style="background:linear-gradient(135deg,#0e2a3a,#030c1a);border-color:rgba(0,220,160,0.5)">🌌</button><div class="swatch-tip"><strong>🌌 오로라 성운</strong>25승 달성 시 해금</div></div>
-          <div class="swatch-wrap"><button class="theme-swatch" data-theme="abyss" onclick="setTheme('abyss')" style="background:linear-gradient(180deg,#010509,#062038);border-color:rgba(90,220,255,0.5)">🌊</button><div class="swatch-tip"><strong>🌊 심연</strong>50승 달성 시 해금</div></div>
+          <div class="theme-premium-row" aria-label="상위 해금 테마">
+            <div class="swatch-wrap"><button class="theme-swatch" data-theme="aurora" onclick="setTheme('aurora')" style="background:linear-gradient(135deg,#0e2a3a,#030c1a);border-color:rgba(0,220,160,0.5)">🌌</button><div class="swatch-tip"><strong>🌌 오로라 성운</strong>25승 달성 시 해금</div></div>
+            <div class="swatch-wrap"><button class="theme-swatch" data-theme="abyss" onclick="setTheme('abyss')" style="background:linear-gradient(180deg,#010509,#062038);border-color:rgba(90,220,255,0.5)">🌊</button><div class="swatch-tip"><strong>🌊 심연</strong>50승 달성 시 해금</div></div>
+            <div class="swatch-wrap"><button class="theme-swatch angel-swatch" data-theme="angel" onclick="setTheme('angel')" aria-label="천상 테마">✦</button><div class="swatch-tip"><strong>✦ 천상</strong>100승 달성 시 해금</div></div>
+          </div>
         </div>
         <div id="themeDesc"></div>
       </div>
@@ -4181,6 +4189,7 @@ const PINK_UNLOCK_WINS = 1;
 const RAINBOW_UNLOCK_WINS = 10;
 const AURORA_UNLOCK_WINS = 25;
 const ABYSS_UNLOCK_WINS = 50;
+const ANGEL_UNLOCK_WINS = 100;
 
 function getTotalWins() {
   // Supabase profile is source of truth when logged in (includes imported wins)
@@ -4223,6 +4232,7 @@ function isPinkUnlocked() { return hasPromoThemes() || getTotalWins() >= PINK_UN
 function isRainbowUnlocked() { return hasPromoThemes() || getTotalWins() >= RAINBOW_UNLOCK_WINS; }
 function isAuroraUnlocked() { return hasPromoThemes() || getTotalWins() >= AURORA_UNLOCK_WINS; }
 function isAbyssUnlocked() { return hasPromoThemes() || getTotalWins() >= ABYSS_UNLOCK_WINS; }
+function isAngelUnlocked() { return hasPromoThemes() || getTotalWins() >= ANGEL_UNLOCK_WINS; }
 
 // code -> { already: <fn returning true if already active>, localKey, column,
 //           applied: <fn to refresh UI>, label }
@@ -4292,10 +4302,12 @@ function updateLockedSwatches() {
   const rainbow = document.querySelector('.theme-swatch[data-theme="rainbow"]');
   const aurora = document.querySelector('.theme-swatch[data-theme="aurora"]');
   const abyss = document.querySelector('.theme-swatch[data-theme="abyss"]');
+  const angel = document.querySelector('.theme-swatch[data-theme="angel"]');
   if (pink) pink.classList.toggle('locked', !isPinkUnlocked());
   if (rainbow) rainbow.classList.toggle('locked', !isRainbowUnlocked());
   if (aurora) aurora.classList.toggle('locked', !isAuroraUnlocked());
   if (abyss) abyss.classList.toggle('locked', !isAbyssUnlocked());
+  if (angel) angel.classList.toggle('locked', !isAngelUnlocked());
 }
 // Keep old name for backwards compat calls
 function updateRainbowSwatch() { updateLockedSwatches(); }
@@ -4320,6 +4332,11 @@ function setTheme(theme) {
     showConfirmModal({ emoji:'🌊', title:'심연 테마 잠금', sub:'PVP 50승 달성 시 해금됩니다.\n현재 총 승리: ' + wins + '승', acceptLabel:'확인', onAccept:()=>{} });
     return;
   }
+  if (theme === 'angel' && !isAngelUnlocked()) {
+    const wins = getTotalWins();
+    showConfirmModal({ emoji:'✦', title:'천상 테마 잠금', sub:'PVP 100승 달성 시 해금됩니다.\n현재 총 승리: ' + wins + '승', acceptLabel:'확인', onAccept:()=>{} });
+    return;
+  }
   document.body.className = document.body.className.replace(/theme-\S+/g, '').trim();
   if (theme !== 'green') document.body.classList.add('theme-' + theme);
   localStorage.setItem('grTheme', theme);
@@ -4328,6 +4345,7 @@ function setTheme(theme) {
   if (theme === 'rainbow') startGrass(); else stopGrass();
   if (theme === 'aurora') { startAuroraStars(); startAuroraSparkleLoop(); startAuroraShootingStarLoop(); } else { stopAuroraStars(); stopAuroraSparkleLoop(); stopAuroraShootingStarLoop(); }
   if (theme === 'abyss') { startAbyssTheme(); } else { stopAbyssTheme(); }
+  if (theme === 'angel') { startAngelTheme(); } else { stopAngelTheme(); }
   updatePetalSection();
   updateGrassSection();
 }
@@ -6356,7 +6374,10 @@ if (!localStorage.getItem('grHistoryResetV3')) {
   localStorage.setItem('grHistoryResetV3', '1');
 }
 
-setTheme(localStorage.getItem('grTheme') || 'green');
+const savedTheme = localStorage.getItem('grTheme') || 'green';
+// A stale/manually-edited 100-win theme value must not bypass the unlock on
+// startup or open a lock modal before the user has interacted with the page.
+setTheme(savedTheme === 'angel' && !isAngelUnlocked() ? 'green' : savedTheme);
 applyLanguage();
 updateLockedSwatches();
 updatePetalSection();
@@ -7390,6 +7411,9 @@ function initSocket() {
     if (matchResult === 'win' && getTotalWins() === ABYSS_UNLOCK_WINS) {
       setTimeout(() => showConfirmModal({ emoji:'🌊', title:'심연 테마 해금!', sub:'PVP 50승 달성! 해파리가 헤엄치는 심해가 열렸습니다!', acceptLabel:'🌊 확인', onAccept:()=>{} }), 2500);
     }
+    if (matchResult === 'win' && getTotalWins() === ANGEL_UNLOCK_WINS) {
+      setTimeout(() => showConfirmModal({ emoji:'✦', title:'천상 테마 해금!', sub:'PVP 100승 달성! 구름 위의 천상 성전이 열렸습니다!', acceptLabel:'천상으로', onAccept:()=>{} }), 3000);
+    }
     if (!vsAI && matchResult === 'win' && myChar === '🦄') {
       setTimeout(() => spawnUnicornCelebration(), 600);
     }
@@ -7422,10 +7446,12 @@ function initSocket() {
       if (document.body.classList.contains('theme-aurora')) spawnAuroraCelebration();
       else if (document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
       else if (document.body.classList.contains('theme-abyss')) spawnAbyssWinBurst('matchEndOverlay');
+      else if (document.body.classList.contains('theme-angel')) spawnAngelWinBurst('matchEndOverlay');
       else if (wasRevenge && revengeSuccess) spawnFireworks();
       else spawnConfetti();
-    } else if (!tie && document.body.classList.contains('theme-abyss')) {
-      spawnAbyssLoseEffect();
+    } else if (!tie) {
+      if (document.body.classList.contains('theme-abyss')) spawnAbyssLoseEffect();
+      else if (document.body.classList.contains('theme-angel')) spawnAngelLoseEffect();
     }
 
     // Show revenge/rematch/leave buttons based on role (only for human vs human)
@@ -8346,12 +8372,14 @@ function showResult(data) {
   if (iWon && document.body.classList.contains('theme-aurora')) spawnAuroraCelebration();
   else if (iWon && document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
   else if (iWon && document.body.classList.contains('theme-abyss')) spawnAbyssWinBurst('resultOverlay');
+  else if (iWon && document.body.classList.contains('theme-angel')) spawnAngelWinBurst('resultOverlay');
   else if (iWon && isBigGin) spawnFireworks();
   else if (iWon && !isTie) {
     if (myStreak >= 4) spawnStreakCelebration(myStreak);
     else spawnConfetti();
   }
   if (!iWon && !isTie && document.body.classList.contains('theme-abyss')) spawnAbyssLoseEffect();
+  if (!iWon && !isTie && document.body.classList.contains('theme-angel')) spawnAngelLoseEffect();
   if (iWon && !isTie && myStreak >= 4) showStreakBanner(myStreak);
 
   function cardSpan(c) { return `<span class="mini-card ${IS_RED[c.suit]?'red':''}">${c.rank}${SUITS_SYM[c.suit]}</span>`; }
