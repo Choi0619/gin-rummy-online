@@ -5505,6 +5505,27 @@ function switchFriendsTab(tab) {
 
 const STATUS_LABELS = { online: '🟢 온라인', gaming: '🎮 게임 중', away: '🌙 자리비움', offline: '⚫ 오프라인' };
 
+// "1시간 전" / "3일 전" / "2달 전" / "1년 전" style relative timestamp for a
+// friend's last_seen — only meaningful once they're offline (while online/
+// gaming/away, last_seen is refreshed every ~30s and effectiveStatus() would
+// have already downgraded a stale one to offline anyway).
+function formatLastSeen(iso) {
+  if (!iso) return '';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  if (diffMs < 0) return '방금 전';
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return '방금 전';
+  if (min < 60) return min + '분 전';
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return hr + '시간 전';
+  const day = Math.floor(hr / 24);
+  if (day < 30) return day + '일 전';
+  const month = Math.floor(day / 30);
+  if (month < 12) return month + '달 전';
+  const year = Math.floor(day / 365);
+  return year + '년 전';
+}
+
 function renderFriendsList() {
   const el = document.getElementById('fPanelList');
   if (!_friends.length) {
@@ -5521,6 +5542,8 @@ function renderFriendsList() {
     const st = effectiveStatus(_statusMap[f.id]);
     const msg = (_statusMap[f.id] || {}).status_msg || '';
     const online = st !== 'offline';
+    const lastSeenTxt = (st === 'offline' && (_statusMap[f.id] || {}).last_seen)
+      ? ' · ' + formatLastSeen(_statusMap[f.id].last_seen) : '';
     const alreadyInvited = invitedFriendIds.has(f.id);
     // Invites only make sense from the waiting room: not while I'm mid-game,
     // and not to a friend who is themselves mid-game.
@@ -5535,7 +5558,7 @@ function renderFriendsList() {
       '<span class="f-char cb-' + (f.cardBorder || 'green') + '" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' + charHTML(f.char) + '<span class="f-dot ' + st + '"></span></span>' +
       '<div class="f-info" onclick="showUserProfileById(\'' + f.id + '\')" style="cursor:pointer">' +
         '<div class="f-name">' + escapeHtml(f.name) + '</div>' +
-        '<div class="f-sub">' + (STATUS_LABELS[st] || st) + '</div>' +
+        '<div class="f-sub">' + (STATUS_LABELS[st] || st) + lastSeenTxt + '</div>' +
         (msg ? '<div class="f-status-msg">💬 ' + escapeHtml(msg) + '</div>' : '') +
       '</div>' +
       inviteBtn +
