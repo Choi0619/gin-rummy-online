@@ -17,6 +17,11 @@ let _angelSparkIndex = 0;
 let _angelCursorFeatherIndex = 0;
 let _angelSparkLast = { x: -100, y: -100, time: 0 };
 let _angelTimers = [];
+let _angelMiniAngel = null;
+let _angelGoldenFeather = null;
+let _angelMiniTimer = null;
+let _angelFeatherTimer = null;
+let _angelBlessingTimer = null;
 
 function angelRandom(min, max) {
   return min + Math.random() * (max - min);
@@ -158,6 +163,156 @@ function angelBurstAt(x, y, count, kind = 'spark') {
   }
 }
 
+function angelSetMiniFrame(sprite, frame) {
+  const x = ['0%', '50%', '100%'][frame % 3];
+  const y = frame > 2 ? '100%' : '0%';
+  sprite.style.setProperty('--mini-frame-x', x);
+  sprite.style.setProperty('--mini-frame-y', y);
+}
+
+function angelScheduleMiniAngel(delay = angelRandom(24000, 48000)) {
+  clearTimeout(_angelMiniTimer);
+  _angelMiniTimer = setTimeout(() => {
+    _angelMiniTimer = null;
+    if (!document.body.classList.contains('theme-angel') || _angelMiniAngel) {
+      angelScheduleMiniAngel();
+      return;
+    }
+    angelSpawnMiniAngel();
+  }, delay);
+}
+
+function angelSpawnMiniAngel() {
+  const motion = angelMotionProfile();
+  if (motion.reduced || _angelMiniAngel || !document.body.classList.contains('theme-angel')) return;
+
+  const angel = document.createElement('button');
+  angel.type = 'button';
+  angel.className = 'angel-mini-angel';
+  angel.setAttribute('aria-label', '천상 수호천사');
+  const sprite = document.createElement('span');
+  sprite.className = 'angel-mini-sprite';
+  angelSetMiniFrame(sprite, Math.random() < 0.58 ? 1 : 0);
+  angel.appendChild(sprite);
+
+  const fromLeft = Math.random() < 0.5;
+  angel.classList.add(fromLeft ? 'from-left' : 'from-right');
+  angel.style.left = fromLeft ? (motion.compact ? '-8px' : '1.5vw') : 'auto';
+  angel.style.right = fromLeft ? 'auto' : (motion.compact ? '-8px' : '1.5vw');
+  angel.style.top = angelRandom(motion.compact ? 22 : 18, motion.compact ? 66 : 72).toFixed(1) + 'vh';
+  document.body.appendChild(angel);
+  _angelMiniAngel = angel;
+
+  let retired = false;
+  const retire = (reacted) => {
+    if (retired) return;
+    retired = true;
+    if (reacted) {
+      const rect = angel.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      angelSetMiniFrame(sprite, 4);
+      angel.classList.add('reacting');
+      angelBurstAt(x, y, motion.compact ? 8 : 13, 'blessing');
+      _angelTimers.push(setTimeout(() => angelSpawnGoldenFeather(x, y, true), 280));
+    } else {
+      angelSetMiniFrame(sprite, 5);
+      angel.classList.add('leaving');
+    }
+    _angelTimers.push(setTimeout(() => {
+      angel.remove();
+      if (_angelMiniAngel === angel) _angelMiniAngel = null;
+      angelScheduleMiniAngel(angelRandom(26000, 52000));
+    }, reacted ? 980 : 760));
+  };
+
+  angel.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    retire(true);
+  });
+  _angelTimers.push(setTimeout(() => retire(false), motion.compact ? 6200 : 8200));
+}
+
+function angelScheduleGoldenFeather(delay = angelRandom(36000, 72000)) {
+  clearTimeout(_angelFeatherTimer);
+  _angelFeatherTimer = setTimeout(() => {
+    _angelFeatherTimer = null;
+    if (!document.body.classList.contains('theme-angel') || _angelGoldenFeather) {
+      angelScheduleGoldenFeather();
+      return;
+    }
+    angelSpawnGoldenFeather();
+  }, delay);
+}
+
+function angelActivateBlessing(x, y) {
+  clearTimeout(_angelBlessingTimer);
+  document.querySelectorAll('.angel-blessing-wave').forEach(el => el.remove());
+  const wave = angelMake('div', 'angel-blessing-wave', document.body);
+  wave.style.setProperty('--blessing-x', x.toFixed(1) + 'px');
+  wave.style.setProperty('--blessing-y', y.toFixed(1) + 'px');
+  document.body.classList.add('angel-blessing-active');
+  angelBurstAt(x, y, window.innerWidth < 720 ? 13 : 20, 'blessing');
+  _angelBlessingTimer = setTimeout(() => {
+    wave.remove();
+    document.body.classList.remove('angel-blessing-active');
+    _angelBlessingTimer = null;
+  }, 3400);
+}
+
+function angelSpawnGoldenFeather(originX, originY, fromAngel = false) {
+  const motion = angelMotionProfile();
+  if (motion.reduced || _angelGoldenFeather || !document.body.classList.contains('theme-angel')) return;
+
+  const feather = document.createElement('button');
+  feather.type = 'button';
+  feather.className = 'angel-golden-feather';
+  feather.setAttribute('aria-label', '황금 깃털');
+  const startX = Number.isFinite(originX) ? originX : angelRandom(50, window.innerWidth - 70);
+  const startY = Number.isFinite(originY) ? originY : -84;
+  const drift = angelRandom(motion.compact ? -48 : -100, motion.compact ? 48 : 100);
+  feather.style.setProperty('--gold-start-x', startX.toFixed(1) + 'px');
+  feather.style.setProperty('--gold-start-y', startY.toFixed(1) + 'px');
+  const fall = window.innerHeight - startY + 130;
+  feather.style.setProperty('--gold-x1', (startX + drift * .32).toFixed(1) + 'px');
+  feather.style.setProperty('--gold-y1', (startY + fall * .25).toFixed(1) + 'px');
+  feather.style.setProperty('--gold-x2', (startX - drift * .2).toFixed(1) + 'px');
+  feather.style.setProperty('--gold-y2', (startY + fall * .52).toFixed(1) + 'px');
+  feather.style.setProperty('--gold-x3', (startX + drift * .72).toFixed(1) + 'px');
+  feather.style.setProperty('--gold-y3', (startY + fall * .78).toFixed(1) + 'px');
+  feather.style.setProperty('--gold-end-x', (startX + drift).toFixed(1) + 'px');
+  feather.style.setProperty('--gold-end-y', (startY + fall).toFixed(1) + 'px');
+  feather.style.setProperty('--gold-duration', (fromAngel ? angelRandom(7.2, 8.4) : angelRandom(9.5, 12)).toFixed(1) + 's');
+  document.body.appendChild(feather);
+  _angelGoldenFeather = feather;
+
+  let removed = false;
+  const cleanup = () => {
+    if (removed) return;
+    removed = true;
+    feather.remove();
+    if (_angelGoldenFeather === feather) _angelGoldenFeather = null;
+    angelScheduleGoldenFeather(angelRandom(38000, 76000));
+  };
+  feather.addEventListener('animationend', cleanup, { once: true });
+  feather.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = feather.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    feather.style.left = x + 'px';
+    feather.style.top = y + 'px';
+    feather.style.transform = 'none';
+    feather.style.animation = 'none';
+    void feather.offsetWidth;
+    feather.classList.add('caught');
+    angelActivateBlessing(x, y);
+    _angelTimers.push(setTimeout(cleanup, 680));
+  }, { once: true });
+}
+
 function startAngelTheme() {
   stopAngelTheme();
   _angelLayer = document.getElementById('angelLayer');
@@ -246,6 +401,10 @@ function startAngelTheme() {
 
   document.body.classList.add('angel-theme-enter');
   _angelTimers.push(setTimeout(() => document.body.classList.remove('angel-theme-enter'), 1100));
+  if (!motion.reduced) {
+    angelScheduleMiniAngel(motion.compact ? 10500 : 7200);
+    angelScheduleGoldenFeather(motion.compact ? 24000 : 16500);
+  }
 }
 
 function stopAngelTheme() {
@@ -253,10 +412,13 @@ function stopAngelTheme() {
   document.removeEventListener('pointerdown', angelPointerDown);
   if (_angelRAF) cancelAnimationFrame(_angelRAF);
   clearTimeout(_angelWakeTimer);
+  clearTimeout(_angelMiniTimer);
+  clearTimeout(_angelFeatherTimer);
+  clearTimeout(_angelBlessingTimer);
   _angelTimers.forEach(clearTimeout);
   _angelTimers = [];
   document.getElementById('confirmModalOverlay')?.classList.remove('angel-invite-arrival', 'angel-unlock-arrival');
-  document.querySelectorAll('.angel-burst-particle,.angel-result-rays,.angel-lose-veil').forEach(el => el.remove());
+  document.querySelectorAll('.angel-burst-particle,.angel-result-rays,.angel-lose-veil,.angel-mini-angel,.angel-golden-feather,.angel-blessing-wave').forEach(el => el.remove());
   if (_angelFxLayer) _angelFxLayer.remove();
   if (_angelLayer) _angelLayer.innerHTML = '';
   _angelFxLayer = null;
@@ -265,13 +427,18 @@ function stopAngelTheme() {
   _angelWake = null;
   _angelRAF = null;
   _angelWakeTimer = null;
+  _angelMiniTimer = null;
+  _angelFeatherTimer = null;
+  _angelBlessingTimer = null;
+  _angelMiniAngel = null;
+  _angelGoldenFeather = null;
   _angelSparkPool = [];
   _angelCursorFeatherPool = [];
   _angelSparkIndex = 0;
   _angelCursorFeatherIndex = 0;
   _angelSparkLast = { x: -100, y: -100, time: 0 };
   _angelPointer = { x: -100, y: -100, px: -100, py: -100, angle: 0, speed: 0 };
-  document.body.classList.remove('angel-theme-enter');
+  document.body.classList.remove('angel-theme-enter', 'angel-blessing-active');
 }
 
 function spawnAngelWinBurst(overlayId) {
