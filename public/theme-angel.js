@@ -12,9 +12,10 @@ let _angelRAF = null;
 let _angelWakeTimer = null;
 let _angelPointer = { x: -100, y: -100, px: -100, py: -100, angle: 0, speed: 0 };
 let _angelSparkPool = [];
+let _angelCursorFeatherPool = [];
 let _angelSparkIndex = 0;
+let _angelCursorFeatherIndex = 0;
 let _angelSparkLast = { x: -100, y: -100, time: 0 };
-let _angelObserver = null;
 let _angelTimers = [];
 
 function angelRandom(min, max) {
@@ -27,8 +28,9 @@ function angelMotionProfile() {
   return {
     reduced,
     compact,
-    feathers: reduced ? 3 : (compact ? 6 : 11),
+    feathers: reduced ? 3 : (compact ? 7 : 14),
     orbs: reduced ? 3 : (compact ? 5 : 9),
+    sigils: reduced ? 0 : (compact ? 1 : 3),
   };
 }
 
@@ -44,7 +46,7 @@ function angelEmitSparkle(x, y, angle, small = false) {
   if (!_angelSparkPool.length) return;
   const sparkle = _angelSparkPool[_angelSparkIndex % _angelSparkPool.length];
   _angelSparkIndex += 1;
-  const size = angelRandom(small ? 3 : 4.5, small ? 5 : 8);
+  const size = angelRandom(small ? 4 : 6, small ? 6 : 11);
   const tail = small ? 7 : 13;
   sparkle.style.width = size.toFixed(1) + 'px';
   sparkle.style.height = size.toFixed(1) + 'px';
@@ -55,6 +57,21 @@ function angelEmitSparkle(x, y, angle, small = false) {
   sparkle.style.setProperty('--angel-rot', angelRandom(120, 300).toFixed(0) + 'deg');
   sparkle.style.setProperty('--angel-dur', angelRandom(0.72, 1.08).toFixed(2) + 's');
   sparkle.className = 'angel-cursor-spark ' + (_angelSparkIndex % 2 ? 'spark-a' : 'spark-b');
+}
+
+function angelEmitCursorFeather(x, y, angle) {
+  if (!_angelCursorFeatherPool.length) return;
+  const feather = _angelCursorFeatherPool[_angelCursorFeatherIndex % _angelCursorFeatherPool.length];
+  const variant = _angelCursorFeatherIndex % 8;
+  _angelCursorFeatherIndex += 1;
+  feather.style.left = x + 'px';
+  feather.style.top = y + 'px';
+  feather.style.setProperty('--cursor-feather-x', ((variant % 4) * 33.333).toFixed(3) + '%');
+  feather.style.setProperty('--cursor-feather-y', (variant > 3 ? '100%' : '0%'));
+  feather.style.setProperty('--cursor-feather-dx', angelRandom(-18, 18).toFixed(1) + 'px');
+  feather.style.setProperty('--cursor-feather-dy', angelRandom(-34, -18).toFixed(1) + 'px');
+  feather.style.setProperty('--cursor-feather-rot', (angle * 180 / Math.PI + angelRandom(95, 170)).toFixed(0) + 'deg');
+  feather.className = 'angel-cursor-feather active';
 }
 
 function angelPointerMove(event) {
@@ -78,9 +95,10 @@ function angelPointerMove(event) {
   }
   const trailX = event.clientX - _angelSparkLast.x;
   const trailY = event.clientY - _angelSparkLast.y;
-  if (now - _angelSparkLast.time >= 72 && trailX * trailX + trailY * trailY >= 324) {
+  if (now - _angelSparkLast.time >= 42 && trailX * trailX + trailY * trailY >= 110) {
     angelEmitSparkle(event.clientX, event.clientY, _angelPointer.angle);
-    if (_angelSparkIndex % 4 === 0) angelEmitSparkle(event.clientX, event.clientY, _angelPointer.angle, true);
+    if (_angelSparkIndex % 3 === 0) angelEmitSparkle(event.clientX, event.clientY, _angelPointer.angle, true);
+    if (_angelSparkIndex % 4 === 0) angelEmitCursorFeather(event.clientX, event.clientY, _angelPointer.angle);
     _angelSparkLast = { x: event.clientX, y: event.clientY, time: now };
   }
 }
@@ -125,6 +143,7 @@ function angelBurstAt(x, y, count, kind = 'spark') {
   const host = document.body;
   for (let i = 0; i < count; i++) {
     const particle = angelMake('i', 'angel-burst-particle ' + kind, host);
+    const variant = i % 8;
     const angle = Math.PI * 2 * i / count + angelRandom(-0.18, 0.18);
     const distance = angelRandom(42, kind === 'win' ? 180 : 92);
     particle.style.left = x + 'px';
@@ -132,6 +151,8 @@ function angelBurstAt(x, y, count, kind = 'spark') {
     particle.style.setProperty('--angel-bx', (Math.cos(angle) * distance).toFixed(1) + 'px');
     particle.style.setProperty('--angel-by', (Math.sin(angle) * distance - (kind === 'win' ? 36 : 10)).toFixed(1) + 'px');
     particle.style.setProperty('--angel-br', angelRandom(-240, 240).toFixed(0) + 'deg');
+    particle.style.setProperty('--burst-feather-x', ((variant % 4) * 33.333).toFixed(3) + '%');
+    particle.style.setProperty('--burst-feather-y', (variant > 3 ? '100%' : '0%'));
     particle.style.animationDelay = (i * 0.018).toFixed(2) + 's';
     particle.addEventListener('animationend', () => particle.remove(), { once: true });
   }
@@ -152,9 +173,13 @@ function startAngelTheme() {
   angelMake('i', 'angel-cloud-bank cloud-far', clouds);
   angelMake('i', 'angel-cloud-bank cloud-near', clouds);
 
+  const ribbons = angelMake('div', 'angel-light-ribbons', _angelLayer);
+  angelMake('i', 'angel-light-ribbon ribbon-a', ribbons);
+  angelMake('i', 'angel-light-ribbon ribbon-b', ribbons);
+
   const gate = angelMake('div', 'angel-lobby-gate', _angelLayer);
   const gateImg = document.createElement('img');
-  gateImg.src = ANGEL_ASSET_ROOT + 'lobby-gate.webp';
+  gateImg.src = ANGEL_ASSET_ROOT + 'lobby-gate-v3.webp';
   gateImg.alt = '';
   gateImg.decoding = 'async';
   gateImg.draggable = false;
@@ -162,9 +187,12 @@ function startAngelTheme() {
 
   for (let i = 0; i < motion.feathers; i++) {
     const feather = angelMake('i', 'angel-feather', _angelLayer);
+    const variant = i % 8;
     feather.style.left = angelRandom(2, 96).toFixed(1) + '%';
     feather.style.top = angelRandom(-18, 90).toFixed(1) + '%';
-    feather.style.setProperty('--feather-size', angelRandom(10, motion.compact ? 19 : 25).toFixed(1) + 'px');
+    feather.style.setProperty('--feather-size', angelRandom(18, motion.compact ? 30 : 42).toFixed(1) + 'px');
+    feather.style.setProperty('--feather-x', ((variant % 4) * 33.333).toFixed(3) + '%');
+    feather.style.setProperty('--feather-y', (variant > 3 ? '100%' : '0%'));
     feather.style.setProperty('--feather-drift', angelRandom(-90, 90).toFixed(1) + 'px');
     feather.style.setProperty('--feather-dur', angelRandom(18, 34).toFixed(1) + 's');
     feather.style.setProperty('--feather-delay', (-angelRandom(0, 30)).toFixed(1) + 's');
@@ -178,6 +206,16 @@ function startAngelTheme() {
     orb.style.top = angelRandom(8, 92).toFixed(1) + '%';
     orb.style.setProperty('--orb-dur', angelRandom(6, 12).toFixed(1) + 's');
     orb.style.setProperty('--orb-delay', (-angelRandom(0, 10)).toFixed(1) + 's');
+  }
+  for (let i = 0; i < motion.sigils; i++) {
+    const sigil = angelMake('i', 'angel-ambient-sigil', _angelLayer);
+    const size = angelRandom(motion.compact ? 120 : 150, motion.compact ? 180 : 280);
+    sigil.style.width = size.toFixed(0) + 'px';
+    sigil.style.height = size.toFixed(0) + 'px';
+    sigil.style.left = angelRandom(3, 82).toFixed(1) + '%';
+    sigil.style.top = angelRandom(9, 76).toFixed(1) + '%';
+    sigil.style.setProperty('--sigil-dur', angelRandom(32, 58).toFixed(1) + 's');
+    sigil.style.setProperty('--sigil-delay', (-angelRandom(0, 30)).toFixed(1) + 's');
   }
 
   if (!motion.reduced) {
@@ -193,24 +231,19 @@ function startAngelTheme() {
     }
   }
 
-  const finePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+  const finePointer = !motion.compact || (window.matchMedia && window.matchMedia('(any-pointer: fine)').matches);
   if (finePointer) {
-    _angelFxLayer = angelMake('div', 'angel-cursor-fx');
+    _angelFxLayer = angelMake('div', 'angel-cursor-fx', document.body);
     _angelGlow = angelMake('i', 'angel-cursor-glow', _angelFxLayer);
     _angelWake = angelMake('i', 'angel-cursor-wake', _angelFxLayer);
     if (!motion.reduced) {
-      for (let i = 0; i < 15; i++) _angelSparkPool.push(angelMake('i', 'angel-cursor-spark', _angelFxLayer));
+      for (let i = 0; i < 20; i++) _angelSparkPool.push(angelMake('i', 'angel-cursor-spark', _angelFxLayer));
+      for (let i = 0; i < 8; i++) _angelCursorFeatherPool.push(angelMake('i', 'angel-cursor-feather', _angelFxLayer));
     }
     document.addEventListener('pointermove', angelPointerMove, { passive: true });
     document.addEventListener('pointerdown', angelPointerDown, { passive: true });
   }
 
-  const confirmOverlay = document.getElementById('confirmModalOverlay');
-  if (confirmOverlay) {
-    const Observer = confirmOverlay.ownerDocument.defaultView.MutationObserver;
-    _angelObserver = new Observer(angelDecorateConfirm);
-    _angelObserver.observe(confirmOverlay, { attributes: true, attributeFilter: ['class'] });
-  }
   document.body.classList.add('angel-theme-enter');
   _angelTimers.push(setTimeout(() => document.body.classList.remove('angel-theme-enter'), 1100));
 }
@@ -222,8 +255,6 @@ function stopAngelTheme() {
   clearTimeout(_angelWakeTimer);
   _angelTimers.forEach(clearTimeout);
   _angelTimers = [];
-  if (_angelObserver) _angelObserver.disconnect();
-  _angelObserver = null;
   document.getElementById('confirmModalOverlay')?.classList.remove('angel-invite-arrival', 'angel-unlock-arrival');
   document.querySelectorAll('.angel-burst-particle,.angel-result-rays,.angel-lose-veil').forEach(el => el.remove());
   if (_angelFxLayer) _angelFxLayer.remove();
@@ -235,7 +266,9 @@ function stopAngelTheme() {
   _angelRAF = null;
   _angelWakeTimer = null;
   _angelSparkPool = [];
+  _angelCursorFeatherPool = [];
   _angelSparkIndex = 0;
+  _angelCursorFeatherIndex = 0;
   _angelSparkLast = { x: -100, y: -100, time: 0 };
   _angelPointer = { x: -100, y: -100, px: -100, py: -100, angle: 0, speed: 0 };
   document.body.classList.remove('angel-theme-enter');
@@ -259,6 +292,8 @@ function spawnAngelLoseEffect() {
     feather.style.left = angelRandom(12, 88).toFixed(1) + '%';
     feather.style.setProperty('--fall-delay', (i * 0.14).toFixed(2) + 's');
     feather.style.setProperty('--fall-drift', angelRandom(-55, 55).toFixed(1) + 'px');
+    feather.style.setProperty('--fall-feather-x', ((i % 4) * 33.333).toFixed(3) + '%');
+    feather.style.setProperty('--fall-feather-y', (i > 3 ? '100%' : '0%'));
   }
   _angelTimers.push(setTimeout(() => veil.remove(), 3600));
 }

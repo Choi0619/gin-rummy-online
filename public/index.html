@@ -7921,7 +7921,7 @@ function makeCard(card, opts = {}) {
         <div class="card-corner bot ${cls}">${card.rank}${sym}</div>
       </div>
     `;
-    if (inMeld) el.insertAdjacentHTML('beforeend', '<div class="meld-dot"></div>');
+    if (inMeld) el.insertAdjacentHTML('beforeend', '<span class="angel-meld-seal" aria-hidden="true"></span><div class="meld-dot"></div>');
   }
   return el;
 }
@@ -8501,9 +8501,11 @@ function showConfirmModal({ emoji, title, sub, acceptLabel, declineLabel, onAcce
   const box = document.getElementById('confirmModalBox');
   box.classList.remove('pop-in'); void box.offsetWidth; box.classList.add('pop-in');
   document.getElementById('confirmModalOverlay').classList.add('show');
+  if (document.body.classList.contains('theme-angel')) requestAnimationFrame(angelDecorateConfirm);
 }
 function hideConfirmModal() {
   document.getElementById('confirmModalOverlay').classList.remove('show');
+  if (document.body.classList.contains('theme-angel')) angelDecorateConfirm();
 }
 
 function requestRevenge(ir) {
