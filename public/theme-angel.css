@@ -418,36 +418,40 @@ body.theme-angel .avatar-card.my-turn > .turn-halo-layer::before,
 body.theme-angel .avatar-card.my-turn > .turn-halo-layer::after {
   content: '';
   position: absolute;
+  width: 106px;
+  height: 106px;
+  bottom: calc(50% - 8px);
   pointer-events: none;
+  background-image: url('/assets/angel/turn-wings-v3.webp');
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  mix-blend-mode: screen;
   will-change: transform, opacity;
 }
 body.theme-angel .avatar-card.my-turn > .turn-halo-layer::before {
-  inset: -55px -88px;
-  background: url('/assets/angel/turn-wings-v3.webp') center / contain no-repeat;
-  mix-blend-mode: screen;
-  transform-origin: 50% 58%;
-  animation: angelWingBreathe 2.8s ease-in-out infinite;
+  right: calc(100% - 23px);
+  background-position: left center;
+  transform-origin: 82% 92%;
+  animation: angelLeftWingBreathe 2.8s ease-in-out infinite;
 }
 body.theme-angel .avatar-card.my-turn > .turn-halo-layer::after {
-  width: 94px;
-  height: 94px;
-  left: 50%;
-  top: 50%;
-  margin: -47px 0 0 -47px;
-  background: url('/assets/angel/celestial-sigil-v3.webp') center / contain no-repeat;
-  mix-blend-mode: screen;
-  opacity: .18;
-  animation: angelTurnSigil 18s linear infinite;
+  left: calc(100% - 23px);
+  background-position: right center;
+  transform-origin: 18% 92%;
+  animation: angelRightWingBreathe 2.8s ease-in-out infinite;
 }
 @keyframes angelTurnHalo {
   0%,100% { transform: scale(0.99); opacity: 0.72; }
   50% { transform: scale(1.025); opacity: 1; }
 }
-@keyframes angelWingBreathe {
-  0%,100% { transform: translateY(2px) scale(.965,.94); opacity: .5; }
-  50% { transform: translateY(-3px) scale(1.035,1.02); opacity: .8; }
+@keyframes angelLeftWingBreathe {
+  0%,100% { transform: rotate(-2deg) scale(.97,.94); opacity: .56; }
+  50% { transform: rotate(1deg) scale(1.025,1.01); opacity: .82; }
 }
-@keyframes angelTurnSigil { to { transform: rotate(360deg); } }
+@keyframes angelRightWingBreathe {
+  0%,100% { transform: rotate(2deg) scale(.97,.94); opacity: .56; }
+  50% { transform: rotate(-1deg) scale(1.025,1.01); opacity: .82; }
+}
 
 /* ---------- Cards, movement, and meld sequence ---------- */
 body.theme-angel .card {
@@ -2366,13 +2370,14 @@ body.theme-angel #confirmModalOverlay.angel-warning-arrival .angel-result-crest 
   .angel-victory-halo,
   .angel-neutral-halo { width: 94vw; height: 94vw; }
   .angel-gin-wings { width: 112vw; height: 58vh; }
-  body.theme-angel .avatar-card.my-turn > .turn-halo-layer::before { inset: -29px -38px; opacity: .68; }
+  body.theme-angel .avatar-card.my-turn > .turn-halo-layer::before,
   body.theme-angel .avatar-card.my-turn > .turn-halo-layer::after {
-    width: 54px;
-    height: 54px;
-    margin: -27px 0 0 -27px;
-    opacity: .14;
+    width: 76px;
+    height: 76px;
+    bottom: calc(50% - 6px);
   }
+  body.theme-angel .avatar-card.my-turn > .turn-halo-layer::before { right: calc(100% - 17px); }
+  body.theme-angel .avatar-card.my-turn > .turn-halo-layer::after { left: calc(100% - 17px); }
   body.theme-angel #gameScreen .util-row {
     width: calc(100% - 20px);
     min-height: 44px;
