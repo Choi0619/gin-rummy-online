@@ -3612,8 +3612,8 @@ body.theme-aurora .card.just-drawn {
   <div class="howto-box" style="max-width:500px;width:92vw">
     <button class="howto-close" onclick="hideHistory()">✕</button>
     <div style="display:flex;gap:0;margin-bottom:16px;background:rgba(255,255,255,0.06);border-radius:10px;padding:3px">
-      <button id="tabHistory" onclick="switchHistoryTab('history')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:rgba(255,215,120,0.2);color:#ffd76a;transition:all 0.2s">📊 전적</button>
-      <button id="tabRanking" onclick="switchHistoryTab('ranking')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:none;color:rgba(255,255,255,0.45);transition:all 0.2s">🏆 랭킹</button>
+      <button class="history-tab active" id="tabHistory" onclick="switchHistoryTab('history')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:rgba(255,215,120,0.2);color:#ffd76a;transition:all 0.2s">📊 전적</button>
+      <button class="history-tab" id="tabRanking" onclick="switchHistoryTab('ranking')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:none;color:rgba(255,255,255,0.45);transition:all 0.2s">🏆 랭킹</button>
     </div>
     <!-- 전적 탭 -->
     <div id="panelHistory" class="howto-scroll" style="max-height:62vh">
@@ -6100,6 +6100,10 @@ async function saveMatchToDb({ opponentName, opponentChar, myScore, oppScore, re
 
 function switchHistoryTab(tab) {
   const isHistory = tab === 'history';
+  document.getElementById('tabHistory').classList.toggle('active', isHistory);
+  document.getElementById('tabRanking').classList.toggle('active', !isHistory);
+  document.getElementById('tabHistory').setAttribute('aria-selected', String(isHistory));
+  document.getElementById('tabRanking').setAttribute('aria-selected', String(!isHistory));
   document.getElementById('panelHistory').style.display = isHistory ? '' : 'none';
   document.getElementById('panelRanking').style.display = isHistory ? 'none' : '';
   document.getElementById('tabHistory').style.background = isHistory ? 'rgba(255,215,120,0.2)' : 'none';

@@ -478,31 +478,71 @@ body.theme-angel .card.in-meld {
   isolation: isolate;
   z-index: 2;
   overflow: visible;
-  border-color: #fff2b5 !important;
+  border-color: #f3fbff !important;
   border-width: 2.5px;
-  background: linear-gradient(145deg, #fffef8, #f3e9dc 58%, #e5e5f7);
-  box-shadow: inset 0 0 12px rgba(255,223,151,0.26), 0 0 0 1px rgba(214,207,255,0.72), 0 0 14px rgba(255,230,165,0.8), 0 0 27px rgba(190,184,255,0.34), 0 7px 17px rgba(35,29,64,0.34);
+  background: linear-gradient(145deg, #fffefb, #edf7fa 42%, #f8ecf5 72%, #ececff);
+  box-shadow: inset 0 0 13px rgba(199,239,255,.42), inset 0 0 24px rgba(255,211,236,.2), 0 0 0 1px rgba(225,222,255,.78), 0 0 13px rgba(195,240,255,.78), 0 0 25px rgba(233,191,255,.4), 0 7px 17px rgba(35,29,64,.34);
 }
 body.theme-angel .card.in-meld .card-inner { position: relative; overflow: hidden; border-radius: 6px; }
 body.theme-angel .card.in-meld .card-inner::before {
   content: '';
   position: absolute;
-  inset: 17% 13%;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, rgba(255,255,255,0.72) 0 6%, transparent 7% 30%, rgba(226,184,89,0.28) 31% 33%, transparent 34%),
-    conic-gradient(from 45deg, transparent 0 10%, rgba(231,190,96,0.22) 11% 13%, transparent 14% 23%, rgba(211,208,247,0.28) 24% 26%, transparent 27% 100%);
-  animation: angelMeldAura 3.2s ease-in-out infinite;
+  inset: -42%;
+  z-index: 0;
+  border-radius: 42%;
+  background: conic-gradient(from 30deg, rgba(255,255,255,.08), rgba(151,235,255,.48), rgba(224,186,255,.38), rgba(255,202,217,.4), rgba(255,233,155,.3), rgba(174,245,237,.44), rgba(255,255,255,.08));
+  mix-blend-mode: screen;
+  animation: angelMeldOpalTurn 7.5s linear infinite;
   pointer-events: none;
 }
+body.theme-angel .card.in-meld .card-inner::after {
+  content: '';
+  position: absolute;
+  inset: -35% -110%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(112deg, transparent 36%, rgba(255,255,255,.08) 42%, rgba(255,255,255,.82) 48%, rgba(184,241,255,.32) 52%, rgba(255,201,241,.22) 56%, transparent 64%);
+  transform: translate3d(-24%,0,0) rotate(2deg);
+  opacity: 0;
+  animation: angelMeldCrystalSweep 3.6s ease-in-out infinite;
+}
+body.theme-angel .card.in-meld .card-inner > * { position: relative; z-index: 2; }
 body.theme-angel .card.in-meld .meld-dot {
-  width: 12px; height: 12px;
-  border-radius: 2px;
-  transform: rotate(45deg);
-  background: linear-gradient(135deg, #fff, #ffe49b 55%, #c9c8ff);
-  border-color: #ffffff;
-  box-shadow: 0 0 8px rgba(255,223,138,0.95), 0 0 17px rgba(205,201,255,0.65);
-  animation: angelMeldGem 1.8s ease-in-out infinite;
+  top: -10px;
+  right: -10px;
+  z-index: 16;
+  width: 27px;
+  height: 27px;
+  border: 0;
+  border-radius: 50%;
+  background: url('/assets/angel/meld-opal-badge-v1.webp') center / contain no-repeat;
+  box-shadow: none;
+  filter: saturate(1.28) brightness(1.04) drop-shadow(0 0 3px rgba(255,255,255,.95)) drop-shadow(0 0 7px rgba(164,230,255,.8)) drop-shadow(0 0 12px rgba(236,189,255,.56));
+  animation: angelMeldBadgeFloat 2.2s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+body.theme-angel .card.in-meld .meld-dot::before,
+body.theme-angel .card.in-meld .meld-dot::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+body.theme-angel .card.in-meld .meld-dot::before {
+  inset: -5px;
+  border-radius: 50%;
+  border: 1px solid rgba(225,248,255,.72);
+  box-shadow: 0 0 7px rgba(185,235,255,.55), inset 0 0 6px rgba(255,213,246,.38);
+  animation: angelMeldBadgeRing 2.2s ease-in-out infinite;
+}
+body.theme-angel .card.in-meld .meld-dot::after {
+  width: 7px;
+  height: 7px;
+  top: -5px;
+  right: -4px;
+  background: #fff;
+  clip-path: polygon(50% 0,61% 38%,100% 50%,61% 62%,50% 100%,39% 62%,0 50%,39% 38%);
+  filter: drop-shadow(0 0 4px #dff9ff);
+  animation: angelMeldBadgeSpark 1.45s ease-in-out infinite;
 }
 body.theme-angel .angel-meld-seal {
   display: block;
@@ -529,6 +569,9 @@ body.theme-angel .card.meld-pop { animation: angelMeldEnter 0.82s cubic-bezier(.
 body.theme-angel .card.meld-pop .angel-meld-seal {
   animation: angelMeldSealReveal 1.05s cubic-bezier(.16,.86,.24,1) both;
 }
+body.theme-angel .card.meld-pop .meld-dot {
+  animation: angelMeldBadgeReveal .9s cubic-bezier(.16,.86,.24,1) both, angelMeldBadgeFloat 2.2s .9s ease-in-out infinite;
+}
 body.theme-angel .card.meld-pop::after {
   content: '';
   position: absolute;
@@ -543,6 +586,36 @@ body.theme-angel .card.meld-pop::after {
 @keyframes angelMeldAura {
   0%,100% { transform: scale(0.92) rotate(-4deg); opacity: 0.28; }
   50% { transform: scale(1.08) rotate(4deg); opacity: 0.58; }
+}
+@keyframes angelMeldOpalTurn {
+  0% { transform: rotate(0) scale(.9); opacity: .34; }
+  50% { opacity: .72; }
+  100% { transform: rotate(360deg) scale(.9); opacity: .34; }
+}
+@keyframes angelMeldCrystalSweep {
+  0%,22% { transform: translate3d(-24%,0,0) rotate(2deg); opacity: 0; }
+  38% { opacity: .72; }
+  62% { opacity: .24; }
+  78%,100% { transform: translate3d(24%,0,0) rotate(2deg); opacity: 0; }
+}
+@keyframes angelMeldBadgeFloat {
+  0%,100% { transform: translateY(0) scale(.94) rotate(-3deg); opacity: .9; }
+  50% { transform: translateY(-2px) scale(1.07) rotate(3deg); opacity: 1; }
+}
+@keyframes angelMeldBadgeRing {
+  0%,100% { transform: scale(.78) rotate(0); opacity: .22; }
+  50% { transform: scale(1.12) rotate(90deg); opacity: .9; }
+}
+@keyframes angelMeldBadgeSpark {
+  0%,100% { transform: rotate(0) scale(.35); opacity: 0; }
+  42% { transform: rotate(90deg) scale(1.18); opacity: 1; }
+  72% { opacity: .35; }
+}
+@keyframes angelMeldBadgeReveal {
+  0% { transform: scale(.1) rotate(-120deg); opacity: 0; }
+  46% { transform: scale(1.42) rotate(12deg); opacity: 1; }
+  72% { transform: scale(.86) rotate(-5deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
 }
 @keyframes angelMeldGem {
   0%,100% { transform: rotate(45deg) scale(.86); opacity: .72; }
@@ -1324,6 +1397,209 @@ body.theme-angel :is(button,.friend-row):focus-visible {
   outline-offset: 3px;
 }
 
+/* ---------- Celestial modal system ---------- */
+body.theme-angel .overlay,
+body.theme-angel .profile-overlay {
+  backdrop-filter: blur(9px) saturate(1.08);
+  -webkit-backdrop-filter: blur(9px) saturate(1.08);
+}
+body.theme-angel .overlay.show::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,248,220,.2), transparent 32%),
+    linear-gradient(112deg, transparent 22%, rgba(217,218,255,.1) 44%, rgba(255,238,193,.12) 52%, transparent 74%);
+  mix-blend-mode: screen;
+  animation: angelModalVeil 3.2s ease-out both;
+}
+body.theme-angel .overlay.show > :is(.howto-box,.result-box,.disc-box) {
+  z-index: 1;
+}
+body.theme-angel .howto-box {
+  isolation: isolate;
+  overflow: hidden;
+  padding-top: 62px;
+  border: 1px solid rgba(255,243,207,.72);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% -4%, rgba(255,244,207,.22), transparent 31%),
+    radial-gradient(circle at 100% 100%, rgba(200,206,255,.15), transparent 34%),
+    linear-gradient(148deg, rgba(67,67,105,.98), rgba(31,34,72,.985) 52%, rgba(17,21,51,.99));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.1),
+    inset 0 18px 34px rgba(255,243,213,.045),
+    0 24px 70px rgba(10,11,34,.56),
+    0 0 0 4px rgba(185,195,255,.055),
+    0 0 38px rgba(239,216,255,.22);
+}
+body.theme-angel .howto-box::before,
+body.theme-angel :is(#friendsOverlay,#dmOverlay,#userProfileOverlay) .howto-box::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: 4px;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  width: min(210px,54%);
+  aspect-ratio: 720 / 193;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background:
+    url('/assets/angel/modal-crest-v1.webp') center / contain no-repeat,
+    radial-gradient(ellipse at center, rgba(27,27,67,.76), rgba(64,58,101,.3) 43%, transparent 72%) center / 108% 150% no-repeat;
+  filter: contrast(1.12) drop-shadow(0 1px 2px rgba(12,12,37,.82)) drop-shadow(0 0 7px rgba(255,247,218,.68)) drop-shadow(0 0 15px rgba(210,213,255,.38));
+  animation: angelModalCrestBreathe 3.4s ease-in-out infinite;
+}
+body.theme-angel .howto-box::after,
+body.theme-angel :is(#friendsOverlay,#dmOverlay,#userProfileOverlay) .howto-box::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  width: 280px;
+  height: 280px;
+  right: -126px;
+  bottom: -132px;
+  pointer-events: none;
+  background: url('/assets/angel/celestial-sigil-v3.webp') center / contain no-repeat;
+  mix-blend-mode: screen;
+  opacity: .115;
+  animation: angelModalSigil 34s linear infinite;
+}
+body.theme-angel .howto-box > :not(.howto-close) { position: relative; z-index: 2; }
+body.theme-angel .howto-close {
+  z-index: 4;
+  top: 12px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  color: #fffdf7;
+  border: 1px solid rgba(255,243,207,.58);
+  background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.2), rgba(81,80,126,.9) 56%, rgba(34,37,76,.96));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 0 12px rgba(222,218,255,.16);
+}
+body.theme-angel .howto-close:hover {
+  color: #fff;
+  border-color: rgba(255,248,224,.94);
+  background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.32), rgba(112,101,143,.96) 60%, rgba(51,48,91,.98));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 0 18px rgba(255,229,165,.34);
+}
+body.theme-angel .howto-title {
+  margin-bottom: 18px;
+  color: #fff1bc;
+  font-size: 22px;
+  text-shadow: 0 1px 2px rgba(18,17,48,.9), 0 0 14px rgba(255,225,155,.34);
+}
+body.theme-angel .howto-title::after {
+  content: '';
+  display: block;
+  width: min(240px,72%);
+  height: 1px;
+  margin: 11px auto 0;
+  background: linear-gradient(90deg, transparent, rgba(198,233,255,.48), rgba(255,237,183,.88), rgba(234,199,255,.42), transparent);
+  box-shadow: 0 0 8px rgba(255,230,166,.25);
+}
+body.theme-angel .howto-scroll {
+  min-height: 0;
+  flex: 1 1 auto;
+  scrollbar-color: rgba(237,220,255,.46) rgba(13,17,45,.35);
+}
+body.theme-angel .howto-scroll::-webkit-scrollbar { width: 7px; height: 7px; }
+body.theme-angel .howto-scroll::-webkit-scrollbar-track { background: rgba(12,16,43,.38); border-radius: 8px; }
+body.theme-angel .howto-scroll::-webkit-scrollbar-thumb {
+  border: 1px solid rgba(255,255,255,.18);
+  background: linear-gradient(180deg, rgba(255,232,175,.75), rgba(194,201,255,.58));
+  border-radius: 8px;
+}
+body.theme-angel .howto-section {
+  padding-bottom: 16px;
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, transparent, rgba(218,222,255,.24), rgba(255,231,174,.18), transparent) 1;
+}
+body.theme-angel .howto-section:last-child { border-bottom: 0; padding-bottom: 0; }
+body.theme-angel .howto-section h3 {
+  color: #ffe9aa;
+  text-shadow: 0 0 9px rgba(255,225,151,.2);
+}
+body.theme-angel .howto-score-table th,
+body.theme-angel .howto-score-table td { border-bottom-color: rgba(218,222,255,.14); }
+body.theme-angel .howto-score-table th { color: rgba(235,237,255,.72); }
+
+body.theme-angel #friendsOverlay .howto-title + div,
+body.theme-angel #historyOverlay .howto-box > div:first-of-type {
+  padding: 5px !important;
+  border: 1px solid rgba(224,228,255,.22) !important;
+  border-radius: 12px !important;
+  background: rgba(10,14,39,.64) !important;
+  box-shadow: inset 0 1px 8px rgba(0,0,0,.24);
+}
+body.theme-angel .friends-tab,
+body.theme-angel .history-tab {
+  min-height: 40px;
+  color: rgba(235,239,255,.72) !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  text-shadow: 0 1px 2px rgba(10,12,36,.8);
+}
+body.theme-angel :is(.friends-tab,.history-tab).active {
+  color: #2b243b !important;
+  border-color: rgba(255,252,232,.84) !important;
+  background: linear-gradient(180deg, #fffceb, #f0d58f 62%, #d8b86e) !important;
+  box-shadow: inset 0 1px 0 #fff, 0 4px 13px rgba(98,70,32,.28), 0 0 13px rgba(255,226,154,.17);
+  text-shadow: none;
+}
+body.theme-angel .friend-row,
+body.theme-angel .history-row,
+body.theme-angel #tierTable > div,
+body.theme-angel #myRankCard {
+  border: 1px solid rgba(220,225,255,.18) !important;
+  background: linear-gradient(135deg, rgba(255,255,255,.095), rgba(179,186,239,.05)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 5px 13px rgba(8,10,31,.15);
+}
+body.theme-angel .history-row:hover,
+body.theme-angel #tierTable > div:hover {
+  border-color: rgba(255,232,177,.38) !important;
+  background: linear-gradient(135deg, rgba(255,239,199,.13), rgba(198,201,249,.075)) !important;
+}
+body.theme-angel #historyStats > div {
+  min-width: 84px !important;
+  padding: 12px 18px !important;
+  border: 1px solid rgba(220,225,255,.2) !important;
+  background: radial-gradient(circle at 50% 0, rgba(255,238,192,.12), transparent 55%), rgba(21,25,57,.68) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 6px 15px rgba(8,10,31,.18);
+}
+body.theme-angel #settingsOverlay .lang-toggle,
+body.theme-angel #collectionOverlay .theme-grid,
+body.theme-angel #collectionOverlay .border-grid {
+  border: 1px solid rgba(220,225,255,.14);
+  border-radius: 12px;
+  background: rgba(12,16,43,.34);
+  box-shadow: inset 0 1px 9px rgba(4,7,27,.24);
+}
+body.theme-angel #settingsOverlay .lang-toggle { padding: 5px; }
+body.theme-angel #collectionOverlay .theme-grid { padding: 11px 8px; }
+body.theme-angel #collectionOverlay .border-grid { padding-block: 10px; }
+body.theme-angel #collectionOverlay .theme-swatch {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 0 0 1px rgba(220,225,255,.1), 0 4px 9px rgba(6,8,28,.22);
+}
+body.theme-angel #collectionOverlay .theme-swatch:is(:hover,.active) {
+  transform: translateY(-2px) scale(1.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 0 0 1px rgba(255,240,197,.46), 0 6px 14px rgba(6,8,28,.26), 0 0 17px rgba(255,225,151,.24);
+}
+@keyframes angelModalVeil {
+  0% { transform: translate3d(-8%,0,0); opacity: 0; }
+  28% { opacity: 1; }
+  100% { transform: translate3d(5%,0,0); opacity: .72; }
+}
+@keyframes angelModalCrestBreathe {
+  0%,100% { transform: translateX(-50%) scale(.97); opacity: .78; }
+  50% { transform: translateX(-50%) translateY(-1px) scale(1.025); opacity: 1; }
+}
+@keyframes angelModalSigil { to { transform: rotate(360deg); } }
+
 /* ---------- Theme swatch premium row ---------- */
 .theme-premium-row {
   flex: 0 0 100%;
@@ -1386,6 +1662,22 @@ body.theme-angel :is(button,.friend-row):focus-visible {
   .angel-mini-angel { width: 78px; height: 78px; }
   .angel-golden-feather { width: 34px; height: 62px; margin: -31px 0 0 -17px; }
   .angel-golden-feather.caught { margin: -31px 0 0 -17px; }
+  body.theme-angel .howto-box {
+    width: calc(100% - 18px);
+    padding: 52px 16px 18px;
+    border-radius: 16px;
+  }
+  body.theme-angel .howto-box::before,
+  body.theme-angel :is(#friendsOverlay,#dmOverlay,#userProfileOverlay) .howto-box::before {
+    top: 5px;
+    width: min(174px,52%);
+  }
+  body.theme-angel .howto-close { top: 10px; right: 10px; width: 34px; height: 34px; }
+  body.theme-angel .howto-title { font-size: 20px; margin-bottom: 14px; }
+  body.theme-angel #historyStats { gap: 7px !important; }
+  body.theme-angel #historyStats > div { min-width: 72px !important; padding: 9px 11px !important; }
+  body.theme-angel :is(.friends-tab,.history-tab) { min-height: 38px; padding-inline: 7px !important; }
+  body.theme-angel .card.in-meld .meld-dot { top: -8px; right: -7px; width: 23px; height: 23px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1401,11 +1693,18 @@ body.theme-angel :is(button,.friend-row):focus-visible {
   body.theme-angel .avatar-card.my-turn > .turn-halo-layer::before,
   body.theme-angel .avatar-card.my-turn > .turn-halo-layer::after,
   body.theme-angel .card.in-meld .card-inner::before,
+  body.theme-angel .card.in-meld .card-inner::after,
+  body.theme-angel .card.in-meld .meld-dot,
+  body.theme-angel .card.in-meld .meld-dot::before,
+  body.theme-angel .card.in-meld .meld-dot::after,
   body.theme-angel .angel-meld-seal,
   body.theme-angel .friend-row::after,
   body.theme-angel #friendsOverlay .howto-box::after,
   body.theme-angel #dmOverlay .howto-box::after,
   body.theme-angel #userProfileOverlay .howto-box::after,
+  body.theme-angel .overlay.show::before,
+  body.theme-angel .howto-box::before,
+  body.theme-angel .howto-box::after,
   .angel-cursor-glow { animation: none; }
   .angel-cursor-wake,
   .angel-cursor-feather,
