@@ -3733,6 +3733,17 @@ body.theme-aurora .card.just-drawn {
           🌸 꽃잎 흩날리기: <span id="petalToggleState">OFF</span>
         </button>
       </div>
+      <div class="howto-section" id="angelSection" style="display:none">
+        <h3>천상 기록</h3>
+        <div class="angel-discovery-card">
+          <div><span class="angel-discovery-icon guardian" aria-hidden="true"></span><strong id="angelGuardianCount">0</strong><small>수호천사 만남</small></div>
+          <div><span class="angel-discovery-icon feather" aria-hidden="true"></span><strong id="angelFeatherCount">0</strong><small>황금 깃털</small></div>
+          <div><span class="angel-discovery-icon opal" aria-hidden="true"></span><strong id="angelOpalCount">0</strong><small>오팔 깃털</small></div>
+        </div>
+        <button class="lang-btn" id="angelSoundToggleBtn" onclick="toggleAngelSound()" style="width:100%;text-align:center">
+          천상 효과음: <span id="angelSoundToggleState">OFF</span>
+        </button>
+      </div>
       <div class="howto-section" style="margin-bottom:0">
         <h3>🖼️ 프로필 테두리</h3>
         <div class="border-grid" id="borderGrid"></div>
@@ -4771,6 +4782,7 @@ function showLockedBorderMsg(id) {
 function showCollectionModal() {
   updatePetalSection();
   updateGrassSection();
+  if (typeof angelUpdateCollectionPanel === 'function') angelUpdateCollectionPanel();
   renderBorderGrid();
   document.getElementById('collectionOverlay').classList.add('show');
   if (_collectionSwatchesWired) return;
@@ -5107,6 +5119,7 @@ async function checkDailyReward() {
     sub: `오늘도 접속해주셔서 <b style="color:#ffd76a">+${reward} RP</b>를 드려요! 연속 출석할수록 보상이 커져요.`,
     acceptLabel: '🎁 받기',
     onAccept: () => {},
+    kind: 'reward',
   });
 }
 
@@ -5363,6 +5376,7 @@ async function initFriendSystem() {
             emoji: '🎮', title: senderName + ' 님의 게임 초대!',
             sub: m.content, acceptLabel: '🚀 바로 입장',
             declineLabel: '거절',
+            kind: 'invite',
             onAccept: () => { if (codeMatch) joinRoomByCode(codeMatch[0]); },
             onDecline: () => {
               supa.from('direct_messages').insert({
@@ -5692,6 +5706,7 @@ async function inviteFriend(friendId) {
     emoji: '📨', title: '초대를 보냈어요!',
     sub: '친구가 오프라인이면 다음 접속 시 DM으로 확인할 수 있어요.',
     acceptLabel: '확인', declineLabel: null, onAccept: () => {},
+    kind: 'invite-sent',
   });
 }
 
@@ -7123,6 +7138,7 @@ function initSocket() {
       sub: `${opponentName || '상대방'}님과의 경기 (${myScore}:${oppScore}) — 이어서 하시겠습니까?`,
       acceptLabel: '이어하기',
       declineLabel: '안 하기',
+      kind: 'resume',
       onAccept: () => socket.emit('resume-room', { clientId: CLIENT_ID, code }),
       onDecline: () => socket.emit('decline-resume', { clientId: CLIENT_ID, code }),
     });
@@ -7311,6 +7327,7 @@ function initSocket() {
       sub: `현재 점수로 매치를 종료할까요?<br><span style="color:rgba(255,255,255,0.5);font-size:12px">나: ${scores[myIdx]}점 | ${fromName}: ${scores[1-myIdx]}점</span>`,
       acceptLabel: '✅ 종료 수락',
       declineLabel: '계속 플레이',
+      kind: 'end-request',
       onAccept: () => socket.emit('respond-end', { accept: true }),
       onDecline: () => socket.emit('respond-end', { accept: false }),
     });
@@ -7328,6 +7345,7 @@ function initSocket() {
       sub: `수락하면 이번 라운드는 내 승리(+25점)로 처리됩니다.`,
       acceptLabel: '✅ 수락',
       declineLabel: '거절',
+      kind: 'surrender',
       onAccept: () => socket.emit('surrender-respond', { accept: true }),
       onDecline: () => socket.emit('surrender-respond', { accept: false }),
     });
@@ -7393,6 +7411,7 @@ function initSocket() {
             title: `새 캐릭터 해금!`,
             sub: `<span style="font-size:28px">${charHTML(ch)}</span><br>캐릭터가 해금됐어요! 로비에서 선택해보세요 🎉`,
             acceptLabel: '🎉 확인',
+            kind: 'unlock',
             onAccept: () => renderCharGrid(),
           });
         }, 2000 + i * 2500);
@@ -7418,7 +7437,7 @@ function initSocket() {
             emoji: up ? '🎉' : '😢',
             title: up ? `${tierNext.emoji} ${tierNext.name} 승급!` : `${tierNext.emoji} ${tierNext.name} 강등...`,
             sub: `랭킹 포인트: ${next.toLocaleString()} RP`,
-            acceptLabel: '확인', onAccept: () => {},
+            acceptLabel: '확인', onAccept: () => {}, kind: up ? 'rank-up' : 'rank-down',
           }), 1500);
         }
       }
@@ -7443,7 +7462,7 @@ function initSocket() {
       setTimeout(() => showConfirmModal({ emoji:'🌊', title:'심연 테마 해금!', sub:'PVP 50승 달성! 해파리가 헤엄치는 심해가 열렸습니다!', acceptLabel:'🌊 확인', onAccept:()=>{} }), 2500);
     }
     if (matchResult === 'win' && getTotalWins() === ANGEL_UNLOCK_WINS) {
-      setTimeout(() => showConfirmModal({ emoji:'✦', title:'천상 테마 해금!', sub:'PVP 100승 달성! 구름 위의 천상 성전이 열렸습니다!', acceptLabel:'천상으로', onAccept:()=>{} }), 3000);
+      setTimeout(() => showConfirmModal({ emoji:'✦', title:'천상 테마 해금!', sub:'PVP 100승 달성! 구름 위의 천상 성전이 열렸습니다!', acceptLabel:'천상으로', onAccept:()=>{}, kind:'unlock' }), 3000);
     }
     if (!vsAI && matchResult === 'win' && myChar === '🦄') {
       setTimeout(() => spawnUnicornCelebration(), 600);
@@ -7477,12 +7496,14 @@ function initSocket() {
       if (document.body.classList.contains('theme-aurora')) spawnAuroraCelebration();
       else if (document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
       else if (document.body.classList.contains('theme-abyss')) spawnAbyssWinBurst('matchEndOverlay');
-      else if (document.body.classList.contains('theme-angel')) spawnAngelWinBurst('matchEndOverlay');
+      else if (document.body.classList.contains('theme-angel')) spawnAngelWinBurst('matchEndOverlay', wasRevenge && revengeSuccess ? 'revenge' : 'match');
       else if (wasRevenge && revengeSuccess) spawnFireworks();
       else spawnConfetti();
     } else if (!tie) {
       if (document.body.classList.contains('theme-abyss')) spawnAbyssLoseEffect();
-      else if (document.body.classList.contains('theme-angel')) spawnAngelLoseEffect('matchEndOverlay');
+      else if (document.body.classList.contains('theme-angel')) spawnAngelLoseEffect('matchEndOverlay', wasRevenge ? 'revenge-loss' : 'match-loss');
+    } else if (document.body.classList.contains('theme-angel')) {
+      spawnAngelNeutralEffect('matchEndOverlay', 'tie');
     }
 
     // Show revenge/rematch/leave buttons based on role (only for human vs human)
@@ -7508,6 +7529,7 @@ function initSocket() {
         ? `설욕전을 받아들이시겠어요?<br><span style="color:#ff9040;font-size:12px">수락 시 리벤지 전으로 진행됩니다</span>`
         : `리벤지 전으로 설욕하시겠어요?<br><span style="color:#ffd76a;font-size:12px">수락 시 리벤지 전으로 진행됩니다</span>`,
       acceptLabel: ir ? '🔥 받아들인다' : '🔄 수락',
+      kind: 'rematch',
       declineLabel: '거절',
       onAccept: () => {
         socket.emit('respond-revenge', { accept: true });
@@ -8012,6 +8034,7 @@ function renderGame() {
     : myHand;
   const { melds, dw } = bestMelds(analysisHand);
   const meldIds = new Set(melds.flat().map(c => c.id));
+  const hasNewAngelMeld = !!prevMeldIds && [...meldIds].some(id => !prevMeldIds.has(id));
 
   // Map each card id -> which meld group it belongs to (for grouping, not just suit/rank)
   const cardGroupIdx = new Map();
@@ -8046,6 +8069,9 @@ function renderGame() {
     myEl.appendChild(el);
   });
   prevMeldIds = meldIds;
+  if (hasNewAngelMeld && document.body.classList.contains('theme-angel') && typeof angelPlayTone === 'function') {
+    angelPlayTone('meld');
+  }
 
   // Discard pile
   const slot = document.getElementById('discardSlot');
@@ -8403,14 +8429,15 @@ function showResult(data) {
   if (iWon && document.body.classList.contains('theme-aurora')) spawnAuroraCelebration();
   else if (iWon && document.body.classList.contains('theme-rainbow')) spawnRainbowCelebration();
   else if (iWon && document.body.classList.contains('theme-abyss')) spawnAbyssWinBurst('resultOverlay');
-  else if (iWon && document.body.classList.contains('theme-angel')) spawnAngelWinBurst('resultOverlay');
+  else if (iWon && document.body.classList.contains('theme-angel')) spawnAngelWinBurst('resultOverlay', resultType);
   else if (iWon && isBigGin) spawnFireworks();
   else if (iWon && !isTie) {
     if (myStreak >= 4) spawnStreakCelebration(myStreak);
     else spawnConfetti();
   }
   if (!iWon && !isTie && document.body.classList.contains('theme-abyss')) spawnAbyssLoseEffect();
-  if (!iWon && !isTie && document.body.classList.contains('theme-angel')) spawnAngelLoseEffect('resultOverlay');
+  if (!iWon && !isTie && document.body.classList.contains('theme-angel')) spawnAngelLoseEffect('resultOverlay', resultType);
+  if (isTie && document.body.classList.contains('theme-angel')) spawnAngelNeutralEffect('resultOverlay', 'tie');
   if (iWon && !isTie && myStreak >= 4) showStreakBanner(myStreak);
 
   function cardSpan(c) { return `<span class="mini-card ${IS_RED[c.suit]?'red':''}">${c.rank}${SUITS_SYM[c.suit]}</span>`; }
@@ -8495,7 +8522,7 @@ function updateRevengeProgress() {
 }
 
 // ===== In-game confirm modal =====
-function showConfirmModal({ emoji, title, sub, acceptLabel, declineLabel, onAccept, onDecline }) {
+function showConfirmModal({ emoji, title, sub, acceptLabel, declineLabel, onAccept, onDecline, kind }) {
   document.getElementById('confirmModalEmoji').innerHTML = charHTML(emoji || '❓');
   document.getElementById('confirmModalTitle').textContent = title || '';
   document.getElementById('confirmModalSub').innerHTML = sub || '';
@@ -8508,12 +8535,16 @@ function showConfirmModal({ emoji, title, sub, acceptLabel, declineLabel, onAcce
   declineBtn.onclick = () => { hideConfirmModal(); onDecline && onDecline(); };
   const box = document.getElementById('confirmModalBox');
   box.classList.remove('pop-in'); void box.offsetWidth; box.classList.add('pop-in');
-  document.getElementById('confirmModalOverlay').classList.add('show');
-  if (document.body.classList.contains('theme-angel')) requestAnimationFrame(angelDecorateConfirm);
+  const overlay = document.getElementById('confirmModalOverlay');
+  overlay.dataset.angelKind = kind || '';
+  overlay.classList.add('show');
+  if (document.body.classList.contains('theme-angel')) requestAnimationFrame(() => angelDecorateConfirm(kind));
 }
 function hideConfirmModal() {
-  document.getElementById('confirmModalOverlay').classList.remove('show');
-  if (document.body.classList.contains('theme-angel')) angelDecorateConfirm();
+  const overlay = document.getElementById('confirmModalOverlay');
+  overlay.classList.remove('show');
+  if (document.body.classList.contains('theme-angel')) angelDecorateConfirm(overlay.dataset.angelKind);
+  delete overlay.dataset.angelKind;
 }
 
 function requestRevenge(ir) {

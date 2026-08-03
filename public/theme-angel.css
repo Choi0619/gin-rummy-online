@@ -24,6 +24,11 @@ body.theme-angel .screen.active {
   background: transparent !important;
 }
 
+body.theme-angel.angel-theme-paused :is(.angel-layer,.angel-cursor-fx,.angel-mini-angel,.angel-golden-feather) *,
+body.theme-angel.angel-theme-paused :is(.angel-layer,.angel-cursor-fx,.angel-mini-angel,.angel-golden-feather) {
+  animation-play-state: paused !important;
+}
+
 .angel-layer {
   display: none;
   position: fixed;
@@ -1392,6 +1397,15 @@ body.theme-angel :is(.result-box,.disc-box) {
     linear-gradient(155deg, rgba(55,55,91,.985), rgba(15,19,47,.99));
   border-color: rgba(255,235,184,.67);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 25px 74px rgba(10,11,32,.58), 0 0 34px rgba(215,213,255,.17);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(239,220,255,.62) rgba(13,17,45,.3);
+}
+body.theme-angel :is(.result-box,.disc-box)::-webkit-scrollbar { width: 7px; }
+body.theme-angel :is(.result-box,.disc-box)::-webkit-scrollbar-track { margin-block: 12px; background: rgba(12,16,43,.32); border-radius: 8px; }
+body.theme-angel :is(.result-box,.disc-box)::-webkit-scrollbar-thumb {
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255,232,176,.78), rgba(195,202,255,.68));
 }
 body.theme-angel :is(.result-box,.disc-box)::after {
   content: '';
@@ -1948,6 +1962,342 @@ body.theme-angel #collectionOverlay .theme-swatch:is(:hover,.active) {
   box-shadow: 0 0 10px rgba(255,222,145,0.32);
 }
 
+/* ---------- Celestial window heraldry atlas ---------- */
+body.theme-angel :is(#howToOverlay,#historyOverlay,#collectionOverlay,#settingsOverlay,#friendsOverlay,#dmOverlay,#roomSettingsOverlay,#roomBrowserOverlay,#matchDetailOverlay,#userProfileOverlay) .howto-box {
+  padding-top: 88px;
+}
+body.theme-angel :is(#howToOverlay,#historyOverlay,#collectionOverlay,#settingsOverlay,#friendsOverlay,#dmOverlay,#roomSettingsOverlay,#roomBrowserOverlay,#matchDetailOverlay,#userProfileOverlay) .howto-box::before {
+  top: 5px;
+  width: 78px;
+  height: 78px;
+  aspect-ratio: auto;
+  background-image: url('/assets/angel/modal-heraldry-atlas-v1.webp');
+  background-size: 400% 200%;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 1px 2px rgba(10,11,35,.86)) drop-shadow(0 0 8px rgba(255,244,205,.7));
+  animation: angelHeraldryFloat 3.6s ease-in-out infinite;
+}
+body.theme-angel #howToOverlay .howto-box::before { background-position: 0 0; }
+body.theme-angel #historyOverlay .howto-box::before { background-position: 33.333% 0; }
+body.theme-angel #collectionOverlay .howto-box::before { background-position: 66.667% 0; }
+body.theme-angel #settingsOverlay .howto-box::before { background-position: 100% 0; }
+body.theme-angel :is(#friendsOverlay,#dmOverlay,#userProfileOverlay) .howto-box::before { background-position: 0 100%; }
+body.theme-angel :is(#roomSettingsOverlay,#roomBrowserOverlay) .howto-box::before { background-position: 33.333% 100%; }
+body.theme-angel #matchDetailOverlay .howto-box::before { background-position: 66.667% 100%; }
+@keyframes angelHeraldryFloat {
+  0%,100% { transform: translateX(-50%) translateY(1px) scale(.96); opacity: .88; }
+  50% { transform: translateX(-50%) translateY(-3px) scale(1.02); opacity: 1; }
+}
+
+/* ---------- Room creation and public-room browser ---------- */
+body.theme-angel #roomSettingsOverlay .howto-section {
+  padding: 13px 12px 16px;
+  border: 1px solid rgba(221,226,255,.14);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(255,255,255,.065), rgba(168,177,231,.035));
+}
+body.theme-angel #roomSettingsOverlay .room-timer-row {
+  padding: 7px;
+  border-radius: 24px;
+  background: rgba(10,14,39,.44);
+}
+body.theme-angel .room-stepper {
+  width: 38px;
+  height: 38px;
+  color: #fff9e9;
+  border: 1px solid rgba(255,236,187,.62);
+  background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.24), rgba(87,85,132,.96) 58%, rgba(34,38,78,.98));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 11px rgba(220,217,255,.13);
+}
+body.theme-angel .room-stepper:hover,
+body.theme-angel .room-stepper:focus-visible {
+  transform: translateY(-1px) scale(1.05);
+  border-color: #fff2c6;
+  background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.34), rgba(121,105,148,.98) 60%, rgba(47,45,88,.99));
+}
+body.theme-angel .room-timer-val {
+  color: #fff0ba;
+  text-shadow: 0 0 10px rgba(255,224,151,.26);
+}
+body.theme-angel #roomSettingsOverlay :is(#diffDesc,#gameModeDesc,#roomVisibilityDesc) { color: rgba(232,235,255,.66) !important; }
+body.theme-angel .room-browser-row {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 68px;
+  border: 1px solid rgba(220,226,255,.24);
+  background: linear-gradient(135deg, rgba(255,249,226,.1), rgba(166,176,235,.075));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 7px 16px rgba(8,10,31,.18);
+}
+body.theme-angel .room-browser-row::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 15%, rgba(255,247,216,.16) 46%, transparent 70%);
+  transform: translateX(-110%);
+  opacity: 0;
+}
+body.theme-angel .room-browser-row:hover {
+  border-color: rgba(255,236,187,.65);
+  background: linear-gradient(135deg, rgba(255,241,199,.16), rgba(188,191,244,.11));
+  transform: translateY(-1px);
+}
+body.theme-angel .room-browser-row:hover::before { opacity: 1; animation: angelRoomRowShine .8s ease-out both; }
+body.theme-angel #roomBrowserList > div:not(.room-browser-row) {
+  color: rgba(239,241,255,.7) !important;
+  border: 1px dashed rgba(222,226,255,.18);
+  border-radius: 14px;
+  background: rgba(12,16,43,.31);
+}
+@keyframes angelRoomRowShine { to { transform: translateX(110%); } }
+
+/* ---------- Match detail and history internals ---------- */
+body.theme-angel #matchDetailBody > div {
+  border: 1px solid rgba(220,225,255,.16);
+  background: linear-gradient(135deg, rgba(255,255,255,.085), rgba(177,184,235,.05)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+body.theme-angel #matchDetailBody > div:first-child {
+  background: radial-gradient(circle at 50% 0, rgba(255,234,176,.16), transparent 62%), rgba(20,24,57,.66) !important;
+  border-color: rgba(255,232,176,.28);
+}
+body.theme-angel #matchDetailBody [style*="overflow-y:auto"] {
+  scrollbar-color: rgba(236,219,255,.5) rgba(11,15,41,.32);
+}
+body.theme-angel #historyPagination button {
+  color: #f9f8ff !important;
+  border-color: rgba(220,225,255,.25) !important;
+  background: rgba(63,66,110,.72) !important;
+}
+
+/* ---------- Authentication and recovery ---------- */
+body.theme-angel .auth-overlay {
+  background:
+    linear-gradient(180deg, rgba(35,39,82,.38), rgba(12,16,42,.84)),
+    url('/assets/angel/celestial-bg-desktop.webp') center / cover no-repeat;
+}
+body.theme-angel .auth-overlay .auth-bg-symbol { opacity: .16; color: #fff1bd !important; }
+body.theme-angel .auth-box,
+body.theme-angel #pwResetOverlay > div {
+  border: 1px solid rgba(255,240,201,.68) !important;
+  background:
+    radial-gradient(circle at 50% -8%, rgba(255,240,196,.2), transparent 34%),
+    linear-gradient(150deg, rgba(70,69,108,.98), rgba(24,29,64,.99)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 28px 78px rgba(8,10,31,.62), 0 0 38px rgba(220,214,255,.2) !important;
+}
+body.theme-angel .auth-logo {
+  width: 74px;
+  height: 74px;
+  margin: 0 auto 5px;
+  overflow: hidden;
+  color: transparent;
+  font-size: 0;
+  background: url('/assets/angel/celestial-sigil-v3.webp') center / contain no-repeat;
+  filter: drop-shadow(0 0 9px rgba(255,234,180,.46));
+}
+body.theme-angel .auth-title { color: #fff0bb; text-shadow: 0 0 14px rgba(255,225,153,.24); }
+body.theme-angel .auth-tabs { border: 1px solid rgba(221,225,255,.16); background: rgba(9,13,37,.46); }
+body.theme-angel .auth-tab { color: rgba(234,237,255,.68); }
+body.theme-angel .auth-tab.active {
+  color: #2d263c;
+  background: linear-gradient(180deg,#fffbea,#ebcf88);
+  box-shadow: inset 0 1px 0 #fff, 0 4px 12px rgba(65,47,27,.22);
+}
+body.theme-angel .auth-field input,
+body.theme-angel #pwResetOverlay input {
+  color: #fff !important;
+  border-color: rgba(221,225,255,.26) !important;
+  background: rgba(12,16,43,.58) !important;
+}
+body.theme-angel .auth-field input:focus,
+body.theme-angel #pwResetOverlay input:focus { border-color: rgba(255,235,183,.72) !important; box-shadow: 0 0 0 3px rgba(255,229,164,.09); }
+body.theme-angel #pwResetOverlay { background: rgba(14,17,43,.8) !important; }
+body.theme-angel #pwResetOverlay > div::before {
+  content: '';
+  display: block;
+  width: 76px;
+  height: 76px;
+  margin: -12px auto 2px;
+  background: url('/assets/angel/modal-heraldry-atlas-v1.webp') 100% 0 / 400% 200% no-repeat;
+  filter: drop-shadow(0 0 8px rgba(255,235,184,.48));
+}
+body.theme-angel #profileOverlay .profile-box {
+  position: relative;
+  isolation: isolate;
+  padding-top: 88px;
+  border-color: rgba(255,240,201,.68);
+  background: radial-gradient(circle at 50% -5%, rgba(255,239,192,.2), transparent 33%), linear-gradient(150deg, rgba(67,66,104,.985), rgba(23,28,63,.99));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 25px 72px rgba(8,10,31,.58), 0 0 34px rgba(220,214,255,.18);
+}
+body.theme-angel #profileOverlay .profile-box::before {
+  content: '';
+  position: absolute;
+  top: 6px; left: 50%;
+  width: 76px; height: 76px;
+  transform: translateX(-50%);
+  background: url('/assets/angel/modal-heraldry-atlas-v1.webp') 33.333% 0 / 400% 200% no-repeat;
+  filter: drop-shadow(0 0 8px rgba(255,235,184,.5));
+  animation: angelHeraldryFloat 3.6s ease-in-out infinite;
+}
+body.theme-angel #profileOverlay .profile-box > button:last-child {
+  color: #fffaf0 !important;
+  border-color: rgba(221,225,255,.28) !important;
+  background: linear-gradient(180deg, rgba(92,92,139,.9), rgba(42,46,88,.95)) !important;
+}
+
+/* ---------- Waiting-room arrivals and ready seal ---------- */
+body.theme-angel .waiting-card .players-status {
+  padding: 10px;
+  border: 1px solid rgba(220,225,255,.14);
+  border-radius: 14px;
+  background: rgba(11,15,42,.35);
+}
+body.theme-angel .player-slot { position: relative; isolation: isolate; overflow: visible; }
+body.theme-angel .player-slot.connected::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 12%; right: 12%; top: -28px; bottom: -14px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(255,244,204,.24) 46%, transparent 86%);
+  clip-path: polygon(42% 0,58% 0,100% 100%,0 100%);
+  animation: angelSlotArrival 1.05s ease-out both;
+}
+body.theme-angel .player-slot.ready-state {
+  border-color: rgba(255,241,199,.86);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 0 25px rgba(255,224,151,.2);
+}
+body.theme-angel .player-slot.ready-state::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  left: 50%; top: 50%;
+  width: 148px; height: 88px;
+  transform: translate(-50%,-50%);
+  background: url('/assets/angel/turn-wings-v3.webp') center / contain no-repeat;
+  opacity: .36;
+  pointer-events: none;
+  animation: angelReadySeal .72s cubic-bezier(.2,.82,.2,1) both;
+}
+body.theme-angel .player-slot.ready-state > * { position: relative; z-index: 1; }
+body.theme-angel #roomSettingsSummary { padding: 8px; border-radius: 12px; background: rgba(10,14,39,.34); }
+body.theme-angel .room-chip { color: #fff0bb; box-shadow: inset 0 1px 0 rgba(255,255,255,.1); }
+@keyframes angelSlotArrival { 0% { transform: translateY(-26px) scaleX(.45); opacity: 0; } 42% { opacity: .86; } 100% { transform: translateY(0) scaleX(1); opacity: 0; } }
+@keyframes angelReadySeal { 0% { transform: translate(-50%,-50%) scaleX(.3) scale(.72); opacity: 0; } 70% { opacity: .52; } 100% { transform: translate(-50%,-50%) scaleX(1) scale(1); opacity: .36; } }
+
+/* ---------- Spectator observatory ---------- */
+body.theme-angel #spectateScreen .game-header .title-sm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff1bc;
+}
+body.theme-angel #spectateScreen .game-header .title-sm::before {
+  content: '';
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  background: url('/assets/angel/modal-heraldry-atlas-v1.webp') 100% 100% / 400% 200% no-repeat;
+  filter: drop-shadow(0 0 7px rgba(213,220,255,.42));
+}
+body.theme-angel #spectateScreen .spectate-hand-zone {
+  border-color: rgba(220,226,255,.26);
+  background: linear-gradient(145deg, rgba(26,31,68,.9), rgba(12,17,43,.92));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 14px 32px rgba(8,10,31,.24), 0 0 22px rgba(216,215,255,.08);
+}
+body.theme-angel #spectateScreen .spectate-hand-head { color: rgba(244,244,255,.78); }
+body.theme-angel #spectateScreen #specStatusMsg { color: #fff0bc !important; text-shadow: 0 0 9px rgba(255,225,151,.2); }
+body.theme-angel #spectateScreen #reactionBarSpectate {
+  width: fit-content;
+  margin-inline: auto;
+  padding: 7px 10px !important;
+  border: 1px solid rgba(255,232,174,.3);
+  border-radius: 24px;
+  background: rgba(29,32,69,.9);
+}
+
+/* ---------- Modal-aware cursor and discovery record ---------- */
+.angel-cursor-fx { z-index: 1450; }
+body.theme-angel:has(.overlay.show) .angel-cursor-glow,
+body.theme-angel:has(.profile-overlay[style*="display: flex"]) .angel-cursor-glow { width: 66px; height: 66px; margin: -33px 0 0 -33px; }
+.angel-golden-feather.opal {
+  filter: hue-rotate(42deg) saturate(1.28) drop-shadow(0 0 8px rgba(192,235,255,.9)) drop-shadow(0 0 20px rgba(224,184,255,.58));
+}
+body.theme-angel .angel-discovery-card {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 7px;
+  margin-bottom: 9px;
+}
+body.theme-angel .angel-discovery-card > div {
+  min-width: 0;
+  padding: 10px 5px;
+  text-align: center;
+  border: 1px solid rgba(220,225,255,.17);
+  border-radius: 10px;
+  background: rgba(12,16,43,.42);
+}
+body.theme-angel .angel-discovery-card strong,
+body.theme-angel .angel-discovery-card small { display: block; }
+body.theme-angel .angel-discovery-card strong { margin-top: 3px; color: #fff0b8; font-size: 17px; }
+body.theme-angel .angel-discovery-card small { color: rgba(231,234,255,.58); font-size: 9px; }
+.angel-discovery-icon { display: block; width: 38px; height: 38px; margin: auto; background-repeat: no-repeat; }
+.angel-discovery-icon.guardian { background: url('/assets/angel/mini-angel-atlas-v1.webp') 50% 0 / 300% 200% no-repeat; }
+.angel-discovery-icon.feather,
+.angel-discovery-icon.opal { background: url('/assets/angel/golden-feather-v1.webp') center / contain no-repeat; }
+.angel-discovery-icon.opal { filter: hue-rotate(42deg) saturate(1.35); }
+
+/* ---------- Result signatures by Gin Rummy outcome ---------- */
+.angel-victory-halo,
+.angel-gin-wings,
+.angel-undercut-emblem,
+.angel-neutral-halo {
+  position: absolute;
+  left: 50%; top: 50%;
+  z-index: 1;
+  pointer-events: none;
+  transform-origin: center;
+}
+.angel-victory-halo {
+  width: min(560px,92vw); height: min(560px,92vw);
+  background: url('/assets/angel/celestial-sigil-v3.webp') center / contain no-repeat;
+  animation: angelVictoryHaloOpen 2.8s ease-out both;
+}
+.angel-gin-wings {
+  width: min(700px,104vw); height: min(420px,70vh);
+  background: url('/assets/angel/turn-wings-v3.webp') center / contain no-repeat;
+  animation: angelGinWingsOpen 3.6s cubic-bezier(.16,.78,.2,1) both;
+}
+.angel-undercut-emblem {
+  width: min(360px,72vw); height: min(360px,72vw);
+  background: url('/assets/angel/modal-heraldry-atlas-v1.webp') 66.667% 100% / 400% 200% no-repeat;
+  animation: angelUndercutReveal 3.2s cubic-bezier(.18,.8,.2,1) both;
+}
+.angel-neutral-halo {
+  width: min(540px,92vw); height: min(540px,92vw);
+  border: 1px solid rgba(218,224,255,.5);
+  border-radius: 50%;
+  background:
+    url('/assets/angel/celestial-sigil-v3.webp') center / 82% no-repeat,
+    radial-gradient(circle, rgba(220,225,255,.16), transparent 64%);
+  animation: angelNeutralBalance 3.4s ease-out both;
+}
+body.theme-angel .angel-result-gin .result-box { border-color: rgba(255,247,220,.98); }
+body.theme-angel .angel-result-big-gin .result-box { box-shadow: inset 0 1px 0 #fff, 0 0 64px rgba(255,228,151,.42), 0 25px 76px rgba(10,11,33,.66); }
+body.theme-angel .angel-result-undercut .result-box { border-color: rgba(206,225,255,.82); }
+body.theme-angel .angel-result-tie .result-box { border-color: rgba(211,218,244,.55); }
+@keyframes angelVictoryHaloOpen { 0% { transform: translate(-50%,-50%) scale(.48) rotate(-28deg); opacity: 0; } 35% { opacity: .62; } 100% { transform: translate(-50%,-50%) scale(1.08) rotate(18deg); opacity: .14; } }
+@keyframes angelGinWingsOpen { 0% { transform: translate(-50%,-48%) scaleX(.2) scaleY(.72); opacity: 0; } 22% { opacity: .72; } 100% { transform: translate(-50%,-52%) scaleX(1) scaleY(1); opacity: .34; } }
+@keyframes angelUndercutReveal { 0% { transform: translate(-50%,-46%) rotate(-18deg) scale(.45); opacity: 0; } 24% { opacity: .7; } 100% { transform: translate(-50%,-52%) rotate(0) scale(1); opacity: .27; } }
+@keyframes angelNeutralBalance { 0% { transform: translate(-50%,-50%) scale(.72); opacity: 0; } 34% { opacity: .54; } 100% { transform: translate(-50%,-50%) scale(1.04); opacity: .12; } }
+
+body.theme-angel #confirmModalOverlay.angel-warning-arrival .result-box {
+  border-color: rgba(255,200,202,.64);
+  background: radial-gradient(circle at 50% -8%, rgba(255,205,201,.18), transparent 36%), linear-gradient(155deg, rgba(68,56,91,.99), rgba(28,20,48,.99));
+}
+body.theme-angel #confirmModalOverlay.angel-warning-arrival .angel-result-crest { filter: sepia(.24) hue-rotate(310deg) drop-shadow(0 0 8px rgba(255,190,194,.38)); }
+
 @media (max-width: 720px) {
   .angel-layer {
     background:
@@ -1958,6 +2308,28 @@ body.theme-angel #collectionOverlay .theme-swatch:is(:hover,.active) {
   .angel-lobby-gate img { width: min(142vw, 710px); max-height: 84vh; opacity: 0.25; }
   .angel-lobby-gate::before { width: min(122vw, 620px); top: 14%; }
   body.theme-angel:has(#lobbyScreen.active) .angel-flock { display: none; }
+  body.theme-angel .overlay,
+  body.theme-angel .profile-overlay {
+    backdrop-filter: blur(4px) saturate(1.03);
+    -webkit-backdrop-filter: blur(4px) saturate(1.03);
+  }
+  body.theme-angel :is(#howToOverlay,#historyOverlay,#collectionOverlay,#settingsOverlay,#friendsOverlay,#dmOverlay,#roomSettingsOverlay,#roomBrowserOverlay,#matchDetailOverlay,#userProfileOverlay) .howto-box {
+    padding-top: 76px;
+  }
+  body.theme-angel :is(#howToOverlay,#historyOverlay,#collectionOverlay,#settingsOverlay,#friendsOverlay,#dmOverlay,#roomSettingsOverlay,#roomBrowserOverlay,#matchDetailOverlay,#userProfileOverlay) .howto-box::before {
+    width: 64px;
+    height: 64px;
+  }
+  body.theme-angel .auth-overlay {
+    background: linear-gradient(180deg, rgba(35,39,82,.4), rgba(12,16,42,.88)), url('/assets/angel/celestial-bg-mobile.webp') center / cover no-repeat;
+  }
+  body.theme-angel .room-browser-row { align-items: flex-start; flex-wrap: wrap; }
+  body.theme-angel .room-browser-row > div { min-width: calc(100% - 56px) !important; }
+  body.theme-angel .room-browser-row .f-btn { margin-left: 54px; flex: 1 1 auto; }
+  body.theme-angel .player-slot.ready-state::after { width: 112px; height: 70px; }
+  .angel-victory-halo,
+  .angel-neutral-halo { width: 94vw; height: 94vw; }
+  .angel-gin-wings { width: 112vw; height: 58vh; }
   body.theme-angel .avatar-card.my-turn > .turn-halo-layer::before { inset: -29px -38px; opacity: .68; }
   body.theme-angel .avatar-card.my-turn > .turn-halo-layer::after {
     width: 54px;
@@ -2038,6 +2410,10 @@ body.theme-angel #collectionOverlay .theme-swatch:is(:hover,.active) {
   body.theme-angel .overlay.show::before,
   body.theme-angel .howto-box::before,
   body.theme-angel .howto-box::after,
+  body.theme-angel #profileOverlay .profile-box::before,
+  body.theme-angel .player-slot.connected::before,
+  body.theme-angel .player-slot.ready-state::after,
+  body.theme-angel .auth-bg-symbol,
   body.theme-angel .angel-result-crest,
   body.theme-angel .angel-result-crest::after,
   body.theme-angel .rematch-banner.show-incoming,
@@ -2050,6 +2426,10 @@ body.theme-angel #collectionOverlay .theme-swatch:is(:hover,.active) {
   .angel-golden-feather,
   .angel-blessing-wave,
   .angel-victory-seraph,
+  .angel-victory-halo,
+  .angel-gin-wings,
+  .angel-undercut-emblem,
+  .angel-neutral-halo,
   .angel-defeat-halo { display: none; }
   body.theme-angel .avatar-card.my-turn > .turn-halo-layer { opacity: 0.86; }
 }

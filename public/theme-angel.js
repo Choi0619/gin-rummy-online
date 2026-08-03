@@ -22,6 +22,77 @@ let _angelGoldenFeather = null;
 let _angelMiniTimer = null;
 let _angelFeatherTimer = null;
 let _angelBlessingTimer = null;
+let _angelAudioCtx = null;
+let _angelVisibilityHandler = null;
+
+const ANGEL_DISCOVERY_KEYS = {
+  guardians: 'grAngelGuardians',
+  feathers: 'grAngelFeathers',
+  opals: 'grAngelOpals',
+  sound: 'grAngelSound',
+};
+
+function angelStoredCount(key) {
+  return Math.max(0, Number.parseInt(localStorage.getItem(key) || '0', 10) || 0);
+}
+
+function angelBumpDiscovery(key) {
+  localStorage.setItem(key, String(angelStoredCount(key) + 1));
+  angelUpdateCollectionPanel();
+}
+
+function angelSoundEnabled() {
+  return localStorage.getItem(ANGEL_DISCOVERY_KEYS.sound) === '1';
+}
+
+function toggleAngelSound() {
+  localStorage.setItem(ANGEL_DISCOVERY_KEYS.sound, angelSoundEnabled() ? '0' : '1');
+  angelUpdateCollectionPanel();
+  if (angelSoundEnabled()) angelPlayTone('blessing');
+}
+
+function angelUpdateCollectionPanel() {
+  const section = document.getElementById('angelSection');
+  if (!section) return;
+  section.style.display = document.body.classList.contains('theme-angel') ? '' : 'none';
+  const guardianEl = document.getElementById('angelGuardianCount');
+  const featherEl = document.getElementById('angelFeatherCount');
+  const opalEl = document.getElementById('angelOpalCount');
+  const soundEl = document.getElementById('angelSoundToggleState');
+  if (guardianEl) guardianEl.textContent = String(angelStoredCount(ANGEL_DISCOVERY_KEYS.guardians));
+  if (featherEl) featherEl.textContent = String(angelStoredCount(ANGEL_DISCOVERY_KEYS.feathers));
+  if (opalEl) opalEl.textContent = String(angelStoredCount(ANGEL_DISCOVERY_KEYS.opals));
+  if (soundEl) soundEl.textContent = angelSoundEnabled() ? 'ON' : 'OFF';
+}
+
+function angelPlayTone(kind = 'spark') {
+  if (!angelSoundEnabled() || !document.body.classList.contains('theme-angel')) return;
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+  try {
+    _angelAudioCtx ||= new AudioCtx();
+    if (_angelAudioCtx.state === 'suspended') _angelAudioCtx.resume();
+    const now = _angelAudioCtx.currentTime;
+    const notes = kind === 'win' ? [523.25, 659.25, 783.99]
+      : kind === 'big-gin' ? [523.25, 659.25, 783.99, 1046.5]
+      : kind === 'meld' ? [659.25, 880]
+      : [587.33, 783.99];
+    notes.forEach((frequency, index) => {
+      const osc = _angelAudioCtx.createOscillator();
+      const gain = _angelAudioCtx.createGain();
+      osc.type = index % 2 ? 'sine' : 'triangle';
+      osc.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.0001, now + index * 0.055);
+      gain.gain.exponentialRampToValueAtTime(0.035, now + index * 0.055 + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.055 + 0.55);
+      osc.connect(gain).connect(_angelAudioCtx.destination);
+      osc.start(now + index * 0.055);
+      osc.stop(now + index * 0.055 + 0.58);
+    });
+  } catch (_) {
+    // Theme audio is optional; visual effects continue if Web Audio is unavailable.
+  }
+}
 
 function angelRandom(min, max) {
   return min + Math.random() * (max - min);
@@ -132,19 +203,23 @@ function angelPointerDown(event) {
   ring.addEventListener('animationend', () => ring.remove(), { once: true });
 }
 
-function angelDecorateConfirm() {
+function angelDecorateConfirm(kind) {
   const overlay = document.getElementById('confirmModalOverlay');
   if (!overlay) return;
   const title = document.getElementById('confirmModalTitle')?.textContent || '';
   const isVisible = overlay.classList.contains('show');
-  const isInvite = title.includes('초대');
-  const isUnlock = title.includes('천상');
-  const isRematch = title.includes('리벤지') || title.includes('리매치');
+  const resolvedKind = kind || overlay.dataset.angelKind || '';
+  const isInvite = resolvedKind === 'invite' || resolvedKind === 'invite-sent' || (!resolvedKind && title.includes('초대'));
+  const isUnlock = resolvedKind === 'unlock' || resolvedKind === 'rank-up' || resolvedKind === 'reward' || (!resolvedKind && title.includes('천상'));
+  const isRematch = resolvedKind === 'rematch' || resolvedKind === 'resume' || (!resolvedKind && (title.includes('리벤지') || title.includes('리매치')));
+  const isWarning = resolvedKind === 'end-request' || resolvedKind === 'surrender' || resolvedKind === 'rank-down';
   overlay.classList.toggle('angel-invite-arrival', isVisible && isInvite);
   overlay.classList.toggle('angel-unlock-arrival', isVisible && isUnlock);
   overlay.classList.toggle('angel-rematch-arrival', isVisible && isRematch);
-  if (isVisible && (isInvite || isUnlock || isRematch)) {
+  overlay.classList.toggle('angel-warning-arrival', isVisible && isWarning);
+  if (isVisible && (isInvite || isUnlock || isRematch || isWarning)) {
     angelBurstAt(window.innerWidth / 2, Math.min(window.innerHeight * 0.42, 360), 10, 'arrival');
+    if (isUnlock) angelPlayTone('blessing');
   }
 }
 
@@ -233,6 +308,8 @@ function angelSpawnMiniAngel() {
   angel.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
+    angelBumpDiscovery(ANGEL_DISCOVERY_KEYS.guardians);
+    angelPlayTone('blessing');
     retire(true);
   });
   _angelTimers.push(setTimeout(() => retire(false), motion.compact ? 6200 : 8200));
@@ -272,7 +349,9 @@ function angelSpawnGoldenFeather(originX, originY, fromAngel = false) {
   const feather = document.createElement('button');
   feather.type = 'button';
   feather.className = 'angel-golden-feather';
-  feather.setAttribute('aria-label', '황금 깃털');
+  const isOpal = !fromAngel && Math.random() < 0.08;
+  if (isOpal) feather.classList.add('opal');
+  feather.setAttribute('aria-label', isOpal ? '희귀 오팔 깃털' : '황금 깃털');
   const startX = Number.isFinite(originX) ? originX : angelRandom(50, window.innerWidth - 70);
   const startY = Number.isFinite(originY) ? originY : -84;
   const drift = angelRandom(motion.compact ? -48 : -100, motion.compact ? 48 : 100);
@@ -312,6 +391,8 @@ function angelSpawnGoldenFeather(originX, originY, fromAngel = false) {
     feather.style.animation = 'none';
     void feather.offsetWidth;
     feather.classList.add('caught');
+    angelBumpDiscovery(isOpal ? ANGEL_DISCOVERY_KEYS.opals : ANGEL_DISCOVERY_KEYS.feathers);
+    angelPlayTone(isOpal ? 'big-gin' : 'blessing');
     angelActivateBlessing(x, y);
     _angelTimers.push(setTimeout(cleanup, 680));
   }, { once: true });
@@ -322,6 +403,9 @@ function startAngelTheme() {
   _angelLayer = document.getElementById('angelLayer');
   if (!_angelLayer) return;
   const motion = angelMotionProfile();
+  _angelVisibilityHandler = () => document.body.classList.toggle('angel-theme-paused', document.hidden);
+  document.addEventListener('visibilitychange', _angelVisibilityHandler);
+  _angelVisibilityHandler();
 
   const rays = angelMake('div', 'angel-godrays', _angelLayer);
   rays.appendChild(angelMake('i', 'angel-ray ray-a'));
@@ -404,6 +488,7 @@ function startAngelTheme() {
   }
 
   document.body.classList.add('angel-theme-enter');
+  angelUpdateCollectionPanel();
   _angelTimers.push(setTimeout(() => document.body.classList.remove('angel-theme-enter'), 1100));
   if (!motion.reduced) {
     angelScheduleMiniAngel(motion.compact ? 10500 : 7200);
@@ -414,6 +499,7 @@ function startAngelTheme() {
 function stopAngelTheme() {
   document.removeEventListener('pointermove', angelPointerMove);
   document.removeEventListener('pointerdown', angelPointerDown);
+  if (_angelVisibilityHandler) document.removeEventListener('visibilitychange', _angelVisibilityHandler);
   if (_angelRAF) cancelAnimationFrame(_angelRAF);
   clearTimeout(_angelWakeTimer);
   clearTimeout(_angelMiniTimer);
@@ -421,8 +507,8 @@ function stopAngelTheme() {
   clearTimeout(_angelBlessingTimer);
   _angelTimers.forEach(clearTimeout);
   _angelTimers = [];
-  document.getElementById('confirmModalOverlay')?.classList.remove('angel-invite-arrival', 'angel-unlock-arrival', 'angel-rematch-arrival');
-  document.querySelectorAll('.angel-burst-particle,.angel-result-rays,.angel-victory-seraph,.angel-defeat-halo,.angel-lose-veil,.angel-mini-angel,.angel-golden-feather,.angel-blessing-wave').forEach(el => el.remove());
+  document.getElementById('confirmModalOverlay')?.classList.remove('angel-invite-arrival', 'angel-unlock-arrival', 'angel-rematch-arrival', 'angel-warning-arrival');
+  document.querySelectorAll('.angel-burst-particle,.angel-result-rays,.angel-victory-seraph,.angel-victory-halo,.angel-gin-wings,.angel-undercut-emblem,.angel-neutral-halo,.angel-defeat-halo,.angel-lose-veil,.angel-mini-angel,.angel-golden-feather,.angel-blessing-wave').forEach(el => el.remove());
   if (_angelFxLayer) _angelFxLayer.remove();
   if (_angelLayer) _angelLayer.innerHTML = '';
   _angelFxLayer = null;
@@ -434,6 +520,7 @@ function stopAngelTheme() {
   _angelMiniTimer = null;
   _angelFeatherTimer = null;
   _angelBlessingTimer = null;
+  _angelVisibilityHandler = null;
   _angelMiniAngel = null;
   _angelGoldenFeather = null;
   _angelSparkPool = [];
@@ -442,27 +529,46 @@ function stopAngelTheme() {
   _angelCursorFeatherIndex = 0;
   _angelSparkLast = { x: -100, y: -100, time: 0 };
   _angelPointer = { x: -100, y: -100, px: -100, py: -100, angle: 0, speed: 0 };
-  document.body.classList.remove('angel-theme-enter', 'angel-blessing-active');
+  document.body.classList.remove('angel-theme-enter', 'angel-blessing-active', 'angel-theme-paused');
+  angelUpdateCollectionPanel();
 }
 
-function spawnAngelWinBurst(overlayId) {
+function angelClearResultFx(overlay) {
+  if (!overlay) return;
+  overlay.querySelectorAll('.angel-result-rays,.angel-victory-seraph,.angel-victory-halo,.angel-gin-wings,.angel-undercut-emblem,.angel-neutral-halo,.angel-defeat-halo').forEach(el => el.remove());
+  [...overlay.classList].filter(name => name.startsWith('angel-result-')).forEach(name => overlay.classList.remove(name));
+}
+
+function spawnAngelWinBurst(overlayId, kind = 'win') {
   const overlay = document.getElementById(overlayId);
   if (!overlay) return;
-  overlay.querySelectorAll('.angel-result-rays,.angel-victory-seraph,.angel-defeat-halo').forEach(el => el.remove());
+  angelClearResultFx(overlay);
+  overlay.classList.add('angel-result-' + kind);
   const rays = angelMake('div', 'angel-result-rays', overlay);
-  const seraph = angelMake('div', 'angel-victory-seraph', overlay);
   const box = overlay.querySelector('.result-box');
+  let signature;
+  if (kind === 'big-gin' || kind === 'match' || kind === 'revenge') {
+    signature = angelMake('div', 'angel-victory-seraph', overlay);
+  } else if (kind === 'gin') {
+    signature = angelMake('div', 'angel-gin-wings', overlay);
+  } else if (kind === 'undercut') {
+    signature = angelMake('div', 'angel-undercut-emblem', overlay);
+  } else {
+    signature = angelMake('div', 'angel-victory-halo', overlay);
+  }
   if (box) {
     overlay.insertBefore(rays, box);
-    overlay.insertBefore(seraph, box);
+    overlay.insertBefore(signature, box);
   }
-  angelBurstAt(window.innerWidth / 2, window.innerHeight * 0.43, 32, 'win');
+  angelBurstAt(window.innerWidth / 2, window.innerHeight * 0.43, kind === 'big-gin' ? 42 : 28, 'win');
+  angelPlayTone(kind === 'big-gin' ? 'big-gin' : 'win');
   _angelTimers.push(setTimeout(() => rays.remove(), 4200));
 }
 
-function spawnAngelLoseEffect(overlayId) {
+function spawnAngelLoseEffect(overlayId, kind = 'lose') {
   const overlay = document.getElementById(overlayId);
-  overlay?.querySelectorAll('.angel-result-rays,.angel-victory-seraph,.angel-defeat-halo').forEach(el => el.remove());
+  angelClearResultFx(overlay);
+  overlay?.classList.add('angel-result-' + kind);
   if (overlay) {
     const halo = angelMake('div', 'angel-defeat-halo', overlay);
     const box = overlay.querySelector('.result-box');
@@ -479,4 +585,16 @@ function spawnAngelLoseEffect(overlayId) {
     feather.style.setProperty('--fall-feather-y', (i > 3 ? '100%' : '0%'));
   }
   _angelTimers.push(setTimeout(() => veil.remove(), 3600));
+}
+
+function spawnAngelNeutralEffect(overlayId, kind = 'tie') {
+  const overlay = document.getElementById(overlayId);
+  if (!overlay) return;
+  angelClearResultFx(overlay);
+  overlay.classList.add('angel-result-' + kind);
+  const halo = angelMake('div', 'angel-neutral-halo', overlay);
+  const box = overlay.querySelector('.result-box');
+  if (box) overlay.insertBefore(halo, box);
+  angelBurstAt(window.innerWidth / 2, window.innerHeight * 0.43, 18, 'arrival');
+  _angelTimers.push(setTimeout(() => halo.remove(), 3600));
 }
