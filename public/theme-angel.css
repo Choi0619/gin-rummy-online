@@ -2110,6 +2110,28 @@ body.theme-angel #historyPagination button {
   border-color: rgba(220,225,255,.25) !important;
   background: rgba(63,66,110,.72) !important;
 }
+body.theme-angel #historyPagination .history-page-btn:not(:disabled):hover {
+  color: #2b243b !important;
+  border-color: rgba(255,249,221,.9) !important;
+  background: linear-gradient(180deg,#fffbe7,#e7c879) !important;
+  box-shadow: 0 0 15px rgba(255,225,151,.22);
+}
+body.theme-angel #historyPagination .history-page-status {
+  border-color: rgba(220,225,255,.18);
+  background: rgba(16,20,52,.56);
+}
+body.theme-angel #historyPagination .history-page-input {
+  color: #fff8df;
+  border-color: rgba(255,232,175,.34);
+  background: rgba(255,255,255,.075);
+}
+body.theme-angel #historyPagination .history-page-input:focus {
+  border-color: rgba(255,241,198,.92);
+  box-shadow: 0 0 0 3px rgba(255,225,151,.11), 0 0 14px rgba(213,214,255,.13);
+}
+body.theme-angel .history-result-badge.win { color:#bfffdc; background:rgba(98,220,163,.11); }
+body.theme-angel .history-result-badge.lose { color:#ffc5c3; background:rgba(225,112,130,.11); }
+body.theme-angel .history-result-badge.tie { color:#fff0b5; background:rgba(255,220,133,.11); }
 
 /* ---------- Authentication and recovery ---------- */
 body.theme-angel .auth-overlay {
