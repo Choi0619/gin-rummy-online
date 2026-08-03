@@ -3554,6 +3554,7 @@ body.theme-aurora .card.just-drawn {
 <!-- ===== RESULT OVERLAY ===== -->
 <div class="overlay" id="resultOverlay">
   <div class="result-box" id="resBox">
+    <span class="angel-result-crest" aria-hidden="true"></span>
     <div class="result-emoji" id="resEmoji"></div>
     <div class="result-title" id="resTitle"></div>
     <div class="result-pts" id="resPts"></div>
@@ -3571,6 +3572,7 @@ body.theme-aurora .card.just-drawn {
 <!-- ===== DISCONNECT OVERLAY ===== -->
 <div class="overlay" id="discOverlay">
   <div class="disc-box" id="discBox">
+    <span class="angel-result-crest" aria-hidden="true"></span>
     <div style="font-size:56px" id="discEmoji">😢</div>
     <h2 id="discTitle">상대방이 나갔습니다</h2>
     <p style="color:rgba(255,255,255,0.6);margin-bottom:24px" id="discSub">방이 닫혔습니다.</p>
@@ -3581,6 +3583,7 @@ body.theme-aurora .card.just-drawn {
 <!-- ===== MATCH END OVERLAY ===== -->
 <div class="overlay" id="matchEndOverlay">
   <div class="result-box" id="matchEndBox">
+    <span class="angel-result-crest" aria-hidden="true"></span>
     <div class="result-emoji" id="matchEndEmoji">🏆</div>
     <div class="result-title" id="matchEndTitle"></div>
     <div class="result-pts" id="matchEndDetail"></div>
@@ -3597,6 +3600,7 @@ body.theme-aurora .card.just-drawn {
 <!-- ===== IN-GAME CONFIRM MODAL ===== -->
 <div class="overlay" id="confirmModalOverlay" style="z-index:600">
   <div class="result-box" id="confirmModalBox" style="max-width:380px;text-align:center;gap:12px">
+    <span class="angel-result-crest" aria-hidden="true"></span>
     <div style="font-size:52px" id="confirmModalEmoji">❓</div>
     <div class="result-title" id="confirmModalTitle" style="font-size:18px"></div>
     <div style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.5" id="confirmModalSub"></div>
@@ -3783,7 +3787,7 @@ body.theme-aurora .card.just-drawn {
 <div id="confettiLayer"></div>
 
 <!-- ===== CHAT ===== -->
-<button class="chat-toggle-btn" id="chatToggleBtn" onclick="toggleChat()" style="display:none">
+<button class="chat-toggle-btn" id="chatToggleBtn" onclick="toggleChat()" style="display:none" aria-label="채팅 열기" title="채팅">
   💬<span class="chat-badge" id="chatBadge"></span>
 </button>
 <div class="chat-panel" id="chatPanel">
@@ -7478,7 +7482,7 @@ function initSocket() {
       else spawnConfetti();
     } else if (!tie) {
       if (document.body.classList.contains('theme-abyss')) spawnAbyssLoseEffect();
-      else if (document.body.classList.contains('theme-angel')) spawnAngelLoseEffect();
+      else if (document.body.classList.contains('theme-angel')) spawnAngelLoseEffect('matchEndOverlay');
     }
 
     // Show revenge/rematch/leave buttons based on role (only for human vs human)
@@ -8406,7 +8410,7 @@ function showResult(data) {
     else spawnConfetti();
   }
   if (!iWon && !isTie && document.body.classList.contains('theme-abyss')) spawnAbyssLoseEffect();
-  if (!iWon && !isTie && document.body.classList.contains('theme-angel')) spawnAngelLoseEffect();
+  if (!iWon && !isTie && document.body.classList.contains('theme-angel')) spawnAngelLoseEffect('resultOverlay');
   if (iWon && !isTie && myStreak >= 4) showStreakBanner(myStreak);
 
   function cardSpan(c) { return `<span class="mini-card ${IS_RED[c.suit]?'red':''}">${c.rank}${SUITS_SYM[c.suit]}</span>`; }

@@ -856,14 +856,16 @@ body.theme-angel .dm-toast .dm-toast-name { color: #ffe6a3; }
 body.theme-angel .dm-toast .dm-toast-body { color: #f6f6ff; }
 
 body.theme-angel #confirmModalOverlay.angel-invite-arrival .result-box,
-body.theme-angel #confirmModalOverlay.angel-unlock-arrival .result-box {
+body.theme-angel #confirmModalOverlay.angel-unlock-arrival .result-box,
+body.theme-angel #confirmModalOverlay.angel-rematch-arrival .result-box {
   position: relative;
   overflow: visible;
   border-color: rgba(255,240,196,0.86);
   animation: angelInvitationArrive 0.62s cubic-bezier(.2,.82,.2,1) both;
 }
 body.theme-angel #confirmModalOverlay.angel-invite-arrival .result-box::before,
-body.theme-angel #confirmModalOverlay.angel-unlock-arrival .result-box::before {
+body.theme-angel #confirmModalOverlay.angel-unlock-arrival .result-box::before,
+body.theme-angel #confirmModalOverlay.angel-rematch-arrival .result-box::before {
   content: '';
   position: absolute;
   inset: -22px;
@@ -883,14 +885,172 @@ body.theme-angel #confirmModalOverlay.angel-unlock-arrival .result-box::before {
 }
 
 body.theme-angel .chat-panel {
+  isolation: isolate;
   color: #fffdf8;
-  background: linear-gradient(160deg, rgba(45,47,82,0.96), rgba(16,20,48,0.97));
-  border-color: rgba(255,231,166,0.45);
-  box-shadow: 0 18px 48px rgba(10,11,31,0.46), 0 0 22px rgba(213,211,255,0.12);
+  background:
+    radial-gradient(circle at 50% -12%, rgba(255,235,177,.2), transparent 34%),
+    linear-gradient(160deg, rgba(54,54,91,.98), rgba(15,19,47,.99));
+  border: 1px solid rgba(255,235,184,.72);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 20px 54px rgba(10,11,31,.54), 0 0 30px rgba(213,211,255,.17);
+  transition: transform .22s cubic-bezier(.2,.82,.2,1), opacity .18s ease;
 }
-body.theme-angel .chat-quick-emojis button { background: rgba(219,222,255,0.1); border-color: rgba(219,222,255,0.2); }
+body.theme-angel .chat-panel::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 37px;
+  width: 260px; height: 260px;
+  z-index: -1;
+  transform: translate(-50%,-50%);
+  background: url('/assets/angel/celestial-sigil-v3.webp') center / contain no-repeat;
+  opacity: .065;
+  pointer-events: none;
+}
+body.theme-angel .chat-panel > * { position: relative; z-index: 1; }
+body.theme-angel .chat-header {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 58px;
+  padding: 8px 11px;
+  font-size: 0;
+  color: #fff7df;
+  background: linear-gradient(180deg, rgba(118,108,151,.34), rgba(31,34,70,.55));
+  border-bottom: 1px solid rgba(255,232,176,.28);
+}
+body.theme-angel .chat-header::before {
+  content: '';
+  flex: 0 0 38px;
+  width: 38px; height: 38px;
+  background: url('/assets/angel/chat-winged-opal-v1.webp') center / contain no-repeat;
+  filter: drop-shadow(0 0 6px rgba(255,235,189,.36));
+}
+body.theme-angel .chat-header [data-i18n="chatTitle"] {
+  flex: 1 1 auto;
+  align-self: center;
+  min-width: 0;
+  font-size: 14px;
+  letter-spacing: 0;
+  text-align: left;
+}
+body.theme-angel .chat-close {
+  flex: 0 0 32px;
+  width: 32px; height: 32px;
+  padding: 0;
+  border: 1px solid rgba(255,235,185,.34);
+  border-radius: 50%;
+  color: #fff9e8;
+  background: rgba(255,255,255,.08);
+  font-size: 16px;
+}
+body.theme-angel .chat-toggle-btn {
+  isolation: isolate;
+  overflow: visible;
+  width: 58px; height: 58px;
+  border: 1px solid rgba(255,240,202,.88);
+  background: radial-gradient(circle, rgba(94,91,137,.98), rgba(24,28,64,.99));
+  color: transparent;
+  font-size: 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 9px 24px rgba(11,12,36,.5), 0 0 20px rgba(255,224,151,.22);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+body.theme-angel .chat-toggle-btn::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  z-index: 2;
+  background: url('/assets/angel/chat-winged-opal-v1.webp') center / contain no-repeat;
+  filter: drop-shadow(0 0 5px rgba(255,239,202,.42));
+}
+body.theme-angel .chat-toggle-btn::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  z-index: 1;
+  background: url('/assets/angel/celestial-sigil-v3.webp') center / contain no-repeat;
+  opacity: .34;
+  animation: angelChatHalo 13s linear infinite;
+  pointer-events: none;
+}
+body.theme-angel .chat-toggle-btn:hover {
+  transform: translateY(-2px) scale(1.06);
+  border-color: #fff9e8;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 12px 28px rgba(11,12,36,.54), 0 0 29px rgba(255,230,170,.4);
+}
+body.theme-angel .chat-toggle-btn.has-unread { animation: angelChatUnread 1.25s ease-in-out infinite; }
+body.theme-angel .chat-toggle-btn.bounce { animation: angelChatBounce .52s cubic-bezier(.2,.82,.2,1); }
+body.theme-angel .chat-badge {
+  z-index: 4;
+  top: -5px; right: -5px;
+  min-width: 21px; height: 21px;
+  color: #30203d;
+  background: linear-gradient(180deg,#fff8de,#e9b95f);
+  border-color: rgba(255,255,255,.9);
+  font-size: 11px;
+  box-shadow: 0 0 10px rgba(255,224,151,.48);
+}
+body.theme-angel .chat-messages { padding: 13px 13px 10px; }
+body.theme-angel .chat-name { color: rgba(238,238,255,.62); }
+body.theme-angel .chat-bubble {
+  color: #fdfcff;
+  background: linear-gradient(145deg, rgba(112,112,160,.48), rgba(53,57,105,.66));
+  border: 1px solid rgba(221,225,255,.2);
+  box-shadow: 0 5px 12px rgba(8,10,31,.18);
+}
+body.theme-angel .chat-msg.mine .chat-bubble {
+  color: #27213b;
+  background: linear-gradient(145deg, #fff9e8, #efd692);
+  border-color: rgba(255,255,255,.82);
+}
+body.theme-angel .chat-msg.system .chat-bubble {
+  color: rgba(243,241,255,.7);
+  background: rgba(219,221,255,.08);
+  border-color: rgba(219,221,255,.12);
+}
+body.theme-angel .chat-quick-emojis {
+  padding: 9px 9px 2px;
+  border-top-color: rgba(255,232,176,.18);
+  background: rgba(13,17,44,.28);
+}
+body.theme-angel .chat-quick-emojis button {
+  min-width: 34px; min-height: 32px;
+  padding: 5px 7px;
+  background: linear-gradient(180deg, rgba(102,101,149,.6), rgba(44,48,91,.72));
+  border-color: rgba(222,226,255,.28);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+}
+body.theme-angel .chat-quick-emojis button:hover {
+  background: linear-gradient(180deg, rgba(139,129,167,.82), rgba(67,67,111,.86));
+  border-color: rgba(255,234,181,.66);
+  box-shadow: 0 0 12px rgba(255,227,162,.2);
+}
+body.theme-angel .chat-input-row {
+  padding: 10px;
+  border-top-color: rgba(255,232,176,.22);
+  background: rgba(10,14,38,.42);
+}
+body.theme-angel .chat-input-row input {
+  color: #fffdf8;
+  background: rgba(14,18,48,.88) !important;
+  border-color: rgba(219,224,255,.3) !important;
+}
+body.theme-angel .chat-input-row button {
+  color: #272038;
+  background: linear-gradient(180deg,#fff9e7,#e7c472);
+  border: 1px solid rgba(255,255,255,.72);
+  box-shadow: 0 5px 12px rgba(9,10,31,.22), 0 0 10px rgba(255,227,163,.14);
+}
+body.theme-angel .chat-input-row button:hover { background: linear-gradient(180deg,#fffef8,#efd58c); }
+body.theme-angel .chat-messages::-webkit-scrollbar-thumb { background: linear-gradient(#fff0bd,#b9bde8); }
+@keyframes angelChatHalo { to { transform: rotate(360deg); } }
+@keyframes angelChatUnread { 0%,100% { transform: translateY(0) scale(1); opacity: 1; } 50% { transform: translateY(-2px) scale(1.07); opacity: .88; } }
+@keyframes angelChatBounce { 0%,100% { transform: scale(1); } 35% { transform: scale(1.22) rotate(-5deg); } 68% { transform: scale(.95) rotate(3deg); } }
 body.theme-angel .chat-msg.spectator .chat-name { color: #ffe7a6; }
-body.theme-angel .chat-msg.spectator .chat-bubble { border-color: rgba(255,231,166,0.4); background: rgba(255,225,154,0.1); }
+body.theme-angel .chat-msg.spectator .chat-bubble {
+  border-color: rgba(193,226,255,.48);
+  background: linear-gradient(145deg, rgba(112,176,208,.24), rgba(157,123,202,.2));
+  box-shadow: 0 0 13px rgba(169,215,255,.12);
+}
 
 /* ---------- Cursor ---------- */
 .angel-cursor-fx {
@@ -1216,6 +1376,166 @@ body.theme-angel .result-box.pop-lose {
   border-color: rgba(205,210,242,0.42);
   box-shadow: 0 18px 55px rgba(14,15,40,0.54);
 }
+
+/* ---------- Celestial result, rematch and invitation windows ---------- */
+.angel-result-crest { display: none; }
+body.theme-angel :is(.result-box,.disc-box) {
+  position: relative;
+  z-index: 2;
+  isolation: isolate;
+  overflow-x: hidden;
+  padding-top: 76px;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% -10%, rgba(255,238,187,.22), transparent 34%),
+    radial-gradient(circle at 100% 100%, rgba(181,184,235,.14), transparent 37%),
+    linear-gradient(155deg, rgba(55,55,91,.985), rgba(15,19,47,.99));
+  border-color: rgba(255,235,184,.67);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 25px 74px rgba(10,11,32,.58), 0 0 34px rgba(215,213,255,.17);
+}
+body.theme-angel :is(.result-box,.disc-box)::after {
+  content: '';
+  position: absolute;
+  right: -86px; bottom: -94px;
+  z-index: 0;
+  width: 260px; height: 260px;
+  background: url('/assets/angel/celestial-sigil-v3.webp') center / contain no-repeat;
+  opacity: .055;
+  pointer-events: none;
+}
+body.theme-angel :is(.result-box,.disc-box) > :not(.angel-result-crest) { position: relative; z-index: 2; }
+body.theme-angel .angel-result-crest {
+  display: block;
+  position: absolute;
+  top: 7px; left: 50%;
+  z-index: 1;
+  width: 112px; height: 64px;
+  transform: translateX(-50%);
+  background: url('/assets/angel/modal-crest-v1.webp') center / contain no-repeat;
+  filter: drop-shadow(0 0 8px rgba(255,235,182,.34));
+  pointer-events: none;
+}
+body.theme-angel .angel-result-crest::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 8px; height: 8px;
+  margin: -4px;
+  background: #fffdf4;
+  clip-path: polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);
+  animation: angelResultCrestGleam 2.8s ease-in-out infinite;
+}
+body.theme-angel :is(.result-title,.disc-box h2) {
+  color: #fff8df;
+  text-shadow: 0 2px 8px rgba(10,11,34,.55), 0 0 13px rgba(255,226,157,.18);
+}
+body.theme-angel :is(.result-pts,.disc-box p) { color: rgba(242,242,255,.74) !important; }
+body.theme-angel .score-bar {
+  color: #fff9e8;
+  background: linear-gradient(145deg, rgba(25,29,65,.82), rgba(66,65,105,.6));
+  border: 1px solid rgba(221,225,255,.2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
+}
+body.theme-angel .result-box .meld-section {
+  padding: 8px 10px;
+  border: 1px solid rgba(221,225,255,.13);
+  border-radius: 8px;
+  background: rgba(11,15,41,.35);
+}
+body.theme-angel .result-box .mini-card {
+  color: #20223b;
+  background: linear-gradient(150deg,#fff,#f0eeff);
+  border: 1px solid rgba(255,225,153,.5);
+  box-shadow: 0 0 8px rgba(222,218,255,.12);
+}
+body.theme-angel .result-box .mini-card.red { color: #c84462; }
+body.theme-angel .rematch-row { gap: 9px; flex-wrap: wrap; }
+body.theme-angel .rematch-row .btn {
+  min-height: 42px;
+  margin: 0;
+  border-radius: 9px;
+  white-space: normal;
+}
+body.theme-angel .rematch-row .btn-orange,
+body.theme-angel #revengeBtn {
+  color: #fff7f2;
+  background: linear-gradient(180deg, #a95d76, #69384f);
+  border-color: rgba(255,211,202,.67);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 5px 14px rgba(24,11,31,.3), 0 0 14px rgba(255,178,168,.16);
+}
+body.theme-angel .rematch-banner,
+body.theme-angel #revengeStatus:not(:empty) {
+  min-height: 38px;
+  color: #fff4d5 !important;
+  background: linear-gradient(145deg, rgba(93,85,128,.62), rgba(28,32,70,.72));
+  border: 1px solid rgba(255,229,168,.35);
+  border-radius: 9px;
+}
+body.theme-angel .rematch-banner.show-incoming {
+  color: #fffdf4 !important;
+  border-color: rgba(255,244,213,.75);
+  animation: angelRematchReady 1.35s ease-in-out infinite;
+}
+body.theme-angel #confirmModalOverlay.angel-rematch-arrival .angel-result-crest {
+  animation: angelRematchCrest .72s cubic-bezier(.2,.82,.2,1) both;
+}
+body.theme-angel #confirmModalOverlay.angel-invite-arrival .angel-result-crest,
+body.theme-angel #confirmModalOverlay.angel-unlock-arrival .angel-result-crest {
+  animation: angelInvitationCrest .9s cubic-bezier(.2,.82,.2,1) both;
+}
+body.theme-angel .result-box.pop-win,
+body.theme-angel .result-box.pop-biggin {
+  border-color: rgba(255,242,202,.94);
+  background:
+    radial-gradient(circle at 50% -8%, rgba(255,235,164,.31), transparent 38%),
+    radial-gradient(circle at 90% 90%, rgba(206,209,255,.18), transparent 42%),
+    linear-gradient(155deg, rgba(63,59,93,.99), rgba(16,20,49,.99));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 0 48px rgba(255,225,149,.34), 0 24px 70px rgba(12,13,38,.62);
+}
+body.theme-angel .result-box.pop-win .angel-result-crest,
+body.theme-angel .result-box.pop-biggin .angel-result-crest { animation: angelVictoryCrest 2.5s ease-in-out infinite; }
+body.theme-angel .result-box.pop-lose {
+  border-color: rgba(194,201,237,.46);
+  background:
+    radial-gradient(circle at 50% -8%, rgba(202,205,238,.13), transparent 36%),
+    linear-gradient(155deg, rgba(48,49,79,.985), rgba(15,18,43,.99));
+}
+body.theme-angel .result-box.pop-lose .angel-result-crest {
+  opacity: .47;
+  filter: grayscale(.72) brightness(.8) drop-shadow(0 0 7px rgba(190,198,235,.18));
+}
+.angel-victory-seraph {
+  position: absolute;
+  left: 50%; top: 50%;
+  z-index: 1;
+  width: min(620px,96vw);
+  height: min(915px,96vh);
+  pointer-events: none;
+  background: url('/assets/angel/victory-seraph-v1.webp') center / contain no-repeat;
+  transform-origin: 50% 48%;
+  animation: angelSeraphReveal 1.25s cubic-bezier(.16,.78,.2,1) both;
+  will-change: transform, opacity;
+}
+.angel-defeat-halo {
+  position: absolute;
+  left: 50%; top: 50%;
+  z-index: 1;
+  width: min(520px,92vw); height: min(520px,80vh);
+  pointer-events: none;
+  background:
+    url('/assets/angel/modal-crest-v1.webp') center / 42% auto no-repeat,
+    radial-gradient(circle, rgba(191,198,235,.15), transparent 66%);
+  filter: grayscale(.76) brightness(.78);
+  animation: angelDefeatHalo 3.8s ease-out forwards;
+  will-change: transform, opacity;
+}
+@keyframes angelResultCrestGleam { 0%,70%,100% { transform: scale(.35) rotate(0); opacity: 0; } 78% { transform: scale(1.35) rotate(45deg); opacity: 1; } 90% { transform: scale(.55) rotate(90deg); opacity: 0; } }
+@keyframes angelVictoryCrest { 0%,100% { transform: translateX(-50%) scale(.97); opacity: .82; } 50% { transform: translateX(-50%) scale(1.05); opacity: 1; } }
+@keyframes angelInvitationCrest { 0% { transform: translateX(-50%) translateY(-16px) scale(.65); opacity: 0; } 62% { transform: translateX(-50%) translateY(2px) scale(1.08); opacity: 1; } 100% { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; } }
+@keyframes angelRematchCrest { 0% { transform: translateX(-50%) rotate(-14deg) scale(.72); opacity: 0; } 70% { transform: translateX(-50%) rotate(3deg) scale(1.06); opacity: 1; } 100% { transform: translateX(-50%) rotate(0) scale(1); opacity: 1; } }
+@keyframes angelRematchReady { 0%,100% { transform: translateY(0); opacity: .84; } 50% { transform: translateY(-1px); opacity: 1; } }
+@keyframes angelSeraphReveal { 0% { transform: translate(-50%,-47%) scale(.62); opacity: 0; } 48% { opacity: .86; } 100% { transform: translate(-50%,-52%) scale(1); opacity: .72; } }
+@keyframes angelDefeatHalo { 0% { transform: translate(-50%,-42%) scale(1.08); opacity: 0; } 24% { opacity: .58; } 100% { transform: translate(-50%,-48%) scale(.88); opacity: 0; } }
 
 /* ---------- Prestige interaction polish ---------- */
 body.theme-angel .screen.active {
@@ -1678,6 +1998,19 @@ body.theme-angel #collectionOverlay .theme-swatch:is(:hover,.active) {
   body.theme-angel #historyStats > div { min-width: 72px !important; padding: 9px 11px !important; }
   body.theme-angel :is(.friends-tab,.history-tab) { min-height: 38px; padding-inline: 7px !important; }
   body.theme-angel .card.in-meld .meld-dot { top: -8px; right: -7px; width: 23px; height: 23px; }
+  body.theme-angel :is(.result-box,.disc-box) {
+    width: calc(100% - 18px);
+    padding: 66px 17px 21px;
+    border-radius: 14px;
+  }
+  body.theme-angel .angel-result-crest { top: 5px; width: 96px; height: 56px; }
+  body.theme-angel .result-title { font-size: 22px; }
+  body.theme-angel .rematch-row .btn { flex: 1 1 120px; min-width: 0; }
+  .angel-victory-seraph { width: 98vw; height: 92vh; }
+  body.theme-angel .chat-toggle-btn { width: 52px; height: 52px; right: 12px; bottom: 12px; }
+  body.theme-angel .chat-panel { left: 7px; right: 7px; width: auto; }
+  body.theme-angel .chat-header { min-height: 54px; }
+  body.theme-angel .chat-header::before { flex-basis: 34px; width: 34px; height: 34px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1705,11 +2038,18 @@ body.theme-angel #collectionOverlay .theme-swatch:is(:hover,.active) {
   body.theme-angel .overlay.show::before,
   body.theme-angel .howto-box::before,
   body.theme-angel .howto-box::after,
+  body.theme-angel .angel-result-crest,
+  body.theme-angel .angel-result-crest::after,
+  body.theme-angel .rematch-banner.show-incoming,
+  body.theme-angel .chat-toggle-btn::after,
+  body.theme-angel .chat-toggle-btn.has-unread,
   .angel-cursor-glow { animation: none; }
   .angel-cursor-wake,
   .angel-cursor-feather,
   .angel-mini-angel,
   .angel-golden-feather,
-  .angel-blessing-wave { display: none; }
+  .angel-blessing-wave,
+  .angel-victory-seraph,
+  .angel-defeat-halo { display: none; }
   body.theme-angel .avatar-card.my-turn > .turn-halo-layer { opacity: 0.86; }
 }
