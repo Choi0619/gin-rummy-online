@@ -720,6 +720,10 @@ body.theme-angel #friendsOverlay .howto-title + div {
   background: rgba(10,14,38,0.6) !important;
   border: 1px solid rgba(222,226,255,0.18);
 }
+body.theme-angel #friendsOverlay .howto-scroll {
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
 body.theme-angel .friends-tab {
   min-width: 0;
   color: rgba(235,238,255,0.7);
@@ -731,6 +735,8 @@ body.theme-angel .friends-tab.active {
 }
 body.theme-angel .friend-row {
   gap: 9px;
+  width: 100%;
+  box-sizing: border-box;
   min-width: 0;
   overflow: visible;
   background: linear-gradient(135deg, rgba(255,255,255,0.09), rgba(181,185,235,0.045));
