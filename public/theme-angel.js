@@ -21,24 +21,147 @@ let _angelMiniAngel = null;
 let _angelGoldenFeather = null;
 let _angelMiniTimer = null;
 let _angelFeatherTimer = null;
+let _angelButterflyTimer = null;
+let _angelCrystalTimer = null;
+let _angelKeyTimer = null;
 let _angelBlessingTimer = null;
 let _angelAudioCtx = null;
 let _angelVisibilityHandler = null;
+let _angelButterfly = null;
+let _angelCrystal = null;
+let _angelCelestialKey = null;
+let _angelRemoteCounts = null;
+let _angelSyncPromise = null;
+let _angelFlushPromise = null;
+let _angelCollectionUserId = null;
 
 const ANGEL_DISCOVERY_KEYS = {
   guardians: 'grAngelGuardians',
   feathers: 'grAngelFeathers',
   opals: 'grAngelOpals',
+  butterflies: 'grAngelButterflies',
+  crystals: 'grAngelCrystals',
+  keys: 'grAngelKeys',
   sound: 'grAngelSound',
+};
+
+const ANGEL_DB_COLUMNS = {
+  guardians: 'guardians',
+  feathers: 'golden_feathers',
+  opals: 'opal_feathers',
+  butterflies: 'radiant_butterflies',
+  crystals: 'starlight_crystals',
+  keys: 'celestial_keys',
 };
 
 function angelStoredCount(key) {
   return Math.max(0, Number.parseInt(localStorage.getItem(key) || '0', 10) || 0);
 }
 
-function angelBumpDiscovery(key) {
-  localStorage.setItem(key, String(angelStoredCount(key) + 1));
+function angelPendingStorageKey(explicitUserId) {
+  const userId = explicitUserId || (typeof supaUser !== 'undefined' && supaUser ? supaUser.id : 'guest');
+  return 'grAngelPending:' + userId;
+}
+
+function angelReadPending(storageKey = angelPendingStorageKey()) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    return Object.fromEntries(Object.keys(ANGEL_DB_COLUMNS).map(kind => [kind, Math.max(0, Number(parsed[kind]) || 0)]));
+  } catch (_) {
+    return Object.fromEntries(Object.keys(ANGEL_DB_COLUMNS).map(kind => [kind, 0]));
+  }
+}
+
+function angelWritePending(pending, storageKey = angelPendingStorageKey()) {
+  localStorage.setItem(storageKey, JSON.stringify(pending));
+}
+
+function angelDisplayCount(kind) {
+  const column = ANGEL_DB_COLUMNS[kind];
+  if (_angelRemoteCounts && column) return Math.max(0, Number(_angelRemoteCounts[column]) || 0);
+  return angelStoredCount(ANGEL_DISCOVERY_KEYS[kind]);
+}
+
+function angelApplyRemoteCounts(row) {
+  _angelRemoteCounts = row || Object.fromEntries(Object.values(ANGEL_DB_COLUMNS).map(column => [column, 0]));
+  Object.entries(ANGEL_DB_COLUMNS).forEach(([kind, column]) => {
+    localStorage.setItem(ANGEL_DISCOVERY_KEYS[kind], String(Math.max(0, Number(_angelRemoteCounts[column]) || 0)));
+  });
   angelUpdateCollectionPanel();
+}
+
+async function angelFetchCollectionProgress() {
+  if (typeof supa === 'undefined' || typeof supaUser === 'undefined' || !supaUser) return;
+  const userId = supaUser.id;
+  const columns = ['guardians','golden_feathers','opal_feathers','radiant_butterflies','starlight_crystals','celestial_keys'].join(',');
+  const { data, error } = await supa.from('angel_collection_progress').select(columns).eq('user_id', userId).maybeSingle();
+  if (!error && supaUser?.id === userId) angelApplyRemoteCounts(data);
+}
+
+async function angelFlushPendingDiscoveries(refresh = true) {
+  if (_angelFlushPromise) return _angelFlushPromise;
+  if (typeof supa === 'undefined' || typeof supaUser === 'undefined' || !supaUser) return;
+  const userId = supaUser.id;
+  const storageKey = angelPendingStorageKey(userId);
+  _angelFlushPromise = (async () => {
+    const snapshot = angelReadPending(storageKey);
+    for (const kind of Object.keys(ANGEL_DB_COLUMNS)) {
+      const amount = Math.min(100, snapshot[kind] || 0);
+      if (!amount) continue;
+      const { error } = await supa.rpc('increment_angel_collectible', { p_kind: kind, p_amount: amount });
+      if (error) continue;
+      const latest = angelReadPending(storageKey);
+      latest[kind] = Math.max(0, (latest[kind] || 0) - amount);
+      angelWritePending(latest, storageKey);
+    }
+    if (refresh && supaUser?.id === userId) await angelFetchCollectionProgress();
+  })().finally(() => { _angelFlushPromise = null; });
+  return _angelFlushPromise;
+}
+
+async function angelSyncCollectionProgress() {
+  if (typeof supa === 'undefined' || typeof supaUser === 'undefined' || !supaUser) return;
+  const userId = supaUser.id;
+  if (_angelSyncPromise && _angelCollectionUserId === userId) return _angelSyncPromise;
+  if (_angelCollectionUserId !== userId) {
+    _angelCollectionUserId = userId;
+    _angelRemoteCounts = null;
+    angelUpdateCollectionPanel();
+  }
+  _angelSyncPromise = (async () => {
+    const pending = angelReadPending(angelPendingStorageKey(userId));
+    const localBase = kind => Math.max(0, angelStoredCount(ANGEL_DISCOVERY_KEYS[kind]) - (pending[kind] || 0));
+    await supa.rpc('import_angel_collection_progress', {
+      p_guardians: localBase('guardians'),
+      p_golden_feathers: localBase('feathers'),
+      p_opal_feathers: localBase('opals'),
+      p_radiant_butterflies: localBase('butterflies'),
+      p_starlight_crystals: localBase('crystals'),
+      p_celestial_keys: localBase('keys'),
+    });
+    await angelFlushPendingDiscoveries(false);
+    await angelFetchCollectionProgress();
+  })().finally(() => { _angelSyncPromise = null; });
+  return _angelSyncPromise;
+}
+
+function angelResetCollectionSync() {
+  _angelRemoteCounts = null;
+  _angelCollectionUserId = null;
+  angelUpdateCollectionPanel();
+}
+
+function angelBumpDiscovery(kind) {
+  const localKey = ANGEL_DISCOVERY_KEYS[kind];
+  if (!localKey) return;
+  localStorage.setItem(localKey, String(angelStoredCount(localKey) + 1));
+  const column = ANGEL_DB_COLUMNS[kind];
+  if (_angelRemoteCounts && column) _angelRemoteCounts[column] = Math.max(0, Number(_angelRemoteCounts[column]) || 0) + 1;
+  const pending = angelReadPending();
+  pending[kind] = (pending[kind] || 0) + 1;
+  angelWritePending(pending);
+  angelUpdateCollectionPanel();
+  void angelFlushPendingDiscoveries();
 }
 
 function angelSoundEnabled() {
@@ -58,10 +181,24 @@ function angelUpdateCollectionPanel() {
   const guardianEl = document.getElementById('angelGuardianCount');
   const featherEl = document.getElementById('angelFeatherCount');
   const opalEl = document.getElementById('angelOpalCount');
+  const butterflyEl = document.getElementById('angelButterflyCount');
+  const crystalEl = document.getElementById('angelCrystalCount');
+  const keyEl = document.getElementById('angelKeyCount');
+  const syncEl = document.getElementById('angelCollectionSyncState');
   const soundEl = document.getElementById('angelSoundToggleState');
-  if (guardianEl) guardianEl.textContent = String(angelStoredCount(ANGEL_DISCOVERY_KEYS.guardians));
-  if (featherEl) featherEl.textContent = String(angelStoredCount(ANGEL_DISCOVERY_KEYS.feathers));
-  if (opalEl) opalEl.textContent = String(angelStoredCount(ANGEL_DISCOVERY_KEYS.opals));
+  if (guardianEl) guardianEl.textContent = String(angelDisplayCount('guardians'));
+  if (featherEl) featherEl.textContent = String(angelDisplayCount('feathers'));
+  if (opalEl) opalEl.textContent = String(angelDisplayCount('opals'));
+  if (butterflyEl) butterflyEl.textContent = String(angelDisplayCount('butterflies'));
+  if (crystalEl) crystalEl.textContent = String(angelDisplayCount('crystals'));
+  if (keyEl) keyEl.textContent = String(angelDisplayCount('keys'));
+  if (syncEl) {
+    const pendingTotal = Object.values(angelReadPending()).reduce((sum, value) => sum + value, 0);
+    syncEl.textContent = _angelRemoteCounts
+      ? (pendingTotal ? 'DB 저장 대기 ' + pendingTotal + '개' : '계정 DB 동기화 완료')
+      : '로그인 계정과 자동 동기화';
+    syncEl.classList.toggle('pending', pendingTotal > 0);
+  }
   if (soundEl) soundEl.textContent = angelSoundEnabled() ? 'ON' : 'OFF';
 }
 
@@ -308,7 +445,7 @@ function angelSpawnMiniAngel() {
   angel.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
-    angelBumpDiscovery(ANGEL_DISCOVERY_KEYS.guardians);
+    angelBumpDiscovery('guardians');
     angelPlayTone('blessing');
     retire(true);
   });
@@ -391,11 +528,220 @@ function angelSpawnGoldenFeather(originX, originY, fromAngel = false) {
     feather.style.animation = 'none';
     void feather.offsetWidth;
     feather.classList.add('caught');
-    angelBumpDiscovery(isOpal ? ANGEL_DISCOVERY_KEYS.opals : ANGEL_DISCOVERY_KEYS.feathers);
+    angelBumpDiscovery(isOpal ? 'opals' : 'feathers');
     angelPlayTone(isOpal ? 'big-gin' : 'blessing');
     angelActivateBlessing(x, y);
     _angelTimers.push(setTimeout(cleanup, 680));
   }, { once: true });
+}
+
+function angelScheduleButterfly(delay = angelRandom(22000, 44000)) {
+  clearTimeout(_angelButterflyTimer);
+  _angelButterflyTimer = setTimeout(() => {
+    _angelButterflyTimer = null;
+    if (!document.body.classList.contains('theme-angel') || _angelButterfly) {
+      angelScheduleButterfly();
+      return;
+    }
+    angelSpawnRadiantButterfly();
+  }, delay);
+}
+
+function angelSpawnRadiantButterfly() {
+  const motion = angelMotionProfile();
+  if (motion.reduced || _angelButterfly || !document.body.classList.contains('theme-angel')) return;
+  const butterfly = document.createElement('button');
+  butterfly.type = 'button';
+  butterfly.className = 'angel-radiant-butterfly';
+  butterfly.setAttribute('aria-label', '광휘 나비');
+  butterfly.innerHTML = '<span class="angel-butterfly-shimmer"></span><span class="angel-butterfly-creature"><i class="left"></i><b></b><i class="right"></i></span>';
+  const fromLeft = Math.random() < 0.5;
+  const y = angelRandom(motion.compact ? 110 : 90, Math.max(150, window.innerHeight - 150));
+  butterfly.style.setProperty('--butterfly-start-x', (fromLeft ? -90 : window.innerWidth + 90) + 'px');
+  butterfly.style.setProperty('--butterfly-end-x', (fromLeft ? window.innerWidth + 90 : -90) + 'px');
+  butterfly.style.setProperty('--butterfly-y', y.toFixed(1) + 'px');
+  const drift = angelRandom(-70, 70);
+  butterfly.style.setProperty('--butterfly-mid-x', (window.innerWidth / 2).toFixed(1) + 'px');
+  butterfly.style.setProperty('--butterfly-mid-y', (y + drift * .58).toFixed(1) + 'px');
+  butterfly.style.setProperty('--butterfly-end-y', (y + drift).toFixed(1) + 'px');
+  butterfly.style.setProperty('--butterfly-facing', fromLeft ? '1' : '-1');
+  butterfly.style.setProperty('--butterfly-duration', angelRandom(12, 17).toFixed(1) + 's');
+  document.body.appendChild(butterfly);
+  _angelButterfly = butterfly;
+  let done = false;
+  const cleanup = () => {
+    if (done) return;
+    done = true;
+    butterfly.remove();
+    if (_angelButterfly === butterfly) _angelButterfly = null;
+    angelScheduleButterfly(angelRandom(24000, 50000));
+  };
+  butterfly.addEventListener('pointerenter', () => {
+    butterfly.classList.add('noticed');
+    _angelTimers.push(setTimeout(() => butterfly.classList.remove('noticed'), 720));
+  });
+  butterfly.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = butterfly.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const yNow = rect.top + rect.height / 2;
+    butterfly.style.left = x + 'px';
+    butterfly.style.top = yNow + 'px';
+    butterfly.style.animation = 'none';
+    void butterfly.offsetWidth;
+    butterfly.classList.add('caught');
+    angelBumpDiscovery('butterflies');
+    angelPlayTone('meld');
+    angelBurstAt(x, yNow, motion.compact ? 12 : 20, 'butterfly');
+    _angelTimers.push(setTimeout(cleanup, 760));
+  }, { once: true });
+  _angelTimers.push(setTimeout(cleanup, 18000));
+}
+
+function angelScheduleCrystal(delay = angelRandom(58000, 105000)) {
+  clearTimeout(_angelCrystalTimer);
+  _angelCrystalTimer = setTimeout(() => {
+    _angelCrystalTimer = null;
+    if (!document.body.classList.contains('theme-angel') || _angelCrystal) {
+      angelScheduleCrystal();
+      return;
+    }
+    angelSpawnStarlightCrystal();
+  }, delay);
+}
+
+function angelCrystalShatter(x, y) {
+  for (let i = 0; i < 14; i++) {
+    const shard = angelMake('i', 'angel-crystal-shard', document.body);
+    const angle = Math.PI * 2 * i / 14 + angelRandom(-.18, .18);
+    const distance = angelRandom(36, 105);
+    shard.style.left = x + 'px';
+    shard.style.top = y + 'px';
+    shard.style.setProperty('--crystal-dx', (Math.cos(angle) * distance).toFixed(1) + 'px');
+    shard.style.setProperty('--crystal-dy', (Math.sin(angle) * distance).toFixed(1) + 'px');
+    shard.style.setProperty('--crystal-rot', angelRandom(-240, 240).toFixed(0) + 'deg');
+    shard.style.setProperty('--crystal-hue', (i % 3).toString());
+    shard.addEventListener('animationend', () => shard.remove(), { once: true });
+  }
+}
+
+function angelSpawnStarlightCrystal() {
+  const motion = angelMotionProfile();
+  if (motion.reduced || _angelCrystal || !document.body.classList.contains('theme-angel')) return;
+  const crystal = document.createElement('button');
+  crystal.type = 'button';
+  crystal.className = 'angel-starlight-crystal';
+  crystal.setAttribute('aria-label', '별빛 결정');
+  crystal.innerHTML = '<span class="angel-crystal-tail"></span><span class="angel-crystal-gem"><i></i></span>';
+  const startX = angelRandom(55, Math.max(70, window.innerWidth - 70));
+  const startY = -100;
+  crystal.style.setProperty('--crystal-start-x', startX.toFixed(1) + 'px');
+  crystal.style.setProperty('--crystal-start-y', startY + 'px');
+  crystal.style.setProperty('--crystal-end-x', (startX + angelRandom(-130, 130)).toFixed(1) + 'px');
+  crystal.style.setProperty('--crystal-end-y', (Math.min(window.innerHeight + 100, startY + window.innerHeight * .82)).toFixed(1) + 'px');
+  crystal.style.setProperty('--crystal-duration', (motion.compact ? 5.8 : 5.2) + 's');
+  document.body.appendChild(crystal);
+  _angelCrystal = crystal;
+  let done = false;
+  const cleanup = () => {
+    if (done) return;
+    done = true;
+    crystal.remove();
+    if (_angelCrystal === crystal) _angelCrystal = null;
+    angelScheduleCrystal(angelRandom(65000, 118000));
+  };
+  crystal.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = crystal.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    crystal.style.left = x + 'px';
+    crystal.style.top = y + 'px';
+    crystal.style.animation = 'none';
+    void crystal.offsetWidth;
+    crystal.classList.add('caught');
+    angelBumpDiscovery('crystals');
+    angelPlayTone('big-gin');
+    angelCrystalShatter(x, y);
+    _angelTimers.push(setTimeout(cleanup, 720));
+  }, { once: true });
+  _angelTimers.push(setTimeout(cleanup, 6200));
+}
+
+function angelScheduleCelestialKey(delay = angelRandom(115000, 195000)) {
+  clearTimeout(_angelKeyTimer);
+  _angelKeyTimer = setTimeout(() => {
+    _angelKeyTimer = null;
+    if (!document.body.classList.contains('theme-angel') || _angelCelestialKey) {
+      angelScheduleCelestialKey();
+      return;
+    }
+    angelSpawnCelestialKey();
+  }, delay);
+}
+
+function angelKeyPosition() {
+  const lobby = document.getElementById('lobbyScreen');
+  if (lobby?.classList.contains('active')) {
+    return { x: window.innerWidth * (Math.random() < .5 ? .2 : .8), y: Math.min(window.innerHeight * .4, 390) };
+  }
+  const openBox = document.querySelector('.overlay.show .howto-box, .overlay.show .result-box, .profile-overlay[style*="display: flex"] .profile-box');
+  if (!openBox) return null;
+  const rect = openBox.getBoundingClientRect();
+  const rightSide = Math.random() < .5;
+  return {
+    x: rightSide ? Math.min(window.innerWidth - 42, rect.right + 16) : Math.max(42, rect.left - 16),
+    y: Math.max(70, Math.min(window.innerHeight - 70, rect.top + rect.height * angelRandom(.28, .72))),
+  };
+}
+
+function angelOpenCelestialGate(x, y) {
+  document.querySelectorAll('.angel-key-gate').forEach(el => el.remove());
+  const gate = angelMake('div', 'angel-key-gate', document.body);
+  gate.style.setProperty('--key-gate-x', x.toFixed(1) + 'px');
+  gate.style.setProperty('--key-gate-y', y.toFixed(1) + 'px');
+  angelActivateBlessing(x, y);
+  angelBurstAt(x, y, window.innerWidth < 720 ? 18 : 28, 'key');
+  _angelTimers.push(setTimeout(() => gate.remove(), 3600));
+}
+
+function angelSpawnCelestialKey() {
+  const motion = angelMotionProfile();
+  if (motion.reduced || _angelCelestialKey || !document.body.classList.contains('theme-angel')) return;
+  const position = angelKeyPosition();
+  if (!position) {
+    angelScheduleCelestialKey(angelRandom(18000, 32000));
+    return;
+  }
+  const key = document.createElement('button');
+  key.type = 'button';
+  key.className = 'angel-celestial-key';
+  key.setAttribute('aria-label', '천상의 열쇠');
+  key.style.left = position.x + 'px';
+  key.style.top = position.y + 'px';
+  key.innerHTML = '<span class="angel-key-wings"><i></i><b></b></span><span class="angel-key-body"><i></i></span>';
+  document.body.appendChild(key);
+  _angelCelestialKey = key;
+  let done = false;
+  const cleanup = () => {
+    if (done) return;
+    done = true;
+    key.remove();
+    if (_angelCelestialKey === key) _angelCelestialKey = null;
+    angelScheduleCelestialKey(angelRandom(125000, 210000));
+  };
+  key.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    key.classList.add('caught');
+    angelBumpDiscovery('keys');
+    angelPlayTone('win');
+    angelOpenCelestialGate(position.x, position.y);
+    _angelTimers.push(setTimeout(cleanup, 850));
+  }, { once: true });
+  _angelTimers.push(setTimeout(cleanup, motion.compact ? 7200 : 9200));
 }
 
 function startAngelTheme() {
@@ -493,6 +839,9 @@ function startAngelTheme() {
   if (!motion.reduced) {
     angelScheduleMiniAngel(motion.compact ? 10500 : 7200);
     angelScheduleGoldenFeather(motion.compact ? 24000 : 16500);
+    angelScheduleButterfly(motion.compact ? 19000 : 12500);
+    angelScheduleCrystal(motion.compact ? 44000 : 32000);
+    angelScheduleCelestialKey(motion.compact ? 90000 : 68000);
   }
 }
 
@@ -504,11 +853,14 @@ function stopAngelTheme() {
   clearTimeout(_angelWakeTimer);
   clearTimeout(_angelMiniTimer);
   clearTimeout(_angelFeatherTimer);
+  clearTimeout(_angelButterflyTimer);
+  clearTimeout(_angelCrystalTimer);
+  clearTimeout(_angelKeyTimer);
   clearTimeout(_angelBlessingTimer);
   _angelTimers.forEach(clearTimeout);
   _angelTimers = [];
   document.getElementById('confirmModalOverlay')?.classList.remove('angel-invite-arrival', 'angel-unlock-arrival', 'angel-rematch-arrival', 'angel-warning-arrival');
-  document.querySelectorAll('.angel-burst-particle,.angel-result-rays,.angel-victory-seraph,.angel-victory-halo,.angel-gin-wings,.angel-undercut-emblem,.angel-neutral-halo,.angel-defeat-halo,.angel-lose-veil,.angel-mini-angel,.angel-golden-feather,.angel-blessing-wave').forEach(el => el.remove());
+  document.querySelectorAll('.angel-burst-particle,.angel-result-rays,.angel-victory-seraph,.angel-victory-halo,.angel-gin-wings,.angel-undercut-emblem,.angel-neutral-halo,.angel-defeat-halo,.angel-lose-veil,.angel-mini-angel,.angel-golden-feather,.angel-radiant-butterfly,.angel-starlight-crystal,.angel-crystal-shard,.angel-celestial-key,.angel-key-gate,.angel-blessing-wave').forEach(el => el.remove());
   if (_angelFxLayer) _angelFxLayer.remove();
   if (_angelLayer) _angelLayer.innerHTML = '';
   _angelFxLayer = null;
@@ -519,10 +871,16 @@ function stopAngelTheme() {
   _angelWakeTimer = null;
   _angelMiniTimer = null;
   _angelFeatherTimer = null;
+  _angelButterflyTimer = null;
+  _angelCrystalTimer = null;
+  _angelKeyTimer = null;
   _angelBlessingTimer = null;
   _angelVisibilityHandler = null;
   _angelMiniAngel = null;
   _angelGoldenFeather = null;
+  _angelButterfly = null;
+  _angelCrystal = null;
+  _angelCelestialKey = null;
   _angelSparkPool = [];
   _angelCursorFeatherPool = [];
   _angelSparkIndex = 0;

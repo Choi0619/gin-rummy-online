@@ -24,8 +24,8 @@ body.theme-angel .screen.active {
   background: transparent !important;
 }
 
-body.theme-angel.angel-theme-paused :is(.angel-layer,.angel-cursor-fx,.angel-mini-angel,.angel-golden-feather) *,
-body.theme-angel.angel-theme-paused :is(.angel-layer,.angel-cursor-fx,.angel-mini-angel,.angel-golden-feather) {
+body.theme-angel.angel-theme-paused :is(.angel-layer,.angel-cursor-fx,.angel-mini-angel,.angel-golden-feather,.angel-radiant-butterfly,.angel-starlight-crystal,.angel-celestial-key) *,
+body.theme-angel.angel-theme-paused :is(.angel-layer,.angel-cursor-fx,.angel-mini-angel,.angel-golden-feather,.angel-radiant-butterfly,.angel-starlight-crystal,.angel-celestial-key) {
   animation-play-state: paused !important;
 }
 
@@ -393,12 +393,44 @@ body.theme-angel .btn-gold { background: linear-gradient(180deg, #ffe4d7, #e5a77
 
 /* ---------- Player cards and turn halo: reuse the shared DOM ---------- */
 body.theme-angel .avatar-card {
+  flex: 1 1 0;
+  max-width: 260px;
+  min-width: 0;
+  padding-inline: 12px;
+  gap: 9px;
   background: linear-gradient(145deg, rgba(40,44,83,0.94), rgba(19,23,54,0.95));
   color: #fffdf8;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 9px 25px rgba(13,14,39,0.3);
 }
 body.theme-angel .avatar-card > :not(.turn-halo-layer) { position: relative; z-index: 2; }
 body.theme-angel .avatar-card.my-turn { background: linear-gradient(145deg, rgba(75,68,95,0.96), rgba(27,28,63,0.96)); }
+body.theme-angel #gameScreen .player-bar {
+  width: min(100%, 660px);
+  gap: 12px;
+  padding-inline: 10px;
+}
+body.theme-angel #gameScreen .avatar-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12.5px;
+}
+body.theme-angel #gameScreen .avatar-subline {
+  width: 100%;
+  min-width: 0;
+  gap: 3px;
+  overflow: visible;
+  text-overflow: clip;
+  font-size: 9.5px;
+}
+body.theme-angel #gameScreen .avatar-subline .id-chip {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.theme-angel #gameScreen .avatar-subline .tier-chip,
+body.theme-angel #gameScreen .avatar-subline > span[style] {
+  flex: 0 0 auto;
+}
 body.theme-angel .avatar-turn-lbl { color: #fff1b5; text-shadow: 0 0 8px rgba(255,225,135,0.5); }
 body.theme-angel .avatar-subline .id-chip { color: rgba(220,229,255,0.85); }
 body.theme-angel .avatar-subline .tier-chip { color: #ffe8a7; }
@@ -1277,6 +1309,241 @@ body.theme-angel .chat-msg.spectator .chat-bubble {
 }
 @keyframes angelGoldenCaught { 0% { transform: scale(1); opacity: 1; } 48% { transform: scale(1.7) rotate(18deg); opacity: 1; } 100% { transform: scale(.2) rotate(70deg); opacity: 0; } }
 @keyframes angelGoldenPulse { 0%,100% { transform: scale(.72); opacity: .42; } 50% { transform: scale(1.14); opacity: .88; } }
+
+/* Radiant butterfly: outer element travels, inner elements flap independently. */
+.angel-radiant-butterfly {
+  position: fixed;
+  left: 0; top: 0;
+  z-index: 34;
+  width: 76px; height: 58px;
+  margin: -29px 0 0 -38px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  appearance: none;
+  pointer-events: auto;
+  animation: angelButterflyCross var(--butterfly-duration,14s) linear both;
+  will-change: transform, opacity;
+}
+.angel-butterfly-creature {
+  position: absolute;
+  inset: 8px 9px;
+  transform: scaleX(var(--butterfly-facing,1));
+  animation: angelButterflyFloat 2.1s ease-in-out infinite;
+}
+.angel-butterfly-creature i {
+  position: absolute;
+  top: 5px;
+  width: 27px; height: 38px;
+  border: 1px solid rgba(255,255,255,.82);
+  background:
+    radial-gradient(circle at 54% 34%, rgba(255,255,255,.9) 0 5%, transparent 7%),
+    radial-gradient(circle at 50% 58%, rgba(163,255,244,.7), transparent 30%),
+    linear-gradient(145deg, rgba(255,252,233,.92), rgba(202,226,255,.76) 48%, rgba(223,183,255,.62));
+  box-shadow: inset 0 0 9px rgba(255,255,255,.64), 0 0 12px rgba(200,232,255,.48);
+  transform-origin: 100% 62%;
+  will-change: transform, opacity;
+}
+.angel-butterfly-creature i.left {
+  right: 50%;
+  border-radius: 82% 22% 68% 34%;
+  clip-path: polygon(100% 48%,74% 5%,18% 0,0 28%,22% 58%,6% 91%,58% 82%,100% 64%);
+  animation: angelButterflyLeftWing .34s ease-in-out infinite;
+}
+.angel-butterfly-creature i.right {
+  left: 50%;
+  border-radius: 22% 82% 34% 68%;
+  clip-path: polygon(0 48%,26% 5%,82% 0,100% 28%,78% 58%,94% 91%,42% 82%,0 64%);
+  transform-origin: 0 62%;
+  animation: angelButterflyRightWing .34s ease-in-out infinite;
+}
+.angel-butterfly-creature b {
+  position: absolute;
+  left: 50%; top: 13px;
+  width: 5px; height: 27px;
+  margin-left: -2.5px;
+  border-radius: 50%;
+  background: linear-gradient(#fff8c8,#d9bcff 56%,#7caed8);
+  box-shadow: 0 0 7px rgba(255,246,190,.82);
+}
+.angel-butterfly-shimmer {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.25), rgba(160,239,255,.12) 36%, transparent 68%);
+  animation: angelButterflyShimmer 1.4s ease-in-out infinite;
+}
+.angel-radiant-butterfly.noticed .angel-butterfly-creature { animation: angelButterflyNotice .72s ease-out both; }
+.angel-radiant-butterfly:is(:hover,:focus-visible) .angel-butterfly-shimmer { opacity: 1; transform: scale(1.2); }
+.angel-radiant-butterfly:focus-visible { outline: 1px solid rgba(255,250,218,.92); outline-offset: 2px; }
+.angel-radiant-butterfly.caught {
+  margin: -29px 0 0 -38px;
+  pointer-events: none;
+  animation: angelButterflyCaught .72s ease-out forwards !important;
+}
+@keyframes angelButterflyCross {
+  0% { transform: translate3d(var(--butterfly-start-x),var(--butterfly-y),0); opacity: 0; }
+  8%,88% { opacity: .96; }
+  46% { transform: translate3d(var(--butterfly-mid-x),var(--butterfly-mid-y),0); opacity: 1; }
+  100% { transform: translate3d(var(--butterfly-end-x),var(--butterfly-end-y),0); opacity: 0; }
+}
+@keyframes angelButterflyFloat { 0%,100% { transform: scaleX(var(--butterfly-facing,1)) translateY(2px) rotate(-2deg); } 50% { transform: scaleX(var(--butterfly-facing,1)) translateY(-5px) rotate(2deg); } }
+@keyframes angelButterflyLeftWing { 0%,100% { transform: rotateY(18deg) rotate(-5deg); opacity: .72; } 50% { transform: rotateY(68deg) rotate(4deg); opacity: 1; } }
+@keyframes angelButterflyRightWing { 0%,100% { transform: rotateY(-18deg) rotate(5deg); opacity: .72; } 50% { transform: rotateY(-68deg) rotate(-4deg); opacity: 1; } }
+@keyframes angelButterflyShimmer { 0%,100% { transform: scale(.82); opacity: .36; } 50% { transform: scale(1.08); opacity: .78; } }
+@keyframes angelButterflyNotice { 0% { transform: scaleX(var(--butterfly-facing,1)) scale(1); } 42% { transform: scaleX(var(--butterfly-facing,1)) translateY(-9px) scale(1.16) rotate(7deg); } 100% { transform: scaleX(var(--butterfly-facing,1)) scale(1); } }
+@keyframes angelButterflyCaught { 0% { transform: scale(1); opacity: 1; } 46% { transform: scale(1.45) rotate(12deg); opacity: 1; } 100% { transform: scale(.25) rotate(70deg); opacity: 0; } }
+
+/* Short-lived opal meteor crystal. */
+.angel-starlight-crystal {
+  position: fixed;
+  left: 0; top: 0;
+  z-index: 38;
+  width: 52px; height: 86px;
+  margin: -43px 0 0 -26px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  appearance: none;
+  pointer-events: auto;
+  animation: angelCrystalFall var(--crystal-duration,5.2s) cubic-bezier(.3,.04,.72,.94) both;
+  will-change: transform, opacity;
+}
+.angel-crystal-gem {
+  position: absolute;
+  left: 11px; top: 24px;
+  width: 30px; height: 44px;
+  clip-path: polygon(50% 0,88% 24%,100% 68%,50% 100%,0 68%,12% 24%);
+  background: conic-gradient(from 35deg,#fffdf1,#8ff5ef,#9cc9ff,#dd9fff,#fff6c9,#fffdf1);
+  box-shadow: 0 0 14px rgba(185,237,255,.78), 0 0 28px rgba(211,172,255,.46);
+  animation: angelCrystalTwinkle .68s ease-in-out infinite;
+}
+.angel-crystal-gem::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  clip-path: inherit;
+  background: linear-gradient(135deg,rgba(255,255,255,.92),rgba(139,243,239,.48) 35%,rgba(180,151,255,.62) 70%,rgba(255,247,200,.86));
+}
+.angel-crystal-gem i { position: absolute; left: 45%; top: 8%; width: 2px; height: 76%; background: rgba(255,255,255,.78); transform: rotate(17deg); }
+.angel-crystal-tail {
+  position: absolute;
+  left: 23px; bottom: 45px;
+  width: 7px; height: 76px;
+  transform-origin: 50% 100%;
+  background: linear-gradient(0deg,rgba(255,255,255,.62),rgba(145,238,255,.22) 48%,transparent);
+  clip-path: polygon(35% 100%,65% 100%,100% 0,0 0);
+  opacity: .72;
+}
+.angel-starlight-crystal:is(:hover,:focus-visible) .angel-crystal-gem { transform: scale(1.15); }
+.angel-starlight-crystal:focus-visible { outline: 1px solid #eaffff; outline-offset: 3px; }
+.angel-starlight-crystal.caught { margin: -43px 0 0 -26px; pointer-events: none; animation: angelCrystalCaught .62s ease-out forwards !important; }
+.angel-crystal-shard {
+  position: fixed;
+  z-index: 760;
+  width: 7px; height: 13px;
+  margin: -6px 0 0 -3px;
+  pointer-events: none;
+  clip-path: polygon(50% 0,100% 70%,50% 100%,0 70%);
+  background: linear-gradient(145deg,#fff,#8ef2ed 45%,#c49bff);
+  animation: angelCrystalShard .92s ease-out forwards;
+}
+.angel-crystal-shard[style*="--crystal-hue: 1"] { background: linear-gradient(145deg,#fff,#a9cfff 45%,#efb4ff); }
+.angel-crystal-shard[style*="--crystal-hue: 2"] { background: linear-gradient(145deg,#fff9d4,#cbfff7 45%,#a8b6ff); }
+@keyframes angelCrystalFall { 0% { transform: translate3d(var(--crystal-start-x),var(--crystal-start-y),0) rotate(-18deg) scale(.55); opacity: 0; } 10%,82% { opacity: 1; } 100% { transform: translate3d(var(--crystal-end-x),var(--crystal-end-y),0) rotate(42deg) scale(1); opacity: 0; } }
+@keyframes angelCrystalTwinkle { 0%,100% { transform: scale(.94) rotate(-2deg); opacity: .82; } 50% { transform: scale(1.06) rotate(2deg); opacity: 1; } }
+@keyframes angelCrystalCaught { 0% { transform: scale(1); opacity: 1; } 48% { transform: scale(1.85) rotate(24deg); opacity: 1; } 100% { transform: scale(.1) rotate(110deg); opacity: 0; } }
+@keyframes angelCrystalShard { 0% { transform: translate3d(0,0,0) rotate(0) scale(.35); opacity: 1; } 100% { transform: translate3d(var(--crystal-dx),var(--crystal-dy),0) rotate(var(--crystal-rot)) scale(.75); opacity: 0; } }
+
+/* Rarest collectible: winged celestial key, shown near the lobby gate/modal edge. */
+.angel-celestial-key {
+  position: fixed;
+  z-index: 710;
+  width: 78px; height: 78px;
+  margin: -39px 0 0 -39px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle,rgba(255,246,196,.3),rgba(200,205,255,.1) 44%,transparent 70%);
+  appearance: none;
+  pointer-events: auto;
+  animation: angelKeyArrive .76s cubic-bezier(.18,.8,.2,1) both, angelKeyHover 2.8s .76s ease-in-out infinite;
+}
+.angel-key-wings { position: absolute; inset: 15px 4px 22px; }
+.angel-key-wings i,
+.angel-key-wings b {
+  position: absolute;
+  top: 5px;
+  width: 27px; height: 22px;
+  border: 1px solid rgba(255,249,222,.78);
+  background: linear-gradient(145deg,rgba(255,255,255,.88),rgba(225,228,255,.65),rgba(255,221,151,.44));
+  box-shadow: 0 0 8px rgba(255,238,185,.44);
+}
+.angel-key-wings i { left: 2px; clip-path: polygon(100% 40%,65% 0,5% 12%,24% 48%,0 82%,70% 72%); }
+.angel-key-wings b { right: 2px; clip-path: polygon(0 40%,35% 0,95% 12%,76% 48%,100% 82%,30% 72%); }
+.angel-key-body {
+  position: absolute;
+  left: 50%; top: 14px;
+  width: 18px; height: 48px;
+  margin-left: -9px;
+  border: 4px solid #ffe6a0;
+  border-radius: 50% 50% 38% 38%;
+  background: radial-gradient(circle at 42% 30%,#fffbd8,#e6b85f 62%,#9f6f28);
+  box-shadow: inset 0 0 5px rgba(255,255,255,.75),0 0 8px #ffe8a1,0 0 18px rgba(255,214,111,.48);
+}
+.angel-key-body::before {
+  content: '';
+  position: absolute;
+  left: 3px; top: 16px;
+  width: 4px; height: 35px;
+  border-radius: 3px;
+  background: linear-gradient(#fff7c8,#dca847);
+}
+.angel-key-body::after {
+  content: '';
+  position: absolute;
+  left: 3px; bottom: -9px;
+  width: 15px; height: 9px;
+  border-left: 4px solid #e3ae50;
+  border-bottom: 4px solid #ffe19a;
+  box-shadow: -6px 0 0 -2px #ffe19a;
+}
+.angel-key-body i { position: absolute; left: 3px; top: 3px; width: 4px; height: 4px; border-radius: 50%; background: #6f5b86; box-shadow: 0 0 3px #fff; }
+.angel-celestial-key:is(:hover,:focus-visible) { transform: translateY(-5px) scale(1.1); }
+.angel-celestial-key:focus-visible { outline: 1px solid #fff1b7; outline-offset: 3px; }
+.angel-celestial-key.caught { pointer-events: none; animation: angelKeyCaught .8s ease-out forwards !important; }
+.angel-key-gate {
+  position: fixed;
+  left: 0; top: 0;
+  z-index: 705;
+  width: min(420px,88vw); height: min(420px,88vw);
+  margin: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg,transparent 47%,rgba(255,252,225,.74) 50%,transparent 53%),
+    url('/assets/angel/celestial-sigil-v3.webp') center / contain no-repeat;
+  mix-blend-mode: screen;
+  animation: angelKeyGateOpen 3.4s ease-out forwards;
+}
+@keyframes angelKeyArrive { 0% { transform: translateY(18px) scale(.45) rotate(-20deg); opacity: 0; } 72% { opacity: 1; } 100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; } }
+@keyframes angelKeyHover { 0%,100% { transform: translateY(0) rotate(-2deg); opacity: .82; } 50% { transform: translateY(-6px) rotate(2deg); opacity: 1; } }
+@keyframes angelKeyCaught { 0% { transform: scale(1); opacity: 1; } 46% { transform: scale(1.42) rotate(18deg); opacity: 1; } 100% { transform: scale(.18) rotate(90deg); opacity: 0; } }
+@keyframes angelKeyGateOpen {
+  0% { transform: translate3d(var(--key-gate-x),var(--key-gate-y),0) translate(-50%,-50%) scale(.32) rotate(-24deg); opacity: 0; }
+  26% { opacity: .88; }
+  68% { transform: translate3d(var(--key-gate-x),var(--key-gate-y),0) translate(-50%,-50%) scale(1.06) rotate(8deg); opacity: .7; }
+  100% { transform: translate3d(var(--key-gate-x),var(--key-gate-y),0) translate(-50%,-50%) scale(1.24) rotate(14deg); opacity: 0; }
+}
+
+.angel-burst-particle.butterfly,
+.angel-burst-particle.key {
+  width: 8px; height: 8px;
+  clip-path: polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+  background-image: none;
+  background: linear-gradient(135deg,#fff9d0,#9ff4f1 52%,#d6aaff);
+}
+.angel-burst-particle.key { width: 11px; height: 11px; background: linear-gradient(135deg,#fff,#ffe096 58%,#c9c7ff); }
 
 .angel-blessing-wave {
   position: fixed;
@@ -2304,11 +2571,42 @@ body.theme-angel .angel-discovery-card strong,
 body.theme-angel .angel-discovery-card small { display: block; }
 body.theme-angel .angel-discovery-card strong { margin-top: 3px; color: #fff0b8; font-size: 17px; }
 body.theme-angel .angel-discovery-card small { color: rgba(231,234,255,.58); font-size: 9px; }
+.angel-sync-state {
+  margin: -2px 0 9px;
+  color: rgba(211,255,231,.58);
+  font-size: 9px;
+  text-align: center;
+}
+.angel-sync-state::before { content: ''; display: inline-block; width: 5px; height: 5px; margin-right: 5px; border-radius: 50%; background: #8ff0bd; box-shadow: 0 0 6px rgba(143,240,189,.65); vertical-align: 1px; }
+.angel-sync-state.pending { color: rgba(255,229,165,.7); }
+.angel-sync-state.pending::before { background: #ffe09a; box-shadow: 0 0 6px rgba(255,224,154,.65); }
 .angel-discovery-icon { display: block; width: 38px; height: 38px; margin: auto; background-repeat: no-repeat; }
 .angel-discovery-icon.guardian { background: url('/assets/angel/mini-angel-atlas-v1.webp') 50% 0 / 300% 200% no-repeat; }
 .angel-discovery-icon.feather,
 .angel-discovery-icon.opal { background: url('/assets/angel/golden-feather-v1.webp') center / contain no-repeat; }
 .angel-discovery-icon.opal { filter: hue-rotate(42deg) saturate(1.35); }
+.angel-discovery-icon.butterfly { position: relative; }
+.angel-discovery-icon.butterfly::before,
+.angel-discovery-icon.butterfly::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  width: 18px; height: 24px;
+  border: 1px solid rgba(255,255,255,.76);
+  background: linear-gradient(145deg,#fffde4,#a9eee9 48%,#d5acff);
+  box-shadow: 0 0 7px rgba(191,235,255,.5);
+}
+.angel-discovery-icon.butterfly::before { right: 50%; border-radius: 85% 25% 70% 35%; transform: rotate(-12deg); }
+.angel-discovery-icon.butterfly::after { left: 50%; border-radius: 25% 85% 35% 70%; transform: rotate(12deg); }
+.angel-discovery-icon.crystal {
+  width: 28px; height: 36px; margin-top: 1px; margin-bottom: 1px;
+  clip-path: polygon(50% 0,90% 25%,100% 68%,50% 100%,0 68%,10% 25%);
+  background: conic-gradient(from 25deg,#fff,#92eee9,#a9c7ff,#d2a0ff,#fff0bd,#fff);
+  box-shadow: 0 0 9px rgba(183,225,255,.64);
+}
+.angel-discovery-icon.key { position: relative; width: 24px; border: 4px solid #ffe19a; border-radius: 50% 50% 34% 34%; box-shadow: 0 0 8px rgba(255,222,138,.5); }
+.angel-discovery-icon.key::before { content: ''; position: absolute; left: 6px; top: 16px; width: 4px; height: 25px; background: #e2ab4c; }
+.angel-discovery-icon.key::after { content: ''; position: absolute; left: 6px; bottom: -7px; width: 13px; height: 8px; border-left: 4px solid #e2ab4c; border-bottom: 4px solid #ffe19a; }
 
 /* ---------- Result signatures by Gin Rummy outcome ---------- */
 .angel-victory-halo,
@@ -2389,6 +2687,10 @@ body.theme-angel #confirmModalOverlay.angel-warning-arrival .angel-result-crest 
   body.theme-angel .room-browser-row > div { min-width: calc(100% - 56px) !important; }
   body.theme-angel .room-browser-row .f-btn { margin-left: 54px; flex: 1 1 auto; }
   body.theme-angel .player-slot.ready-state::after { width: 112px; height: 70px; }
+  body.theme-angel #gameScreen .player-bar { gap: 7px; padding-inline: 7px; }
+  body.theme-angel #gameScreen .avatar-card { padding-inline: 8px; gap: 7px; }
+  body.theme-angel #gameScreen .avatar-name { font-size: 11.5px; }
+  body.theme-angel #gameScreen .avatar-subline { font-size: 8.8px; gap: 2px; }
   .angel-victory-halo,
   .angel-neutral-halo { width: 94vw; height: 94vw; }
   .angel-gin-wings { width: 112vw; height: 58vh; }
@@ -2487,6 +2789,10 @@ body.theme-angel #confirmModalOverlay.angel-warning-arrival .angel-result-crest 
   .angel-cursor-feather,
   .angel-mini-angel,
   .angel-golden-feather,
+  .angel-radiant-butterfly,
+  .angel-starlight-crystal,
+  .angel-celestial-key,
+  .angel-key-gate,
   .angel-blessing-wave,
   .angel-victory-seraph,
   .angel-victory-halo,

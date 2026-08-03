@@ -63,9 +63,9 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
   position: relative;
   min-height: 100vh;
   min-height: 100dvh;
-  justify-content: center;
-  padding: 40px 20px;
-  gap: 18px;
+  justify-content: flex-start;
+  padding: max(22px, 2.5vh) 20px 34px;
+  gap: 0;
   overflow-x: hidden;
   background: var(--lobby-grad);
   transition: background 0.4s ease;
@@ -136,7 +136,67 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
 }
 .btn-howto:hover { background: rgba(255,215,120,0.22); transform: translateY(-1px); }
 
-.lobby-top-row { position: relative; z-index: 1; display: flex; gap: 8px; align-items: center; }
+.lobby-stage {
+  position: relative;
+  z-index: 5;
+  width: min(700px, calc(100vw - 40px));
+  margin: clamp(0px, 2vh, 18px) auto 0;
+  display: grid;
+  gap: clamp(10px, 1.5vh, 16px);
+  align-content: start;
+}
+.lobby-top-row {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  background: rgba(5,12,18,0.26);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.06);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+.lobby-top-row .btn-howto {
+  min-height: 36px;
+  white-space: nowrap;
+}
+.lobby-brand-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.9fr);
+  align-items: center;
+  gap: clamp(16px, 4vw, 34px);
+  padding: 2px clamp(10px, 3vw, 24px);
+}
+.lobby-profile-column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+}
+.lobby-profile-column #lobbyUserBadge {
+  width: 100%;
+  margin: 0 !important;
+}
+.lobby-profile-column #guestNameRow { margin: 0 !important; }
+.lobby-logo-wrap {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.lobby-logo-wrap .logo-img {
+  width: clamp(250px, 28vw, 320px);
+  max-width: 100%;
+  margin: 0;
+}
 .btn-settings {
   background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: white;
   width: 36px; height: 36px; border-radius: 50%; font-size: 16px; cursor: pointer; transition: all 0.2s;
@@ -612,6 +672,43 @@ body.theme-rainbow .score-num { animation: rainbowText 3s linear infinite; }
   display: flex; align-items: center; justify-content: center; min-height: 26px; line-height: 1.2;
 }
 .profile-stat-lbl { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+.ai-global-profile .howto-box { width: min(500px, calc(100vw - 24px)); max-width: 500px !important; }
+.ai-profile-head { display: flex; align-items: center; justify-content: center; gap: 14px; text-align: left; }
+.ai-profile-copy { min-width: 0; }
+.ai-profile-title { font-size: 19px; font-weight: 800; }
+.ai-profile-sub { margin-top: 3px; color: rgba(255,255,255,.48); font-size: 11px; line-height: 1.45; }
+.ai-profile-taunt { margin-top: 7px; color: #ffd76a; font-size: 11.5px; font-style: italic; }
+.ai-diff-tabs {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 16px 0 12px; padding: 4px;
+  border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: rgba(0,0,0,.18);
+}
+.ai-diff-tab {
+  min-height: 34px; border: 0; border-radius: 7px; background: transparent;
+  color: rgba(255,255,255,.5); font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.ai-diff-tab:hover { color: #fff; background: rgba(255,255,255,.07); }
+.ai-diff-tab.active { color: #1d2434; background: linear-gradient(135deg,#fff3b0,#ffd76a); box-shadow: 0 4px 14px rgba(255,215,106,.18); }
+.ai-global-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin-bottom: 16px; }
+.ai-global-stat { min-width: 0; padding: 10px 4px; border: 1px solid rgba(255,255,255,.07); border-radius: 9px; background: rgba(255,255,255,.045); text-align: center; }
+.ai-global-stat strong { display: block; font-size: 18px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.ai-global-stat span { display: block; margin-top: 3px; color: rgba(255,255,255,.45); font-size: 9.5px; white-space: nowrap; }
+.ai-global-feed-title { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 7px; color: rgba(255,255,255,.78); font-size: 11px; font-weight: 700; text-align: left; }
+.ai-global-feed-title span { color: rgba(255,255,255,.32); font-size: 9.5px; font-weight: 500; }
+.ai-global-feed { display: grid; gap: 5px; max-height: 250px; overflow-y: auto; padding-right: 2px; scrollbar-width: thin; scrollbar-color: rgba(255,215,106,.35) transparent; }
+.ai-match-row { display: grid; grid-template-columns: 54px minmax(0,1fr) auto; gap: 8px; align-items: center; padding: 8px 9px; border: 1px solid rgba(255,255,255,.07); border-radius: 8px; background: rgba(0,0,0,.14); text-align: left; }
+.ai-match-result { padding: 5px 3px; border-radius: 6px; font-size: 9px; font-weight: 800; text-align: center; white-space: nowrap; }
+.ai-match-result.win { color: #ff8b88; background: rgba(239,83,80,.12); }
+.ai-match-result.lose { color: #7ff5bb; background: rgba(105,240,174,.1); }
+.ai-match-result.tie { color: #ffd76a; background: rgba(255,215,106,.1); }
+.ai-match-player { min-width: 0; overflow: hidden; color: rgba(255,255,255,.88); font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.ai-match-meta { display: block; margin-top: 2px; color: rgba(255,255,255,.34); font-size: 9px; font-weight: 500; }
+.ai-match-score { color: rgba(255,255,255,.8); font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ai-profile-state { padding: 28px 12px; color: rgba(255,255,255,.45); font-size: 12px; text-align: center; }
+@media (max-width: 420px) {
+  .ai-profile-head { justify-content: flex-start; }
+  .ai-global-stats { grid-template-columns: repeat(2,1fr); }
+  .ai-match-row { grid-template-columns: 50px minmax(0,1fr) auto; padding-inline: 7px; }
+}
 .profile-char-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 6px; }
 .profile-char-opt {
   aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -918,6 +1015,11 @@ body.theme-aurora .logo-title { animation: auroraText 6s linear infinite; }
   flex-direction: column;
   gap: 10px;
 }
+.lobby-stage > .lobby-card {
+  width: min(600px, 100%);
+  max-width: none;
+  margin: 0 auto;
+}
 /* Aurora theme: the card's own background/border/shadow are untouched (stays the
    normal translucent panel over the cosmic page background) — a separate ::after
    ring is the ONLY thing that carries the nebula color, drawn just outside the edge. */
@@ -952,6 +1054,142 @@ body.theme-aurora .lobby-card::after {
   margin-bottom: 2px;
 }
 .lobby-section-title .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.75; }
+
+/* Shared responsive lobby stage. Themes only skin these surfaces; their
+   geometry remains consistent so fullscreen, snapped and mobile windows all
+   retain the same visual hierarchy. */
+@media (min-width: 1400px) and (min-height: 700px) {
+  #lobbyScreen { padding-inline: 32px; }
+  .lobby-stage {
+    width: min(1040px, calc(100vw - 64px));
+    margin-top: clamp(0px, 1.5vh, 14px);
+    gap: clamp(10px, 1.35vh, 15px);
+  }
+  .lobby-top-row { padding-inline: 10px; }
+  .lobby-top-row .btn-howto {
+    min-width: 128px;
+    padding-inline: 18px;
+  }
+  .lobby-brand-row {
+    grid-template-columns: minmax(330px, 0.88fr) minmax(380px, 1.12fr);
+    min-height: 128px;
+    padding-inline: clamp(90px, 9vw, 150px);
+    gap: clamp(28px, 4vw, 54px);
+  }
+  .lobby-profile-column { justify-self: end; width: min(100%, 420px); }
+  .lobby-logo-wrap { justify-self: start; }
+  .lobby-logo-wrap .logo-img { width: clamp(290px, 18vw, 350px); }
+  .lobby-stage > .lobby-card {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    padding: 20px;
+  }
+  .lobby-card > .logo-sub,
+  .lobby-card > .lobby-solo-section,
+  .lobby-card > .error-msg { grid-column: 1 / -1; }
+  .lobby-card > .logo-sub { justify-self: center; margin: -2px 0 1px; }
+  .lobby-create-section { justify-content: space-between; }
+  .lobby-create-section .btn { flex: 1; min-height: 112px; }
+  .lobby-solo-section {
+    display: grid;
+    grid-template-columns: minmax(120px, auto) minmax(0, 1fr);
+    align-items: center;
+    gap: 18px;
+    padding-block: 13px;
+  }
+  .lobby-solo-section .lobby-section-title { margin: 0; }
+  .lobby-card > .error-msg:empty { display: none; }
+}
+
+@media (min-width: 1400px) and (min-height: 700px) and (max-height: 820px) {
+  #lobbyScreen { padding-top: 12px; padding-bottom: 18px; }
+  .lobby-stage { margin-top: 0; gap: 9px; }
+  .lobby-brand-row { min-height: 94px; }
+  .lobby-logo-wrap .logo-img { width: 250px; }
+  .lobby-stage > .lobby-card { padding: 15px; gap: 9px; }
+  .lobby-section { padding: 12px 14px 14px; gap: 8px; }
+  .lobby-create-section .btn { min-height: 78px; }
+  .lobby-solo-section { padding-block: 10px; }
+}
+
+/* Landscape laptop windows need the wide composition even below the desktop
+   breakpoint; otherwise the legacy vertical card becomes taller than the
+   available browser viewport. */
+@media (min-width: 1100px) and (max-width: 1399px) and (max-height: 820px) {
+  #lobbyScreen { padding: 10px 20px 16px; }
+  .lobby-stage {
+    width: min(920px, calc(100vw - 40px));
+    margin-top: 0;
+    gap: 8px;
+  }
+  .lobby-brand-row {
+    grid-template-columns: minmax(280px, 0.9fr) minmax(310px, 1.1fr);
+    min-height: 88px;
+    padding-inline: 90px;
+    gap: 28px;
+  }
+  .lobby-profile-column { justify-self: end; width: min(100%, 380px); }
+  .lobby-logo-wrap .logo-img { width: 230px; }
+  .lobby-stage > .lobby-card {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    padding: 14px;
+  }
+  .lobby-card > .logo-sub,
+  .lobby-card > .lobby-solo-section,
+  .lobby-card > .error-msg { grid-column: 1 / -1; }
+  .lobby-card > .logo-sub { justify-self: center; margin: -2px 0 0; }
+  .lobby-section { padding: 11px 13px 13px; gap: 7px; }
+  .lobby-create-section { justify-content: space-between; }
+  .lobby-create-section .btn { flex: 1; min-height: 70px; }
+  .lobby-solo-section {
+    display: grid;
+    grid-template-columns: minmax(110px, auto) minmax(0, 1fr);
+    align-items: center;
+    gap: 14px;
+    padding-block: 9px;
+  }
+  .lobby-solo-section .lobby-section-title { margin: 0; }
+  .lobby-card > .error-msg:empty { display: none; }
+}
+
+@media (max-width: 699px) {
+  #lobbyScreen { padding: 14px 12px 26px; }
+  .lobby-stage { width: min(440px, calc(100vw - 24px)); margin-top: 0; gap: 10px; }
+  .lobby-top-row { gap: 4px; padding: 5px; }
+  .lobby-top-row .btn-howto {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 34px;
+    padding: 6px 7px;
+    font-size: 10.5px;
+  }
+  .lobby-top-row .btn-settings { width: 34px; height: 34px; }
+  .lobby-brand-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    padding: 0 12px;
+  }
+  .lobby-profile-column { align-items: center; width: 100%; }
+  .lobby-profile-column #lobbyUserBadge { width: min(100%, 360px); }
+  .lobby-logo-wrap { justify-content: center; }
+  .lobby-logo-wrap .logo-img { width: min(250px, 72vw); }
+  .lobby-stage > .lobby-card { width: 100%; }
+}
+
+@media (max-width: 430px) {
+  .lobby-top-row .btn-howto { font-size: 0; padding-inline: 5px; }
+  .lobby-top-row .btn-howto { min-width: 40px; }
+  .lobby-top-row .btn-howto::before { font-size: 15px; line-height: 1; }
+  .lobby-top-row .btn-howto:nth-child(1)::before { content: '📖'; }
+  .lobby-top-row .btn-howto:nth-child(2)::before { content: '📊'; }
+  .lobby-top-row .btn-howto:nth-child(3)::before { content: '👥'; }
+  .lobby-top-row .btn-howto:nth-child(4)::before { content: '🎨'; }
+}
 
 input[type="text"] {
   background: rgba(255,255,255,0.1);
@@ -3205,61 +3443,70 @@ body.theme-aurora .card.just-drawn {
   <div class="lobby-corner-deco bl">🪙</div>
   <div class="lobby-corner-deco br">🪙</div>
 
-  <div class="lobby-top-row">
-    <button class="btn-howto" onclick="showHowTo()" data-i18n="howToBtn">📖 게임 방법 보기</button>
-    <button class="btn-howto" onclick="showHistory()" style="background:rgba(255,215,120,0.12);border-color:rgba(255,215,120,0.3)">📊 전적</button>
-    <button class="btn-howto" onclick="showFriendsModal()" style="background:rgba(105,240,174,0.14);border-color:rgba(105,240,174,0.5);color:#69f0ae;box-shadow:0 0 14px rgba(105,240,174,0.15)">👥 친구<span id="friendReqBadge" style="display:none;background:#ef5350;color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;margin-left:5px;vertical-align:top"></span></button>
-    <button class="btn-howto" onclick="showCollectionModal()" style="background:rgba(180,122,255,0.12);border-color:rgba(180,122,255,0.4);color:#c9a8ff">🎨 컬렉션</button>
-    <button class="btn-settings" onclick="showSettings()" title="Settings">⚙️</button>
-  </div>
-  <div id="lobbyUserBadge" class="auth-user-badge" style="display:none;max-width:420px;margin:16px auto 4px;position:relative" onclick="showProfileModal()">
-    <span style="position:relative;display:inline-flex">
-      <span class="badge-char" id="lobbyUserChar"></span>
-      <span class="lobby-status-dot online" id="lobbyStatusDot" onclick="event.stopPropagation();toggleStatusMenu()"></span>
-    </span>
-    <span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
-      <span class="badge-name" id="lobbyUserName"></span>
-      <span style="display:flex;align-items:center;gap:6px">
-        <span class="badge-id" id="lobbyUserIdText"></span>
-        <span class="badge-rp" id="lobbyUserRP"></span>
-      </span>
-    </span>
-    <span class="badge-logout" onclick="event.stopPropagation();doLogout()">로그아웃</span>
-    <div id="statusMenu" class="status-menu" onclick="event.stopPropagation()">
-      <div class="status-menu-item" onclick="chooseStatus('online')">🟢 온라인</div>
-      <div class="status-menu-item" onclick="chooseStatus('away')">🌙 자리비움</div>
-    </div>
-  </div>
-
-  <img class="logo-img" src="/logo.png" alt="진 러미 온라인" onerror="this.style.display='none';document.querySelector('.logo-fallback').style.display=''">
-  <div class="logo-fallback" style="display:none;font-size:48px;position:relative;z-index:1">🃏</div>
-
-  <!-- 이름 입력: 게스트 시 표시, 로그인 시 숨김 (JS가 value만 채움) -->
-  <div id="guestNameRow" style="display:none;position:relative;z-index:1;width:100%;max-width:360px">
-    <input id="myName" type="text" data-i18n-placeholder="namePlaceholder" placeholder="닉네임 입력" maxlength="12" onblur="saveNickname()"
-      style="width:100%;box-sizing:border-box;text-align:center;font-size:15px;padding:10px 16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:14px;color:#fff;outline:none">
-    <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-top:4px">로그인하면 프로필에서 관리할 수 있어요</div>
-  </div>
-
-  <div class="lobby-card">
-    <div class="logo-sub" data-i18n="logoSub" style="align-self:center;margin:-4px 0 6px">친구와 함께 플레이</div>
-    <div class="lobby-section">
-      <div class="lobby-section-title"><span class="dot"></span>방 만들기</div>
-      <button class="btn btn-primary" onclick="openRoomSettings('pvp')" data-i18n="createRoomBtn">✨ 새 방 만들기</button>
+  <div class="lobby-stage">
+    <div class="lobby-top-row">
+      <button class="btn-howto" onclick="showHowTo()" data-i18n="howToBtn">📖 게임 방법 보기</button>
+      <button class="btn-howto" onclick="showHistory()" style="background:rgba(255,215,120,0.12);border-color:rgba(255,215,120,0.3)">📊 전적</button>
+      <button class="btn-howto" onclick="showFriendsModal()" style="background:rgba(105,240,174,0.14);border-color:rgba(105,240,174,0.5);color:#69f0ae;box-shadow:0 0 14px rgba(105,240,174,0.15)">👥 친구<span id="friendReqBadge" style="display:none;background:#ef5350;color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;margin-left:5px;vertical-align:top"></span></button>
+      <button class="btn-howto" onclick="showCollectionModal()" style="background:rgba(180,122,255,0.12);border-color:rgba(180,122,255,0.4);color:#c9a8ff">🎨 컬렉션</button>
+      <button class="btn-settings" onclick="showSettings()" title="Settings">⚙️</button>
     </div>
 
-    <div class="lobby-section">
-      <div class="lobby-section-title"><span class="dot"></span>방 참가</div>
-      <button class="btn btn-blue" onclick="showRoomBrowser()">🌐 공개방 찾기</button>
-      <input id="joinCode" type="text" data-i18n-placeholder="joinCodePlaceholder" placeholder="방 코드 입력 (예: AB3KZ)" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
-      <button class="btn btn-secondary" onclick="joinRoom()" data-i18n="joinRoomBtn">🚀 코드로 입장</button>
+    <div class="lobby-brand-row">
+      <div class="lobby-profile-column">
+        <div id="lobbyUserBadge" class="auth-user-badge" style="display:none;max-width:420px;position:relative" onclick="showProfileModal()">
+          <span style="position:relative;display:inline-flex">
+            <span class="badge-char" id="lobbyUserChar"></span>
+            <span class="lobby-status-dot online" id="lobbyStatusDot" onclick="event.stopPropagation();toggleStatusMenu()"></span>
+          </span>
+          <span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
+            <span class="badge-name" id="lobbyUserName"></span>
+            <span style="display:flex;align-items:center;gap:6px">
+              <span class="badge-id" id="lobbyUserIdText"></span>
+              <span class="badge-rp" id="lobbyUserRP"></span>
+            </span>
+          </span>
+          <span class="badge-logout" onclick="event.stopPropagation();doLogout()">로그아웃</span>
+          <div id="statusMenu" class="status-menu" onclick="event.stopPropagation()">
+            <div class="status-menu-item" onclick="chooseStatus('online')">🟢 온라인</div>
+            <div class="status-menu-item" onclick="chooseStatus('away')">🌙 자리비움</div>
+          </div>
+        </div>
+
+        <!-- 이름 입력: 게스트 시 표시, 로그인 시 숨김 (JS가 value만 채움) -->
+        <div id="guestNameRow" style="display:none;position:relative;z-index:1;width:100%;max-width:360px">
+          <input id="myName" type="text" data-i18n-placeholder="namePlaceholder" placeholder="닉네임 입력" maxlength="12" onblur="saveNickname()"
+            style="width:100%;box-sizing:border-box;text-align:center;font-size:15px;padding:10px 16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:14px;color:#fff;outline:none">
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-top:4px">로그인하면 프로필에서 관리할 수 있어요</div>
+        </div>
+      </div>
+
+      <div class="lobby-logo-wrap">
+        <img class="logo-img" src="/logo.png" alt="진 러미 온라인" onerror="this.style.display='none';document.querySelector('.logo-fallback').style.display=''">
+        <div class="logo-fallback" style="display:none;font-size:48px;position:relative;z-index:1">🃏</div>
+      </div>
     </div>
 
-    <div class="lobby-section">
-      <div class="lobby-section-title"><span class="dot"></span>솔로 플레이</div>
-      <button class="btn btn-gold" onclick="openRoomSettings('ai')" data-i18n="aiBtn">🤖 AI와 대결하기</button>
+    <div class="lobby-card">
+      <div class="logo-sub" data-i18n="logoSub" style="align-self:center">친구와 함께 플레이</div>
+      <div class="lobby-section lobby-create-section">
+        <div class="lobby-section-title"><span class="dot"></span>방 만들기</div>
+        <button class="btn btn-primary" onclick="openRoomSettings('pvp')" data-i18n="createRoomBtn">✨ 새 방 만들기</button>
+      </div>
+
+      <div class="lobby-section lobby-join-section">
+        <div class="lobby-section-title"><span class="dot"></span>방 참가</div>
+        <button class="btn btn-blue" onclick="showRoomBrowser()">🌐 공개방 찾기</button>
+        <input id="joinCode" type="text" data-i18n-placeholder="joinCodePlaceholder" placeholder="방 코드 입력 (예: AB3KZ)" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
+        <button class="btn btn-secondary" onclick="joinRoom()" data-i18n="joinRoomBtn">🚀 코드로 입장</button>
+      </div>
+
+      <div class="lobby-section lobby-solo-section">
+        <div class="lobby-section-title"><span class="dot"></span>솔로 플레이</div>
+        <button class="btn btn-gold" onclick="openRoomSettings('ai')" data-i18n="aiBtn">🤖 AI와 대결하기</button>
+      </div>
+      <div class="error-msg" id="lobbyError"></div>
     </div>
-    <div class="error-msg" id="lobbyError"></div>
   </div>
 
   <!-- 숨겨진 레거시 요소들 (JS 참조용) -->
@@ -3818,7 +4065,11 @@ body.theme-aurora .card.just-drawn {
           <div><span class="angel-discovery-icon guardian" aria-hidden="true"></span><strong id="angelGuardianCount">0</strong><small>수호천사 만남</small></div>
           <div><span class="angel-discovery-icon feather" aria-hidden="true"></span><strong id="angelFeatherCount">0</strong><small>황금 깃털</small></div>
           <div><span class="angel-discovery-icon opal" aria-hidden="true"></span><strong id="angelOpalCount">0</strong><small>오팔 깃털</small></div>
+          <div><span class="angel-discovery-icon butterfly" aria-hidden="true"></span><strong id="angelButterflyCount">0</strong><small>광휘 나비</small></div>
+          <div><span class="angel-discovery-icon crystal" aria-hidden="true"></span><strong id="angelCrystalCount">0</strong><small>별빛 결정</small></div>
+          <div><span class="angel-discovery-icon key" aria-hidden="true"></span><strong id="angelKeyCount">0</strong><small>천상의 열쇠</small></div>
         </div>
+        <div class="angel-sync-state" id="angelCollectionSyncState">로그인 계정과 자동 동기화</div>
         <button class="lang-btn" id="angelSoundToggleBtn" onclick="toggleAngelSound()" style="width:100%;text-align:center">
           천상 효과음: <span id="angelSoundToggleState">OFF</span>
         </button>
@@ -4717,7 +4968,7 @@ function confirmRoomSettings() {
   if (_roomMode === 'ai') {
     myIdx = 0;
     myAiDifficulty = _roomDiff;
-    socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff, gameMode: _gameMode, handSize: _handSize, cardBorder: myCardBorder, clientId: CLIENT_ID });
+    socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff, gameMode: _gameMode, handSize: _handSize, cardBorder: myCardBorder, clientId: CLIENT_ID, authToken: myAccessToken });
   } else {
     socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder, clientId: CLIENT_ID });
   }
@@ -4862,6 +5113,7 @@ function showCollectionModal() {
   updatePetalSection();
   updateGrassSection();
   if (typeof angelUpdateCollectionPanel === 'function') angelUpdateCollectionPanel();
+  if (typeof angelSyncCollectionProgress === 'function') void angelSyncCollectionProgress();
   renderBorderGrid();
   document.getElementById('collectionOverlay').classList.add('show');
   if (_collectionSwatchesWired) return;
@@ -4916,6 +5168,10 @@ async function initAuth() {
   }
   supa.auth.onAuthStateChange((event, sess) => {
     if (sess) myAccessToken = sess.access_token;
+    else {
+      myAccessToken = null;
+      if (typeof angelResetCollectionSync === 'function') angelResetCollectionSync();
+    }
   });
 }
 
@@ -5064,6 +5320,7 @@ async function doLogin() {
   if (remember) localStorage.setItem(AUTH_ID_KEY, userId);
   else localStorage.removeItem(AUTH_ID_KEY);
   supaUser = data.user;
+  myAccessToken = data.session?.access_token || myAccessToken;
   await loadProfile();
   hideAuthOverlay();
 }
@@ -5160,6 +5417,7 @@ async function loadProfile() {
   const nameInput = document.getElementById('myName');
   if (nameInput) nameInput.value = savedNick;
   initFriendSystem();
+  if (typeof angelSyncCollectionProgress === 'function') void angelSyncCollectionProgress();
   checkDailyReward();
   updateLockedSwatches(); // supaProfile.pvp_wins may differ from the guest/localStorage count used before login
 }
@@ -5790,18 +6048,7 @@ async function inviteFriend(friendId) {
 }
 
 // ===== User profile viewer (opponent / friend) =====
-// ===== AI opponent profile (per-difficulty stats, stored locally) =====
-const AI_STATS_KEY = 'grAiStats';
-function getAiStats(diff) {
-  const all = JSON.parse(localStorage.getItem(AI_STATS_KEY) || '{}');
-  return all[diff] || { win: 0, lose: 0 };
-}
-function recordAiMatchResult(diff, iWon) {
-  const all = JSON.parse(localStorage.getItem(AI_STATS_KEY) || '{}');
-  if (!all[diff]) all[diff] = { win: 0, lose: 0 };
-  if (iWon) all[diff].win++; else all[diff].lose++;
-  localStorage.setItem(AI_STATS_KEY, JSON.stringify(all));
-}
+// ===== AI opponent profile (global, server-authoritative stats) =====
 
 const AI_TAUNTS = [
   '삐리릭- 닝겐, 부숴주마.',
@@ -5823,30 +6070,83 @@ function aiTierProfileText(diff) {
   return '평범한 중급 AI예요. 방심하면 짐.';
 }
 
-function showAiProfile() {
-  const diff = myAiDifficulty;
+let _aiProfileRequestSeq = 0;
+
+function renderAiDifficultyTabs(diff) {
+  return '<div class="ai-diff-tabs" role="tablist" aria-label="AI 난이도 전적">' +
+    ['easy','normal','hard'].map(key =>
+      '<button class="ai-diff-tab' + (key === diff ? ' active' : '') + '" role="tab" aria-selected="' + (key === diff) + '" onclick="showAiProfile(\'' + key + '\')">' +
+        (AI_DIFF_LABELS[key] || key) +
+      '</button>'
+    ).join('') +
+  '</div>';
+}
+
+function formatAiMatchTime(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(d);
+}
+
+function renderAiMatchFeed(matches) {
+  if (!matches.length) return '<div class="ai-profile-state">아직 기록된 경기가 없어요.</div>';
+  return matches.map(match => {
+    const resultClass = match.player_result;
+    const resultLabel = resultClass === 'win' ? 'AI 패배' : (resultClass === 'lose' ? 'AI 승리' : '무승부');
+    const player = escapeHtml(match.player_name || match.player_game_id || '플레이어');
+    const gameId = match.player_game_id ? ' @' + escapeHtml(match.player_game_id) : '';
+    return '<div class="ai-match-row">' +
+      '<span class="ai-match-result ' + resultClass + '">' + resultLabel + '</span>' +
+      '<span class="ai-match-player">' + player + '<span class="ai-match-meta">' + gameId + (gameId ? ' · ' : '') + formatAiMatchTime(match.created_at) + '</span></span>' +
+      '<span class="ai-match-score" title="플레이어 : AI">' + match.player_score + ' : ' + match.ai_score + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+async function showAiProfile(requestedDiff) {
+  const diff = ['easy','normal','hard'].includes(requestedDiff) ? requestedDiff : myAiDifficulty;
   const label = AI_DIFF_LABELS[diff] || '중급';
-  const stats = getAiStats(diff);
-  const wins = stats.win, losses = stats.lose;
-  const winRate = (wins + losses) > 0 ? Math.round((wins / (wins + losses)) * 100) : 0;
   const taunt = AI_TAUNTS[Math.floor(Math.random() * AI_TAUNTS.length)];
+  const requestSeq = ++_aiProfileRequestSeq;
   const body = document.getElementById('userProfileBody');
-  body.innerHTML =
-    '<span class="avatar-frame" style="width:76px;height:76px;font-size:38px;margin:0 auto 10px">🤖</span>' +
-    '<div style="font-size:18px;font-weight:800">AI (' + label + ')</div>' +
-    '<div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px">' + aiTierProfileText(diff) + '</div>' +
-    '<div style="font-size:12px;color:#ffd76a;opacity:0.9;margin-top:8px;font-style:italic">💬 "' + escapeHtml(taunt) + '"</div>' +
-    '<div style="display:flex;gap:8px;margin:18px 0 6px">' +
-      '<div style="flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 4px">' +
-        '<div style="font-size:19px;font-weight:700;color:#69f0ae">' + wins + '</div><div style="font-size:10px;color:rgba(255,255,255,0.5)">승리</div></div>' +
-      '<div style="flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 4px">' +
-        '<div style="font-size:19px;font-weight:700;color:#ef5350">' + losses + '</div><div style="font-size:10px;color:rgba(255,255,255,0.5)">패배</div></div>' +
-      '<div style="flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:12px 4px">' +
-        '<div style="font-size:19px;font-weight:700;color:#ffd76a">' + winRate + '%</div><div style="font-size:10px;color:rgba(255,255,255,0.5)">승률</div></div>' +
+  const overlay = document.getElementById('userProfileOverlay');
+  overlay.classList.add('ai-global-profile', 'show');
+  const headerHtml =
+    '<div class="ai-profile-head"><span class="avatar-frame" style="width:72px;height:72px;font-size:36px;flex:0 0 auto">🤖</span>' +
+      '<div class="ai-profile-copy"><div class="ai-profile-title">AI (' + label + ')</div>' +
+      '<div class="ai-profile-sub">' + aiTierProfileText(diff) + '</div>' +
+      '<div class="ai-profile-taunt">"' + escapeHtml(taunt) + '"</div></div></div>' +
+    renderAiDifficultyTabs(diff);
+  body.innerHTML = headerHtml + '<div class="ai-profile-state"><span class="spinner">⏳</span><br>글로벌 전적을 불러오는 중...</div>';
+
+  const [statsResult, matchesResult] = await Promise.all([
+    supa.from('ai_global_stats').select('player_wins,ai_wins,ties,total_games').eq('difficulty', diff).maybeSingle(),
+    supa.from('ai_match_history').select('player_game_id,player_name,player_char,player_result,player_score,ai_score,created_at').eq('difficulty', diff).order('created_at', { ascending: false }).limit(12),
+  ]);
+  if (requestSeq !== _aiProfileRequestSeq || !overlay.classList.contains('show')) return;
+
+  if (statsResult.error || matchesResult.error) {
+    body.innerHTML = headerHtml + '<div class="ai-profile-state">글로벌 전적 DB를 불러오지 못했어요.<br><span style="font-size:10px;opacity:.65">관리자가 Supabase 스키마를 적용했는지 확인해주세요.</span></div>' +
+      '<button class="btn btn-secondary" onclick="hideUserProfile()">닫기</button>';
+    return;
+  }
+
+  const stats = statsResult.data || { player_wins: 0, ai_wins: 0, ties: 0, total_games: 0 };
+  const decided = Number(stats.ai_wins || 0) + Number(stats.player_wins || 0);
+  const aiWinRate = decided ? Math.round((Number(stats.ai_wins || 0) / decided) * 100) : 0;
+  body.innerHTML = headerHtml +
+    '<div class="ai-global-stats">' +
+      '<div class="ai-global-stat"><strong style="color:#7ff5bb">' + Number(stats.ai_wins || 0).toLocaleString() + '</strong><span>AI 승리</span></div>' +
+      '<div class="ai-global-stat"><strong style="color:#ff8b88">' + Number(stats.player_wins || 0).toLocaleString() + '</strong><span>AI 패배</span></div>' +
+      '<div class="ai-global-stat"><strong style="color:#d7c8ff">' + Number(stats.ties || 0).toLocaleString() + '</strong><span>무승부</span></div>' +
+      '<div class="ai-global-stat"><strong style="color:#ffd76a">' + aiWinRate + '%</strong><span>AI 승률</span></div>' +
     '</div>' +
-    '<div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:6px">전적은 ' + label + ' 난이도끼리만 따로 집계돼요</div>' +
-    '<button class="btn btn-secondary" onclick="hideUserProfile()">닫기</button>';
-  document.getElementById('userProfileOverlay').classList.add('show');
+    '<div class="ai-global-feed-title">최근 글로벌 경기 <span>플레이어 : AI · 최신 12건</span></div>' +
+    '<div class="ai-global-feed">' + renderAiMatchFeed(matchesResult.data || []) + '</div>' +
+    '<button class="btn btn-secondary" style="margin-top:12px" onclick="hideUserProfile()">닫기</button>';
 }
 
 function showOpponentProfile() {
@@ -5865,6 +6165,8 @@ function showOpponentProfile() {
 
 async function showUserProfileByGameId(gameId) {
   const body = document.getElementById('userProfileBody');
+  _aiProfileRequestSeq++;
+  document.getElementById('userProfileOverlay').classList.remove('ai-global-profile');
   body.innerHTML = '<div style="padding:40px 0"><span class="spinner">⏳</span></div>';
   document.getElementById('userProfileOverlay').classList.add('show');
   const { data: prof } = await supa.from('profiles').select('*').eq('game_id', gameId).maybeSingle();
@@ -5874,6 +6176,8 @@ async function showUserProfileByGameId(gameId) {
 
 async function showUserProfileById(userId) {
   const body = document.getElementById('userProfileBody');
+  _aiProfileRequestSeq++;
+  document.getElementById('userProfileOverlay').classList.remove('ai-global-profile');
   body.innerHTML = '<div style="padding:40px 0"><span class="spinner">⏳</span></div>';
   document.getElementById('userProfileOverlay').classList.add('show');
   const { data: prof } = await supa.from('profiles').select('*').eq('id', userId).maybeSingle();
@@ -5949,7 +6253,10 @@ async function quickAddFriend(targetId) {
   }
 }
 
-function hideUserProfile() { document.getElementById('userProfileOverlay').classList.remove('show'); }
+function hideUserProfile() {
+  _aiProfileRequestSeq++;
+  document.getElementById('userProfileOverlay').classList.remove('show', 'ai-global-profile');
+}
 
 // ===== DM chat =====
 async function openDm(friendId) {
@@ -7484,7 +7791,6 @@ function initSocket() {
         mode: vsAI ? 'vsAI' : 'pvp',
       });
     }
-    if (vsAI && matchResult !== 'tie') recordAiMatchResult(myAiDifficulty, matchResult === 'win');
     updateLockedSwatches();
 
     // Character unlock check (PVP wins only)
@@ -8098,7 +8404,8 @@ function renderGameAvatarMeta() {
   }
   if (oppEl) {
     const oppId = gameIds[1 - myIdx] || '';
-    oppEl.innerHTML = avatarMetaHtml(oppId, null, false, vsAI ? 'AI opponent' : '');
+    const aiFallback = document.body.classList.contains('theme-angel') ? 'AI' : 'AI opponent';
+    oppEl.innerHTML = avatarMetaHtml(oppId, null, false, vsAI ? aiFallback : '');
     oppEl.classList.toggle('show', !!oppEl.innerHTML);
   }
 }

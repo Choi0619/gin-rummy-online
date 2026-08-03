@@ -166,6 +166,22 @@ The app is deployed on **Render** (free tier):
 - **Start command**: `node server.js`
 - Render auto-redeploys on every push to `master`.
 
+### Global AI match history
+
+AI results are persisted by the game server so every player sees the same
+difficulty-specific statistics and recent match feed.
+
+1. Run `supabase/ai-global-stats.sql` in the Supabase SQL editor.
+   Run `supabase/angel-collection-progress.sql` there as well to sync all six
+   Angel-theme collectible counters across devices.
+2. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to the Render service's
+   environment variables.
+3. Never expose `SUPABASE_SERVICE_ROLE_KEY` in client code or commit it to Git.
+
+The browser can only read the public scoreboard fields. Match insertion and
+aggregate updates are restricted to the Render server through a
+`SECURITY DEFINER` database function.
+
 ⚠️ Because game state is in-memory only, **a redeploy or server restart will disconnect any games in progress**. Avoid pushing to `master` while a match is actively being played, or warn players in advance.
 
 ---

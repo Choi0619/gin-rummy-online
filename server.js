@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const { randomUUID } = require('crypto');
 
 const app = express();
 const server = http.createServer(app);
@@ -26,6 +27,97 @@ const rooms = new Map(); // code -> Room
 //   just a one-shot mailbox holding the result until they're back.
 const disconnectRegistry = new Map();
 const pendingForfeitResults = new Map();
+
+// AI match results are written by the authoritative game server, never by the
+// browser. Keep the service-role key in Render's environment only.
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://bqlpcfrphnjkzgeydgls.supabase.co';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+async function supabaseServiceRequest(pathname, { method = 'GET', body, authorization } = {}) {
+  if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(SUPABASE_URL + pathname, {
+      method,
+      signal: controller.signal,
+      headers: {
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: authorization || `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const text = await response.text();
+    if (!response.ok) throw new Error(`Supabase ${response.status}: ${text.slice(0, 300)}`);
+    return text ? JSON.parse(text) : null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function resolveAiPlayerIdentity(accessToken) {
+  if (!SUPABASE_SERVICE_ROLE_KEY || !accessToken) return null;
+  const authUser = await supabaseServiceRequest('/auth/v1/user', {
+    authorization: `Bearer ${accessToken}`,
+  });
+  if (!authUser || !authUser.id) return null;
+  const rows = await supabaseServiceRequest(
+    `/rest/v1/profiles?id=eq.${encodeURIComponent(authUser.id)}&select=id,game_id,username,char&limit=1`
+  );
+  const profile = Array.isArray(rows) ? rows[0] : null;
+  if (!profile) return null;
+  return {
+    id: profile.id,
+    gameId: profile.game_id || '',
+    name: profile.username || profile.game_id || 'Player',
+    char: profile.char || '',
+  };
+}
+
+async function recordAiMatchToDb(room, winnerIdx) {
+  if (!room.vsAI || room.aiMatchRecordStarted) return;
+  room.aiMatchRecordStarted = true;
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    console.warn('[AI stats] SUPABASE_SERVICE_ROLE_KEY is missing; result was not persisted.');
+    return;
+  }
+
+  const identity = await room.aiPlayerIdentityPromise;
+  if (!identity) {
+    console.warn(`[AI stats] Could not verify the player for room ${room.code}.`);
+    return;
+  }
+
+  const playerResult = winnerIdx === -1 ? 'tie' : (winnerIdx === 0 ? 'win' : 'lose');
+  const payload = {
+    p_match_id: room.aiMatchId,
+    p_player_id: identity.id,
+    p_player_game_id: identity.gameId,
+    p_player_name: identity.name,
+    p_player_char: identity.char,
+    p_difficulty: room.aiDifficulty,
+    p_player_result: playerResult,
+    p_player_score: room.scores[0],
+    p_ai_score: room.scores[1],
+    p_game_mode: room.gameMode,
+    p_target_score: room.targetScore,
+  };
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await supabaseServiceRequest('/rest/v1/rpc/record_ai_match', { method: 'POST', body: payload });
+      room.aiMatchRecorded = true;
+      return;
+    } catch (err) {
+      if (attempt === 2) {
+        console.error(`[AI stats] Failed to persist match ${room.aiMatchId}:`, err.message);
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
+    }
+  }
+}
 
 // ===== Card logic (server-authoritative) =====
 const SUITS   = ['S','H','D','C'];
@@ -272,7 +364,7 @@ io.on('connection', socket => {
     socket.emit('room-created', { code, playerIndex: 0, targetScore: r.targetScore, isPublic: r.isPublic, turnTimeSecs: r.turnTimeSecs, gameMode: r.gameMode, handSize: r.handSize });
   });
 
-  socket.on('create-ai-room', ({ name, char, targetScore, turnTimeSecs, aiDifficulty, gameMode, handSize, cardBorder, clientId }) => {
+  socket.on('create-ai-room', ({ name, char, targetScore, turnTimeSecs, aiDifficulty, gameMode, handSize, cardBorder, clientId, authToken }) => {
     const code = makeCode();
     const room = {
       code,
@@ -293,6 +385,13 @@ io.on('connection', socket => {
       aiDifficulty: ['easy','normal','hard'].includes(aiDifficulty) ? aiDifficulty : 'normal',
       gameMode: normalizeGameMode(gameMode),
       handSize: normalizeHandSize(handSize),
+      aiMatchId: randomUUID(),
+      aiMatchRecordStarted: false,
+      aiMatchRecorded: false,
+      aiPlayerIdentityPromise: resolveAiPlayerIdentity(authToken).catch(err => {
+        console.warn('[AI stats] Player verification failed:', err.message);
+        return null;
+      }),
     };
     rooms.set(code, room);
     socket.join(code);
@@ -959,6 +1058,7 @@ function checkMatchEnd(room) {
     winnerIdx, scores: room.scores, names: room.names,
     targetReached: true, wasRevenge, revengeSuccess,
   });
+  void recordAiMatchToDb(room, winnerIdx);
   queueForfeitResultIfAny(room, winnerIdx);
 }
 
