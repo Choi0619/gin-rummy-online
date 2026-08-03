@@ -1571,49 +1571,73 @@ body.theme-angel #gameScreen .game-area {
   z-index: 12;
 }
 body.theme-angel #gameScreen .util-row {
-  width: min(94%, 920px);
-  min-height: 50px;
+  width: auto;
+  max-width: calc(100% - 24px);
+  min-height: 0;
   margin: 2px auto 7px;
-  padding: 7px 10px;
-  gap: 7px;
+  padding: 2px 10px 6px;
+  gap: 8px;
   align-items: center;
-  border: 1px solid rgba(255,234,180,.38);
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(24,27,62,.94), rgba(52,51,91,.92));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 22px rgba(12,13,39,.32), 0 0 24px rgba(255,225,151,.1);
-  isolation: isolate;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 body.theme-angel #gameScreen .util-row::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background:
-    url('/assets/angel/celestial-sigil-v3.webp') -42px 50% / 104px 104px no-repeat,
-    url('/assets/angel/celestial-sigil-v3.webp') calc(100% + 42px) 50% / 104px 104px no-repeat;
-  opacity: .13;
-  mix-blend-mode: screen;
+  content: none;
 }
 body.theme-angel #gameScreen .util-btn {
+  --angel-util-top: rgba(105,108,158,.98);
+  --angel-util-bottom: rgba(43,47,91,.99);
+  --angel-util-border: rgba(229,232,255,.68);
+  --angel-util-glow: rgba(215,220,255,.18);
   position: relative;
   z-index: 1;
   isolation: isolate;
   overflow: hidden;
-  min-height: 36px;
-  padding: 7px 13px;
+  min-height: 38px;
+  padding: 8px 14px;
+  border-radius: 10px;
   opacity: 1 !important;
   color: #fffefa !important;
   font-weight: 800;
   text-shadow: 0 1px 2px rgba(10,11,35,.85), 0 0 8px rgba(255,243,204,.22);
-  background: linear-gradient(180deg, rgba(101,101,151,.98), rgba(43,47,91,.99)) !important;
-  border: 1px solid rgba(229,232,255,.62) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 4px 10px rgba(9,11,35,.3), 0 0 9px rgba(214,216,255,.12);
+  background: linear-gradient(180deg, var(--angel-util-top), var(--angel-util-bottom)) !important;
+  border: 1px solid var(--angel-util-border) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 4px 10px rgba(9,11,35,.28), 0 0 10px var(--angel-util-glow);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
-body.theme-angel #gameScreen .util-btn.danger {
+body.theme-angel #gameScreen .util-btn.util-surrender {
+  --angel-util-top: rgba(155,83,117,.98);
+  --angel-util-bottom: rgba(91,42,76,.99);
+  --angel-util-border: rgba(255,203,205,.72);
+  --angel-util-glow: rgba(255,173,189,.16);
   color: #fff4f1 !important;
-  background: linear-gradient(180deg, rgba(143,75,105,.98), rgba(79,37,70,.99)) !important;
-  border-color: rgba(255,198,199,.64) !important;
+}
+body.theme-angel #gameScreen .util-btn.util-leave {
+  --angel-util-top: rgba(126,76,111,.98);
+  --angel-util-bottom: rgba(68,38,72,.99);
+  --angel-util-border: rgba(244,198,218,.68);
+  --angel-util-glow: rgba(234,177,218,.14);
+  color: #fff5f8 !important;
+}
+body.theme-angel #gameScreen .util-btn.util-friends {
+  --angel-util-top: rgba(93,108,166,.98);
+  --angel-util-bottom: rgba(40,48,96,.99);
+  --angel-util-border: rgba(209,225,255,.72);
+  --angel-util-glow: rgba(166,205,255,.18);
+}
+body.theme-angel #gameScreen .util-btn.util-collection {
+  --angel-util-top: rgba(112,98,166,.98);
+  --angel-util-bottom: rgba(51,43,100,.99);
+  --angel-util-border: rgba(230,214,255,.72);
+  --angel-util-glow: rgba(205,177,255,.18);
+}
+body.theme-angel #gameScreen .util-btn.util-settings {
+  --angel-util-top: rgba(114,119,158,.98);
+  --angel-util-bottom: rgba(49,53,88,.99);
+  --angel-util-border: rgba(235,238,255,.72);
+  --angel-util-glow: rgba(225,230,255,.16);
 }
 body.theme-angel #gameScreen #reactionBar {
   width: fit-content;
@@ -1681,6 +1705,12 @@ body.theme-angel :is(.btn-primary,.btn-secondary,.btn-howto,.btn-settings,.room-
 @keyframes angelButtonShine {
   0% { transform: translateX(-170%) skewX(-20deg); }
   100% { transform: translateX(520%) skewX(-20deg); }
+}
+body.theme-angel #gameScreen .util-btn:is(:hover,:focus-visible) {
+  filter: none;
+  transform: translateY(-2px);
+  border-color: rgba(255,245,210,.94) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.42), 0 7px 15px rgba(9,11,35,.34), 0 0 16px var(--angel-util-glow);
 }
 
 body.theme-angel #friendsOverlay .howto-box::after,
