@@ -1,0 +1,38 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Gin Rummy Online",
+  "version": "1.0.0",
+  "identifier": "com.choi0619.ginrummy",
+  "build": {
+    "frontendDist": "../desktop-shell",
+    "devUrl": "https://gin-rummy-online.onrender.com"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Gin Rummy Online",
+        "url": "https://gin-rummy-online.onrender.com",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 680,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "maximized": false,
+        "devtools": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": false,
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.ico"
+    ]
+  }
+}

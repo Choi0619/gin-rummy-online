@@ -132,6 +132,20 @@ Then open **http://localhost:3000** in your browser. Open a second tab (or share
 npm start   # same as `node server.js`
 ```
 
+### Portable Windows app
+
+The Tauri desktop shell loads the live Render deployment in a dedicated
+Windows window. It does not install or register an uninstaller.
+
+```bash
+npm run desktop:dev
+npm run desktop:build-portable
+```
+
+The portable executable is written to
+`src-tauri/target/release/gin-rummy-desktop.exe`. The GitHub Actions workflow
+`Build portable Windows app` packages it as `GinRummy-Portable.zip`.
+
 ---
 
 ## How Multiplayer Works
