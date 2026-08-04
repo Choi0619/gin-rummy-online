@@ -1,6 +1,6 @@
 [package]
 name = "gin-rummy-desktop"
-version = "1.0.1"
+version = "1.0.2"
 description = "Portable Windows shell for Gin Rummy Online"
 authors = ["Choi0619"]
 license = ""
