@@ -3,6 +3,12 @@
    transform and opacity; visual textures are rasterized once by CSS. */
 
 const ANGEL_ASSET_ROOT = '/assets/angel/';
+const ANGEL_COLLECTIBLE_ASSETS = {
+  butterfly: ANGEL_ASSET_ROOT + 'radiant-butterfly-v1.webp',
+  crystal: ANGEL_ASSET_ROOT + 'starlight-crystal-v1.webp',
+  key: ANGEL_ASSET_ROOT + 'celestial-key-v1.webp',
+};
+let _angelCollectiblesPreloaded = false;
 
 let _angelLayer = null;
 let _angelFxLayer = null;
@@ -53,6 +59,16 @@ const ANGEL_DB_COLUMNS = {
   crystals: 'starlight_crystals',
   keys: 'celestial_keys',
 };
+
+function angelPreloadCollectibleAssets() {
+  if (_angelCollectiblesPreloaded) return;
+  _angelCollectiblesPreloaded = true;
+  Object.values(ANGEL_COLLECTIBLE_ASSETS).forEach(src => {
+    const image = new Image();
+    image.decoding = 'async';
+    image.src = src;
+  });
+}
 
 function angelStoredCount(key) {
   return Math.max(0, Number.parseInt(localStorage.getItem(key) || '0', 10) || 0);
@@ -554,7 +570,7 @@ function angelSpawnRadiantButterfly() {
   butterfly.type = 'button';
   butterfly.className = 'angel-radiant-butterfly';
   butterfly.setAttribute('aria-label', '광휘 나비');
-  butterfly.innerHTML = '<span class="angel-butterfly-shimmer"></span><span class="angel-butterfly-creature"><i class="left"></i><b></b><i class="right"></i></span>';
+  butterfly.innerHTML = '<span class="angel-butterfly-shimmer"></span><span class="angel-butterfly-art"><img class="left" src="' + ANGEL_COLLECTIBLE_ASSETS.butterfly + '" alt=""><img class="right" src="' + ANGEL_COLLECTIBLE_ASSETS.butterfly + '" alt=""></span>';
   const fromLeft = Math.random() < 0.5;
   const y = angelRandom(motion.compact ? 110 : 90, Math.max(150, window.innerHeight - 150));
   butterfly.style.setProperty('--butterfly-start-x', (fromLeft ? -90 : window.innerWidth + 90) + 'px');
@@ -633,7 +649,7 @@ function angelSpawnStarlightCrystal() {
   crystal.type = 'button';
   crystal.className = 'angel-starlight-crystal';
   crystal.setAttribute('aria-label', '별빛 결정');
-  crystal.innerHTML = '<span class="angel-crystal-tail"></span><span class="angel-crystal-gem"><i></i></span>';
+  crystal.innerHTML = '<span class="angel-crystal-tail"></span><img class="angel-crystal-art" src="' + ANGEL_COLLECTIBLE_ASSETS.crystal + '" alt="">';
   const startX = angelRandom(55, Math.max(70, window.innerWidth - 70));
   const startY = -100;
   crystal.style.setProperty('--crystal-start-x', startX.toFixed(1) + 'px');
@@ -721,7 +737,7 @@ function angelSpawnCelestialKey() {
   key.setAttribute('aria-label', '천상의 열쇠');
   key.style.left = position.x + 'px';
   key.style.top = position.y + 'px';
-  key.innerHTML = '<span class="angel-key-wings"><i></i><b></b></span><span class="angel-key-body"><i></i></span>';
+  key.innerHTML = '<span class="angel-key-aura"></span><img class="angel-key-art" src="' + ANGEL_COLLECTIBLE_ASSETS.key + '" alt="">';
   document.body.appendChild(key);
   _angelCelestialKey = key;
   let done = false;
@@ -748,6 +764,7 @@ function startAngelTheme() {
   stopAngelTheme();
   _angelLayer = document.getElementById('angelLayer');
   if (!_angelLayer) return;
+  angelPreloadCollectibleAssets();
   const motion = angelMotionProfile();
   _angelVisibilityHandler = () => document.body.classList.toggle('angel-theme-paused', document.hidden);
   document.addEventListener('visibilitychange', _angelVisibilityHandler);

@@ -1536,6 +1536,115 @@ body.theme-angel .chat-msg.spectator .chat-bubble {
   100% { transform: translate3d(var(--key-gate-x),var(--key-gate-y),0) translate(-50%,-50%) scale(1.24) rotate(14deg); opacity: 0; }
 }
 
+/* Generated collectible artwork. The raster assets are decoded once and the
+   live animation only changes transform/opacity so movement remains on the
+   browser compositor instead of repainting detailed CSS gradients. */
+.angel-radiant-butterfly {
+  width: 94px;
+  height: 78px;
+  margin: -39px 0 0 -47px;
+  contain: layout style;
+}
+.angel-butterfly-art {
+  position: absolute;
+  inset: -5px;
+  transform: scaleX(var(--butterfly-facing,1));
+  animation: angelButterflyArtFloat 2.15s ease-in-out infinite;
+  will-change: transform;
+}
+.angel-butterfly-art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(220,242,255,.5));
+  will-change: transform, opacity;
+}
+.angel-butterfly-art img.left {
+  clip-path: polygon(0 0,51% 0,51% 100%,0 100%);
+  transform-origin: 51% 56%;
+  animation: angelButterflyArtLeft .46s ease-in-out infinite;
+}
+.angel-butterfly-art img.right {
+  clip-path: polygon(49% 0,100% 0,100% 100%,49% 100%);
+  transform-origin: 49% 56%;
+  animation: angelButterflyArtRight .46s ease-in-out infinite;
+}
+.angel-radiant-butterfly.noticed .angel-butterfly-art { animation: angelButterflyArtNotice .72s ease-out both; }
+.angel-radiant-butterfly.caught { margin: -39px 0 0 -47px; }
+@keyframes angelButterflyArtFloat {
+  0%,100% { transform: scaleX(var(--butterfly-facing,1)) translateY(2px) rotate(-1.5deg); }
+  50% { transform: scaleX(var(--butterfly-facing,1)) translateY(-5px) rotate(1.5deg); }
+}
+@keyframes angelButterflyArtLeft {
+  0%,100% { transform: perspective(180px) rotateY(4deg); opacity: .92; }
+  50% { transform: perspective(180px) rotateY(43deg) scaleX(.9); opacity: 1; }
+}
+@keyframes angelButterflyArtRight {
+  0%,100% { transform: perspective(180px) rotateY(-4deg); opacity: .92; }
+  50% { transform: perspective(180px) rotateY(-43deg) scaleX(.9); opacity: 1; }
+}
+@keyframes angelButterflyArtNotice {
+  0% { transform: scaleX(var(--butterfly-facing,1)) scale(1); }
+  42% { transform: scaleX(var(--butterfly-facing,1)) translateY(-9px) scale(1.16) rotate(6deg); }
+  100% { transform: scaleX(var(--butterfly-facing,1)) scale(1); }
+}
+
+.angel-starlight-crystal {
+  width: 62px;
+  height: 100px;
+  margin: -50px 0 0 -31px;
+  contain: layout style;
+}
+.angel-crystal-art {
+  position: absolute;
+  inset: 7px 5px;
+  width: calc(100% - 10px);
+  height: calc(100% - 14px);
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(183,229,255,.66));
+  animation: angelCrystalArtBreathe .82s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.angel-starlight-crystal:is(:hover,:focus-visible) .angel-crystal-art { transform: scale(1.12); }
+.angel-starlight-crystal.caught { margin: -50px 0 0 -31px; }
+@keyframes angelCrystalArtBreathe {
+  0%,100% { transform: scale(.96) rotate(-1deg); opacity: .88; }
+  50% { transform: scale(1.04) rotate(1deg); opacity: 1; }
+}
+
+.angel-celestial-key {
+  width: 96px;
+  height: 110px;
+  margin: -55px 0 0 -48px;
+  background: transparent;
+  contain: layout style;
+}
+.angel-key-aura {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: radial-gradient(circle,rgba(255,240,183,.3),rgba(198,211,255,.12) 40%,transparent 70%);
+  animation: angelKeyAura 2.4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.angel-key-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 0 7px rgba(255,225,145,.6));
+  animation: angelKeyArtBreathe 2.4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+@keyframes angelKeyAura { 0%,100% { transform: scale(.84); opacity: .42; } 50% { transform: scale(1.08); opacity: .82; } }
+@keyframes angelKeyArtBreathe { 0%,100% { transform: scale(.97); opacity: .92; } 50% { transform: scale(1.03); opacity: 1; } }
+
 .angel-burst-particle.butterfly,
 .angel-burst-particle.key {
   width: 8px; height: 8px;
@@ -2270,10 +2379,10 @@ body.theme-angel #collectionOverlay .theme-swatch:is(:hover,.active) {
 }
 
 /* ---------- Celestial window heraldry atlas ---------- */
-body.theme-angel :is(#howToOverlay,#historyOverlay,#collectionOverlay,#settingsOverlay,#friendsOverlay,#dmOverlay,#roomSettingsOverlay,#roomBrowserOverlay,#matchDetailOverlay,#userProfileOverlay) .howto-box {
+body.theme-angel :is(#howToOverlay,#historyOverlay,#collectionOverlay,#settingsOverlay,#friendsOverlay,#dmOverlay,#roomBrowserOverlay,#matchDetailOverlay,#userProfileOverlay) .howto-box {
   padding-top: 88px;
 }
-body.theme-angel :is(#howToOverlay,#historyOverlay,#collectionOverlay,#settingsOverlay,#friendsOverlay,#dmOverlay,#roomSettingsOverlay,#roomBrowserOverlay,#matchDetailOverlay,#userProfileOverlay) .howto-box::before {
+body.theme-angel :is(#howToOverlay,#historyOverlay,#collectionOverlay,#settingsOverlay,#friendsOverlay,#dmOverlay,#roomBrowserOverlay,#matchDetailOverlay,#userProfileOverlay) .howto-box::before {
   top: 5px;
   width: 78px;
   height: 78px;
@@ -2289,44 +2398,14 @@ body.theme-angel #historyOverlay .howto-box::before { background-position: 33.33
 body.theme-angel #collectionOverlay .howto-box::before { background-position: 66.667% 0; }
 body.theme-angel #settingsOverlay .howto-box::before { background-position: 100% 0; }
 body.theme-angel :is(#friendsOverlay,#dmOverlay,#userProfileOverlay) .howto-box::before { background-position: 0 100%; }
-body.theme-angel :is(#roomSettingsOverlay,#roomBrowserOverlay) .howto-box::before { background-position: 33.333% 100%; }
+body.theme-angel #roomBrowserOverlay .howto-box::before { background-position: 33.333% 100%; }
 body.theme-angel #matchDetailOverlay .howto-box::before { background-position: 66.667% 100%; }
 @keyframes angelHeraldryFloat {
   0%,100% { transform: translateX(-50%) translateY(1px) scale(.96); opacity: .88; }
   50% { transform: translateX(-50%) translateY(-3px) scale(1.02); opacity: 1; }
 }
 
-/* ---------- Room creation and public-room browser ---------- */
-body.theme-angel #roomSettingsOverlay .howto-section {
-  padding: 13px 12px 16px;
-  border: 1px solid rgba(221,226,255,.14);
-  border-radius: 12px;
-  background: linear-gradient(145deg, rgba(255,255,255,.065), rgba(168,177,231,.035));
-}
-body.theme-angel #roomSettingsOverlay .room-timer-row {
-  padding: 7px;
-  border-radius: 24px;
-  background: rgba(10,14,39,.44);
-}
-body.theme-angel .room-stepper {
-  width: 38px;
-  height: 38px;
-  color: #fff9e9;
-  border: 1px solid rgba(255,236,187,.62);
-  background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.24), rgba(87,85,132,.96) 58%, rgba(34,38,78,.98));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 11px rgba(220,217,255,.13);
-}
-body.theme-angel .room-stepper:hover,
-body.theme-angel .room-stepper:focus-visible {
-  transform: translateY(-1px) scale(1.05);
-  border-color: #fff2c6;
-  background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.34), rgba(121,105,148,.98) 60%, rgba(47,45,88,.99));
-}
-body.theme-angel .room-timer-val {
-  color: #fff0ba;
-  text-shadow: 0 0 10px rgba(255,224,151,.26);
-}
-body.theme-angel #roomSettingsOverlay :is(#diffDesc,#gameModeDesc,#roomVisibilityDesc) { color: rgba(232,235,255,.66) !important; }
+/* ---------- Public-room browser ---------- */
 body.theme-angel .room-browser-row {
   position: relative;
   isolation: isolate;
@@ -2585,28 +2664,18 @@ body.theme-angel .angel-discovery-card small { color: rgba(231,234,255,.58); fon
 .angel-discovery-icon.feather,
 .angel-discovery-icon.opal { background: url('/assets/angel/golden-feather-v1.webp') center / contain no-repeat; }
 .angel-discovery-icon.opal { filter: hue-rotate(42deg) saturate(1.35); }
-.angel-discovery-icon.butterfly { position: relative; }
-.angel-discovery-icon.butterfly::before,
-.angel-discovery-icon.butterfly::after {
-  content: '';
-  position: absolute;
-  top: 7px;
-  width: 18px; height: 24px;
-  border: 1px solid rgba(255,255,255,.76);
-  background: linear-gradient(145deg,#fffde4,#a9eee9 48%,#d5acff);
-  box-shadow: 0 0 7px rgba(191,235,255,.5);
+.angel-discovery-icon.butterfly {
+  background: url('/assets/angel/radiant-butterfly-v1.webp') center / contain no-repeat;
+  filter: drop-shadow(0 0 5px rgba(210,238,255,.48));
 }
-.angel-discovery-icon.butterfly::before { right: 50%; border-radius: 85% 25% 70% 35%; transform: rotate(-12deg); }
-.angel-discovery-icon.butterfly::after { left: 50%; border-radius: 25% 85% 35% 70%; transform: rotate(12deg); }
 .angel-discovery-icon.crystal {
-  width: 28px; height: 36px; margin-top: 1px; margin-bottom: 1px;
-  clip-path: polygon(50% 0,90% 25%,100% 68%,50% 100%,0 68%,10% 25%);
-  background: conic-gradient(from 25deg,#fff,#92eee9,#a9c7ff,#d2a0ff,#fff0bd,#fff);
-  box-shadow: 0 0 9px rgba(183,225,255,.64);
+  background: url('/assets/angel/starlight-crystal-v1.webp') center / contain no-repeat;
+  filter: drop-shadow(0 0 5px rgba(183,225,255,.58));
 }
-.angel-discovery-icon.key { position: relative; width: 24px; border: 4px solid #ffe19a; border-radius: 50% 50% 34% 34%; box-shadow: 0 0 8px rgba(255,222,138,.5); }
-.angel-discovery-icon.key::before { content: ''; position: absolute; left: 6px; top: 16px; width: 4px; height: 25px; background: #e2ab4c; }
-.angel-discovery-icon.key::after { content: ''; position: absolute; left: 6px; bottom: -7px; width: 13px; height: 8px; border-left: 4px solid #e2ab4c; border-bottom: 4px solid #ffe19a; }
+.angel-discovery-icon.key {
+  background: url('/assets/angel/celestial-key-v1.webp') center / contain no-repeat;
+  filter: drop-shadow(0 0 5px rgba(255,222,138,.54));
+}
 
 /* ---------- Result signatures by Gin Rummy outcome ---------- */
 .angel-victory-halo,
@@ -2673,10 +2742,10 @@ body.theme-angel #confirmModalOverlay.angel-warning-arrival .angel-result-crest 
     backdrop-filter: blur(4px) saturate(1.03);
     -webkit-backdrop-filter: blur(4px) saturate(1.03);
   }
-  body.theme-angel :is(#howToOverlay,#historyOverlay,#collectionOverlay,#settingsOverlay,#friendsOverlay,#dmOverlay,#roomSettingsOverlay,#roomBrowserOverlay,#matchDetailOverlay,#userProfileOverlay) .howto-box {
+  body.theme-angel :is(#howToOverlay,#historyOverlay,#collectionOverlay,#settingsOverlay,#friendsOverlay,#dmOverlay,#roomBrowserOverlay,#matchDetailOverlay,#userProfileOverlay) .howto-box {
     padding-top: 76px;
   }
-  body.theme-angel :is(#howToOverlay,#historyOverlay,#collectionOverlay,#settingsOverlay,#friendsOverlay,#dmOverlay,#roomSettingsOverlay,#roomBrowserOverlay,#matchDetailOverlay,#userProfileOverlay) .howto-box::before {
+  body.theme-angel :is(#howToOverlay,#historyOverlay,#collectionOverlay,#settingsOverlay,#friendsOverlay,#dmOverlay,#roomBrowserOverlay,#matchDetailOverlay,#userProfileOverlay) .howto-box::before {
     width: 64px;
     height: 64px;
   }

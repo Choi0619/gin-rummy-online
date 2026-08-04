@@ -63,9 +63,9 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
   position: relative;
   min-height: 100vh;
   min-height: 100dvh;
-  justify-content: flex-start;
-  padding: max(22px, 2.5vh) 20px 34px;
-  gap: 0;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 18px;
   overflow-x: hidden;
   background: var(--lobby-grad);
   transition: background 0.4s ease;
@@ -136,67 +136,7 @@ button, .card, .deck-pile, .discard-slot, .char-opt, .sort-btn, .act-btn, .util-
 }
 .btn-howto:hover { background: rgba(255,215,120,0.22); transform: translateY(-1px); }
 
-.lobby-stage {
-  position: relative;
-  z-index: 5;
-  width: min(700px, calc(100vw - 40px));
-  margin: clamp(0px, 2vh, 18px) auto 0;
-  display: grid;
-  gap: clamp(10px, 1.5vh, 16px);
-  align-content: start;
-}
-.lobby-top-row {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  min-width: 0;
-  display: flex;
-  gap: 7px;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
-  background: rgba(5,12,18,0.26);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.06);
-  backdrop-filter: blur(7px);
-  -webkit-backdrop-filter: blur(7px);
-}
-.lobby-top-row .btn-howto {
-  min-height: 36px;
-  white-space: nowrap;
-}
-.lobby-brand-row {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.9fr);
-  align-items: center;
-  gap: clamp(16px, 4vw, 34px);
-  padding: 2px clamp(10px, 3vw, 24px);
-}
-.lobby-profile-column {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-}
-.lobby-profile-column #lobbyUserBadge {
-  width: 100%;
-  margin: 0 !important;
-}
-.lobby-profile-column #guestNameRow { margin: 0 !important; }
-.lobby-logo-wrap {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-.lobby-logo-wrap .logo-img {
-  width: clamp(250px, 28vw, 320px);
-  max-width: 100%;
-  margin: 0;
-}
+.lobby-top-row { position: relative; z-index: 1; display: flex; gap: 8px; align-items: center; }
 .btn-settings {
   background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: white;
   width: 36px; height: 36px; border-radius: 50%; font-size: 16px; cursor: pointer; transition: all 0.2s;
@@ -1015,11 +955,6 @@ body.theme-aurora .logo-title { animation: auroraText 6s linear infinite; }
   flex-direction: column;
   gap: 10px;
 }
-.lobby-stage > .lobby-card {
-  width: min(600px, 100%);
-  max-width: none;
-  margin: 0 auto;
-}
 /* Aurora theme: the card's own background/border/shadow are untouched (stays the
    normal translucent panel over the cosmic page background) — a separate ::after
    ring is the ONLY thing that carries the nebula color, drawn just outside the edge. */
@@ -1054,142 +989,6 @@ body.theme-aurora .lobby-card::after {
   margin-bottom: 2px;
 }
 .lobby-section-title .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.75; }
-
-/* Shared responsive lobby stage. Themes only skin these surfaces; their
-   geometry remains consistent so fullscreen, snapped and mobile windows all
-   retain the same visual hierarchy. */
-@media (min-width: 1400px) and (min-height: 700px) {
-  #lobbyScreen { padding-inline: 32px; }
-  .lobby-stage {
-    width: min(1040px, calc(100vw - 64px));
-    margin-top: clamp(0px, 1.5vh, 14px);
-    gap: clamp(10px, 1.35vh, 15px);
-  }
-  .lobby-top-row { padding-inline: 10px; }
-  .lobby-top-row .btn-howto {
-    min-width: 128px;
-    padding-inline: 18px;
-  }
-  .lobby-brand-row {
-    grid-template-columns: minmax(330px, 0.88fr) minmax(380px, 1.12fr);
-    min-height: 128px;
-    padding-inline: clamp(90px, 9vw, 150px);
-    gap: clamp(28px, 4vw, 54px);
-  }
-  .lobby-profile-column { justify-self: end; width: min(100%, 420px); }
-  .lobby-logo-wrap { justify-self: start; }
-  .lobby-logo-wrap .logo-img { width: clamp(290px, 18vw, 350px); }
-  .lobby-stage > .lobby-card {
-    width: 100%;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 12px;
-    padding: 20px;
-  }
-  .lobby-card > .logo-sub,
-  .lobby-card > .lobby-solo-section,
-  .lobby-card > .error-msg { grid-column: 1 / -1; }
-  .lobby-card > .logo-sub { justify-self: center; margin: -2px 0 1px; }
-  .lobby-create-section { justify-content: space-between; }
-  .lobby-create-section .btn { flex: 1; min-height: 112px; }
-  .lobby-solo-section {
-    display: grid;
-    grid-template-columns: minmax(120px, auto) minmax(0, 1fr);
-    align-items: center;
-    gap: 18px;
-    padding-block: 13px;
-  }
-  .lobby-solo-section .lobby-section-title { margin: 0; }
-  .lobby-card > .error-msg:empty { display: none; }
-}
-
-@media (min-width: 1400px) and (min-height: 700px) and (max-height: 820px) {
-  #lobbyScreen { padding-top: 12px; padding-bottom: 18px; }
-  .lobby-stage { margin-top: 0; gap: 9px; }
-  .lobby-brand-row { min-height: 94px; }
-  .lobby-logo-wrap .logo-img { width: 250px; }
-  .lobby-stage > .lobby-card { padding: 15px; gap: 9px; }
-  .lobby-section { padding: 12px 14px 14px; gap: 8px; }
-  .lobby-create-section .btn { min-height: 78px; }
-  .lobby-solo-section { padding-block: 10px; }
-}
-
-/* Landscape laptop windows need the wide composition even below the desktop
-   breakpoint; otherwise the legacy vertical card becomes taller than the
-   available browser viewport. */
-@media (min-width: 1100px) and (max-width: 1399px) and (max-height: 820px) {
-  #lobbyScreen { padding: 10px 20px 16px; }
-  .lobby-stage {
-    width: min(920px, calc(100vw - 40px));
-    margin-top: 0;
-    gap: 8px;
-  }
-  .lobby-brand-row {
-    grid-template-columns: minmax(280px, 0.9fr) minmax(310px, 1.1fr);
-    min-height: 88px;
-    padding-inline: 90px;
-    gap: 28px;
-  }
-  .lobby-profile-column { justify-self: end; width: min(100%, 380px); }
-  .lobby-logo-wrap .logo-img { width: 230px; }
-  .lobby-stage > .lobby-card {
-    width: 100%;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 8px;
-    padding: 14px;
-  }
-  .lobby-card > .logo-sub,
-  .lobby-card > .lobby-solo-section,
-  .lobby-card > .error-msg { grid-column: 1 / -1; }
-  .lobby-card > .logo-sub { justify-self: center; margin: -2px 0 0; }
-  .lobby-section { padding: 11px 13px 13px; gap: 7px; }
-  .lobby-create-section { justify-content: space-between; }
-  .lobby-create-section .btn { flex: 1; min-height: 70px; }
-  .lobby-solo-section {
-    display: grid;
-    grid-template-columns: minmax(110px, auto) minmax(0, 1fr);
-    align-items: center;
-    gap: 14px;
-    padding-block: 9px;
-  }
-  .lobby-solo-section .lobby-section-title { margin: 0; }
-  .lobby-card > .error-msg:empty { display: none; }
-}
-
-@media (max-width: 699px) {
-  #lobbyScreen { padding: 14px 12px 26px; }
-  .lobby-stage { width: min(440px, calc(100vw - 24px)); margin-top: 0; gap: 10px; }
-  .lobby-top-row { gap: 4px; padding: 5px; }
-  .lobby-top-row .btn-howto {
-    flex: 1 1 auto;
-    min-width: 0;
-    min-height: 34px;
-    padding: 6px 7px;
-    font-size: 10.5px;
-  }
-  .lobby-top-row .btn-settings { width: 34px; height: 34px; }
-  .lobby-brand-row {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 4px;
-    padding: 0 12px;
-  }
-  .lobby-profile-column { align-items: center; width: 100%; }
-  .lobby-profile-column #lobbyUserBadge { width: min(100%, 360px); }
-  .lobby-logo-wrap { justify-content: center; }
-  .lobby-logo-wrap .logo-img { width: min(250px, 72vw); }
-  .lobby-stage > .lobby-card { width: 100%; }
-}
-
-@media (max-width: 430px) {
-  .lobby-top-row .btn-howto { font-size: 0; padding-inline: 5px; }
-  .lobby-top-row .btn-howto { min-width: 40px; }
-  .lobby-top-row .btn-howto::before { font-size: 15px; line-height: 1; }
-  .lobby-top-row .btn-howto:nth-child(1)::before { content: '📖'; }
-  .lobby-top-row .btn-howto:nth-child(2)::before { content: '📊'; }
-  .lobby-top-row .btn-howto:nth-child(3)::before { content: '👥'; }
-  .lobby-top-row .btn-howto:nth-child(4)::before { content: '🎨'; }
-}
 
 input[type="text"] {
   background: rgba(255,255,255,0.1);
@@ -3443,70 +3242,61 @@ body.theme-aurora .card.just-drawn {
   <div class="lobby-corner-deco bl">🪙</div>
   <div class="lobby-corner-deco br">🪙</div>
 
-  <div class="lobby-stage">
-    <div class="lobby-top-row">
-      <button class="btn-howto" onclick="showHowTo()" data-i18n="howToBtn">📖 게임 방법 보기</button>
-      <button class="btn-howto" onclick="showHistory()" style="background:rgba(255,215,120,0.12);border-color:rgba(255,215,120,0.3)">📊 전적</button>
-      <button class="btn-howto" onclick="showFriendsModal()" style="background:rgba(105,240,174,0.14);border-color:rgba(105,240,174,0.5);color:#69f0ae;box-shadow:0 0 14px rgba(105,240,174,0.15)">👥 친구<span id="friendReqBadge" style="display:none;background:#ef5350;color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;margin-left:5px;vertical-align:top"></span></button>
-      <button class="btn-howto" onclick="showCollectionModal()" style="background:rgba(180,122,255,0.12);border-color:rgba(180,122,255,0.4);color:#c9a8ff">🎨 컬렉션</button>
-      <button class="btn-settings" onclick="showSettings()" title="Settings">⚙️</button>
+  <div class="lobby-top-row">
+    <button class="btn-howto" onclick="showHowTo()" data-i18n="howToBtn">📖 게임 방법 보기</button>
+    <button class="btn-howto" onclick="showHistory()" style="background:rgba(255,215,120,0.12);border-color:rgba(255,215,120,0.3)">📊 전적</button>
+    <button class="btn-howto" onclick="showFriendsModal()" style="background:rgba(105,240,174,0.14);border-color:rgba(105,240,174,0.5);color:#69f0ae;box-shadow:0 0 14px rgba(105,240,174,0.15)">👥 친구<span id="friendReqBadge" style="display:none;background:#ef5350;color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;margin-left:5px;vertical-align:top"></span></button>
+    <button class="btn-howto" onclick="showCollectionModal()" style="background:rgba(180,122,255,0.12);border-color:rgba(180,122,255,0.4);color:#c9a8ff">🎨 컬렉션</button>
+    <button class="btn-settings" onclick="showSettings()" title="Settings">⚙️</button>
+  </div>
+  <div id="lobbyUserBadge" class="auth-user-badge" style="display:none;max-width:420px;margin:16px auto 4px;position:relative" onclick="showProfileModal()">
+    <span style="position:relative;display:inline-flex">
+      <span class="badge-char" id="lobbyUserChar"></span>
+      <span class="lobby-status-dot online" id="lobbyStatusDot" onclick="event.stopPropagation();toggleStatusMenu()"></span>
+    </span>
+    <span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
+      <span class="badge-name" id="lobbyUserName"></span>
+      <span style="display:flex;align-items:center;gap:6px">
+        <span class="badge-id" id="lobbyUserIdText"></span>
+        <span class="badge-rp" id="lobbyUserRP"></span>
+      </span>
+    </span>
+    <span class="badge-logout" onclick="event.stopPropagation();doLogout()">로그아웃</span>
+    <div id="statusMenu" class="status-menu" onclick="event.stopPropagation()">
+      <div class="status-menu-item" onclick="chooseStatus('online')">🟢 온라인</div>
+      <div class="status-menu-item" onclick="chooseStatus('away')">🌙 자리비움</div>
+    </div>
+  </div>
+
+  <img class="logo-img" src="/logo.png" alt="진 러미 온라인" onerror="this.style.display='none';document.querySelector('.logo-fallback').style.display=''">
+  <div class="logo-fallback" style="display:none;font-size:48px;position:relative;z-index:1">🃏</div>
+
+  <!-- 이름 입력: 게스트 시 표시, 로그인 시 숨김 (JS가 value만 채움) -->
+  <div id="guestNameRow" style="display:none;position:relative;z-index:1;width:100%;max-width:360px">
+    <input id="myName" type="text" data-i18n-placeholder="namePlaceholder" placeholder="닉네임 입력" maxlength="12" onblur="saveNickname()"
+      style="width:100%;box-sizing:border-box;text-align:center;font-size:15px;padding:10px 16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:14px;color:#fff;outline:none">
+    <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-top:4px">로그인하면 프로필에서 관리할 수 있어요</div>
+  </div>
+
+  <div class="lobby-card">
+    <div class="logo-sub" data-i18n="logoSub" style="align-self:center;margin:-4px 0 6px">친구와 함께 플레이</div>
+    <div class="lobby-section">
+      <div class="lobby-section-title"><span class="dot"></span>방 만들기</div>
+      <button class="btn btn-primary" onclick="openRoomSettings('pvp')" data-i18n="createRoomBtn">✨ 새 방 만들기</button>
     </div>
 
-    <div class="lobby-brand-row">
-      <div class="lobby-profile-column">
-        <div id="lobbyUserBadge" class="auth-user-badge" style="display:none;max-width:420px;position:relative" onclick="showProfileModal()">
-          <span style="position:relative;display:inline-flex">
-            <span class="badge-char" id="lobbyUserChar"></span>
-            <span class="lobby-status-dot online" id="lobbyStatusDot" onclick="event.stopPropagation();toggleStatusMenu()"></span>
-          </span>
-          <span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
-            <span class="badge-name" id="lobbyUserName"></span>
-            <span style="display:flex;align-items:center;gap:6px">
-              <span class="badge-id" id="lobbyUserIdText"></span>
-              <span class="badge-rp" id="lobbyUserRP"></span>
-            </span>
-          </span>
-          <span class="badge-logout" onclick="event.stopPropagation();doLogout()">로그아웃</span>
-          <div id="statusMenu" class="status-menu" onclick="event.stopPropagation()">
-            <div class="status-menu-item" onclick="chooseStatus('online')">🟢 온라인</div>
-            <div class="status-menu-item" onclick="chooseStatus('away')">🌙 자리비움</div>
-          </div>
-        </div>
-
-        <!-- 이름 입력: 게스트 시 표시, 로그인 시 숨김 (JS가 value만 채움) -->
-        <div id="guestNameRow" style="display:none;position:relative;z-index:1;width:100%;max-width:360px">
-          <input id="myName" type="text" data-i18n-placeholder="namePlaceholder" placeholder="닉네임 입력" maxlength="12" onblur="saveNickname()"
-            style="width:100%;box-sizing:border-box;text-align:center;font-size:15px;padding:10px 16px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:14px;color:#fff;outline:none">
-          <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-top:4px">로그인하면 프로필에서 관리할 수 있어요</div>
-        </div>
-      </div>
-
-      <div class="lobby-logo-wrap">
-        <img class="logo-img" src="/logo.png" alt="진 러미 온라인" onerror="this.style.display='none';document.querySelector('.logo-fallback').style.display=''">
-        <div class="logo-fallback" style="display:none;font-size:48px;position:relative;z-index:1">🃏</div>
-      </div>
+    <div class="lobby-section">
+      <div class="lobby-section-title"><span class="dot"></span>방 참가</div>
+      <button class="btn btn-blue" onclick="showRoomBrowser()">🌐 공개방 찾기</button>
+      <input id="joinCode" type="text" data-i18n-placeholder="joinCodePlaceholder" placeholder="방 코드 입력 (예: AB3KZ)" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
+      <button class="btn btn-secondary" onclick="joinRoom()" data-i18n="joinRoomBtn">🚀 코드로 입장</button>
     </div>
 
-    <div class="lobby-card">
-      <div class="logo-sub" data-i18n="logoSub" style="align-self:center">친구와 함께 플레이</div>
-      <div class="lobby-section lobby-create-section">
-        <div class="lobby-section-title"><span class="dot"></span>방 만들기</div>
-        <button class="btn btn-primary" onclick="openRoomSettings('pvp')" data-i18n="createRoomBtn">✨ 새 방 만들기</button>
-      </div>
-
-      <div class="lobby-section lobby-join-section">
-        <div class="lobby-section-title"><span class="dot"></span>방 참가</div>
-        <button class="btn btn-blue" onclick="showRoomBrowser()">🌐 공개방 찾기</button>
-        <input id="joinCode" type="text" data-i18n-placeholder="joinCodePlaceholder" placeholder="방 코드 입력 (예: AB3KZ)" maxlength="6" style="text-transform:uppercase;letter-spacing:3px;text-align:center">
-        <button class="btn btn-secondary" onclick="joinRoom()" data-i18n="joinRoomBtn">🚀 코드로 입장</button>
-      </div>
-
-      <div class="lobby-section lobby-solo-section">
-        <div class="lobby-section-title"><span class="dot"></span>솔로 플레이</div>
-        <button class="btn btn-gold" onclick="openRoomSettings('ai')" data-i18n="aiBtn">🤖 AI와 대결하기</button>
-      </div>
-      <div class="error-msg" id="lobbyError"></div>
+    <div class="lobby-section">
+      <div class="lobby-section-title"><span class="dot"></span>솔로 플레이</div>
+      <button class="btn btn-gold" onclick="openRoomSettings('ai')" data-i18n="aiBtn">🤖 AI와 대결하기</button>
     </div>
+    <div class="error-msg" id="lobbyError"></div>
   </div>
 
   <!-- 숨겨진 레거시 요소들 (JS 참조용) -->
