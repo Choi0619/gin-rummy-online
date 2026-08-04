@@ -188,6 +188,8 @@ difficulty-specific statistics and recent match feed.
 1. Run `supabase/ai-global-stats.sql` in the Supabase SQL editor.
    Run `supabase/angel-collection-progress.sql` there as well to sync all six
    Angel-theme collectible counters across devices.
+   Run `supabase/profile-cosmetics.sql` to sync the selected theme alongside
+   the existing profile character and border across browsers and the desktop app.
 2. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to the Render service's
    environment variables.
 3. Never expose `SUPABASE_SERVICE_ROLE_KEY` in client code or commit it to Git.

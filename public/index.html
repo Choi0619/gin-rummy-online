@@ -4325,6 +4325,8 @@ const RAINBOW_UNLOCK_WINS = 10;
 const AURORA_UNLOCK_WINS = 25;
 const ABYSS_UNLOCK_WINS = 50;
 const ANGEL_UNLOCK_WINS = 100;
+const THEME_STORAGE_KEY = 'grTheme';
+const VALID_THEMES = new Set(['green', 'blue', 'purple', 'red', 'dark', 'pink', 'rainbow', 'aurora', 'abyss', 'angel']);
 
 function getTotalWins() {
   // Supabase profile is source of truth when logged in (includes imported wins)
@@ -4368,6 +4370,22 @@ function isRainbowUnlocked() { return hasPromoThemes() || getTotalWins() >= RAIN
 function isAuroraUnlocked() { return hasPromoThemes() || getTotalWins() >= AURORA_UNLOCK_WINS; }
 function isAbyssUnlocked() { return hasPromoThemes() || getTotalWins() >= ABYSS_UNLOCK_WINS; }
 function isAngelUnlocked() { return hasPromoThemes() || getTotalWins() >= ANGEL_UNLOCK_WINS; }
+
+function isThemeUnlocked(theme) {
+  if (theme === 'pink') return isPinkUnlocked();
+  if (theme === 'rainbow') return isRainbowUnlocked();
+  if (theme === 'aurora') return isAuroraUnlocked();
+  if (theme === 'abyss') return isAbyssUnlocked();
+  if (theme === 'angel') return isAngelUnlocked();
+  return VALID_THEMES.has(theme);
+}
+
+async function syncSelectedTheme(theme) {
+  if (!supaUser || !supaProfile) return;
+  supaProfile.selected_theme = theme;
+  const { error } = await supa.from('profiles').update({ selected_theme: theme }).eq('id', supaUser.id);
+  if (error) console.error('[cosmetics] Theme sync failed:', error);
+}
 
 // code -> { already: <fn returning true if already active>, localKey, column,
 //           applied: <fn to refresh UI>, label }
@@ -4447,7 +4465,8 @@ function updateLockedSwatches() {
 // Keep old name for backwards compat calls
 function updateRainbowSwatch() { updateLockedSwatches(); }
 
-function setTheme(theme) {
+function setTheme(theme, options = {}) {
+  if (!VALID_THEMES.has(theme)) theme = 'green';
   if (theme === 'pink' && !isPinkUnlocked()) {
     showConfirmModal({ emoji:'🔒', title:'핑크 테마 잠금', sub:`PVP ${PINK_UNLOCK_WINS}승 달성 시 해금됩니다.`, acceptLabel:'확인', onAccept:()=>{} });
     return;
@@ -4474,7 +4493,7 @@ function setTheme(theme) {
   }
   document.body.className = document.body.className.replace(/theme-\S+/g, '').trim();
   if (theme !== 'green') document.body.classList.add('theme-' + theme);
-  localStorage.setItem('grTheme', theme);
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
   document.querySelectorAll('.theme-swatch').forEach(el => el.classList.toggle('selected', el.dataset.theme === theme));
   if (theme === 'pink') startPetals(); else stopPetals();
   if (theme === 'rainbow') startGrass(); else stopGrass();
@@ -4483,6 +4502,7 @@ function setTheme(theme) {
   if (theme === 'angel') { startAngelTheme(); } else { stopAngelTheme(); }
   updatePetalSection();
   updateGrassSection();
+  if (options.persist !== false) void syncSelectedTheme(theme);
 }
 
 // ===== Aurora Nebula =====
@@ -4878,7 +4898,12 @@ function selectCardBorder(id) {
   if (!b || !(b.unlock() || hasPromoBorders())) return;
   myCardBorder = id;
   localStorage.setItem('grCardBorder', id);
-  if (supaUser) supa.from('profiles').update({ card_border: id }).eq('id', supaUser.id).then(() => {});
+  if (supaProfile) supaProfile.card_border = id;
+  if (supaUser) {
+    supa.from('profiles').update({ card_border: id }).eq('id', supaUser.id).then(({ error }) => {
+      if (error) console.error('[cosmetics] Profile border sync failed:', error);
+    });
+  }
   applyAvatarBorder('lobbyUserChar', id);
   applyAvatarBorder('lobbyUserBadge', id);
   applyAvatarBorder('profileAvatar', id);
@@ -5187,8 +5212,25 @@ async function loadProfile() {
   const savedNick = data.username || data.game_id || '';
   document.getElementById('myName').value = savedNick;
   myName = savedNick;
-  myChar = data.char || myChar;
-  myCardBorder = data.card_border || 'green';
+  if (CHAR_LIST.includes(data.char)) myChar = data.char;
+  localStorage.setItem('grCharacter', myChar);
+  myCardBorder = CARD_BORDERS.some(border => border.id === data.card_border) ? data.card_border : 'green';
+  localStorage.setItem('grCardBorder', myCardBorder);
+
+  const localTheme = VALID_THEMES.has(localStorage.getItem(THEME_STORAGE_KEY))
+    ? localStorage.getItem(THEME_STORAGE_KEY)
+    : 'green';
+  const accountTheme = VALID_THEMES.has(data.selected_theme) ? data.selected_theme : null;
+  if (accountTheme && isThemeUnlocked(accountTheme)) {
+    setTheme(accountTheme, { persist: false });
+  } else if (!data.selected_theme && localTheme !== 'green' && isThemeUnlocked(localTheme)) {
+    // Existing players kept cosmetics per browser. Import that meaningful local
+    // choice once, while avoiding a fresh app's default green overwriting it.
+    setTheme(localTheme, { persist: false });
+    void syncSelectedTheme(localTheme);
+  } else {
+    setTheme('green', { persist: false });
+  }
   renderCharGrid();
   localStorage.setItem(RANK_KEY, String(data.rank_points));
   renderLobbyRank();
@@ -5291,17 +5333,30 @@ function renderProfileCharGrid() {
   }).join('');
 }
 
-async function selectProfileChar(ch) {
-  if (!supaUser) return;
-  supaProfile.char = ch;
-  document.getElementById('profileAvatar').innerHTML = charHTML(ch);
-  renderProfileCharGrid();
-  document.getElementById('lobbyUserChar').innerHTML = charHTML(ch);
+async function persistCharacterChoice(ch, showFeedback = false) {
+  if (!CHAR_LIST.includes(ch) || !isCharUnlocked(ch)) return;
   myChar = ch;
+  localStorage.setItem('grCharacter', ch);
+  if (supaProfile) supaProfile.char = ch;
+  const profileAvatar = document.getElementById('profileAvatar');
+  if (profileAvatar) profileAvatar.innerHTML = charHTML(ch);
+  const lobbyAvatar = document.getElementById('lobbyUserChar');
+  if (lobbyAvatar) lobbyAvatar.innerHTML = charHTML(ch);
   renderCharGrid();
+  if (document.getElementById('profileCharGrid')) renderProfileCharGrid();
   if (socket && roomCode) socket.emit('set-character', { char: ch });
-  await supa.from('profiles').update({ char: ch }).eq('id', supaUser.id);
-  showMsg('profileSaveMsg', '✅ 캐릭터가 저장되었습니다!', '#69f0ae');
+  if (!supaUser) return;
+  const { error } = await supa.from('profiles').update({ char: ch }).eq('id', supaUser.id);
+  if (error) {
+    console.error('[cosmetics] Character sync failed:', error);
+    if (showFeedback) showMsg('profileSaveMsg', '캐릭터 저장에 실패했습니다.', '#ef5350');
+    return;
+  }
+  if (showFeedback) showMsg('profileSaveMsg', '✅ 캐릭터가 저장되었습니다!', '#69f0ae');
+}
+
+async function selectProfileChar(ch) {
+  await persistCharacterChoice(ch, true);
 }
 
 async function saveProfileNickname() {
@@ -6604,10 +6659,10 @@ if (!localStorage.getItem('grHistoryResetV3')) {
   localStorage.setItem('grHistoryResetV3', '1');
 }
 
-const savedTheme = localStorage.getItem('grTheme') || 'green';
+const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'green';
 // A stale/manually-edited 100-win theme value must not bypass the unlock on
 // startup or open a lock modal before the user has interacted with the page.
-setTheme(savedTheme === 'angel' && !isAngelUnlocked() ? 'green' : savedTheme);
+setTheme(savedTheme === 'angel' && !isAngelUnlocked() ? 'green' : savedTheme, { persist: false });
 applyLanguage();
 updateLockedSwatches();
 updatePetalSection();
@@ -6639,7 +6694,8 @@ function checkNewCharUnlocks(winsBeforeThisGame) {
   }
   return newlyUnlocked;
 }
-let myChar = CHAR_LIST[0];
+const savedCharacter = localStorage.getItem('grCharacter');
+let myChar = CHAR_LIST.includes(savedCharacter) ? savedCharacter : CHAR_LIST[0];
 let socket = null;
 let myIdx = -1;
 let myHand = [];
@@ -7085,7 +7141,7 @@ function renderCharGrid() {
         showConfirmModal({ emoji: ch, title: `${req}승 달성 시 해금!`, sub: `현재 PVP 승리: ${getTotalWins()}승`, acceptLabel: '확인', onAccept: () => {} });
         return;
       }
-      myChar = ch; renderCharGrid();
+      void persistCharacterChoice(ch);
     };
     grid.appendChild(btn);
   });

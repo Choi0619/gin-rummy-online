@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Gin Rummy Online",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "identifier": "com.choi0619.ginrummy",
   "build": {
     "frontendDist": "../desktop-shell",
@@ -14,7 +14,7 @@
         "title": "Gin Rummy Online",
         "url": "https://gin-rummy-online.onrender.com",
         "width": 1280,
-        "height": 820,
+        "height": 1000,
         "minWidth": 960,
         "minHeight": 680,
         "center": true,
