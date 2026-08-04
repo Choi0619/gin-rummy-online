@@ -4780,7 +4780,7 @@ function confirmRoomSettings() {
     myAiDifficulty = _roomDiff;
     socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff, gameMode: _gameMode, handSize: _handSize, cardBorder: myCardBorder, clientId: CLIENT_ID, authToken: myAccessToken });
   } else {
-    socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder, clientId: CLIENT_ID });
+    socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder, clientId: CLIENT_ID, authToken: myAccessToken });
   }
 }
 
@@ -7254,6 +7254,37 @@ function initSocket() {
     }
   });
 
+  socket.on('account-game-conflict', ({ code, opponentName, inProgress, canTakeOver, vsAI: existingVsAI }) => {
+    const stateLabel = inProgress ? '게임 진행 중' : '대기 또는 결과 확인 중';
+    const takeover = canTakeOver !== false;
+    showConfirmModal({
+      emoji: '🔐',
+      title: '다른 기기에서 게임을 진행 중입니다',
+      sub: `${escapeHtml(opponentName || (existingVsAI ? 'AI' : '상대방'))}님과의 방 <b>${escapeHtml(code)}</b>이 ${stateLabel}입니다.<br>${takeover ? '이 기기에서 이어서 플레이하거나 관전할 수 있습니다.' : '현재 결과를 확인 중이므로 관전만 가능합니다.'}`,
+      acceptLabel: takeover ? '이 기기에서 이어하기' : '관전하기',
+      declineLabel: takeover ? '관전하기' : '닫기',
+      kind: 'resume',
+      onAccept: () => takeover
+        ? socket.emit('take-over-account-game', {
+            code, clientId: CLIENT_ID, authToken: myAccessToken,
+            name: myName || (supaProfile && supaProfile.username) || '',
+            char: myChar, gameId: (supaProfile && supaProfile.game_id) || '', cardBorder: myCardBorder,
+          })
+        : spectateRoomByCode(code),
+      onDecline: () => { if (takeover) spectateRoomByCode(code); },
+    });
+  });
+
+  socket.on('account-game-transferred', () => {
+    showToast('다른 기기에서 게임을 이어받았습니다. 이 화면은 관전 모드로 전환됩니다.', 'info');
+    setTimeout(() => hideToast(), 3500);
+  });
+
+  socket.on('account-game-takeover-failed', () => {
+    showToast('기존 게임을 찾지 못했습니다. 이미 종료되었을 수 있습니다.', 'alert');
+    setTimeout(() => hideToast(), 3000);
+  });
+
   socket.on('opponent-joined', ({ name, char, gameId, cardBorder }) => {
     gameIds[1-myIdx] = gameId || '';
     cardBorders[1-myIdx] = cardBorder || 'green';
@@ -7959,6 +7990,10 @@ function initSocket() {
     }
   });
   socket.on('deck-empty', () => {
+    if (isSpectator) {
+      document.getElementById('specStatusMsg').textContent = '🃏 덱이 소진되어 라운드가 종료되었습니다.';
+      return;
+    }
     document.getElementById('resultOverlay').classList.add('show');
     document.getElementById('resEmoji').textContent = '🤝';
     document.getElementById('resTitle').textContent = '덱 소진 - 무승부';
@@ -8002,7 +8037,7 @@ function joinRoom() {
   myName = document.getElementById('myName').value.trim() || t('defaultPlayer2');
   if (!socket) initSocket();
   document.getElementById('lobbyError').textContent = '';
-  socket.emit('join-room', { code, name: myName, char: myChar, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder, clientId: CLIENT_ID });
+  socket.emit('join-room', { code, name: myName, char: myChar, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder, clientId: CLIENT_ID, authToken: myAccessToken });
 }
 
 document.getElementById('joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });

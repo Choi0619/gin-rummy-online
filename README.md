@@ -157,6 +157,11 @@ The portable executable is written to
 5. **Round end** → the server computes melds, deadwood, lay-offs, and the winner, then emits a `round-end` event with full details (both hands revealed) for the result screen.
 6. **Rematch** → both players must click "Play Again" before a new round starts (skipped automatically against the AI).
 
+Multiple devices may stay signed in to the same account, but the server allows
+only one active player seat per account. A second device can take over the
+existing seat (the previous device becomes a spectator) or join that room as a
+spectator. This protects match history and RP from concurrent-game updates.
+
 All game state lives in server memory (`const rooms = new Map()`), so **redeploying or restarting the server wipes any in-progress games**. There is currently no database or persistent storage — see [Known Limitations](#known-limitations).
 
 ---

@@ -32,6 +32,7 @@ const pendingForfeitResults = new Map();
 // browser. Keep the service-role key in Render's environment only.
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://bqlpcfrphnjkzgeydgls.supabase.co';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxbHBjZnJwaG5qa3pnZXlkZ2xzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MTIyMTcsImV4cCI6MjA5OTA4ODIxN30.fygRKugO99xwKx2mzWKsQ1OLKb2aZBMHqtGyYv_OzEk';
 
 async function supabaseServiceRequest(pathname, { method = 'GET', body, authorization } = {}) {
   if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
@@ -56,23 +57,70 @@ async function supabaseServiceRequest(pathname, { method = 'GET', body, authoriz
   }
 }
 
-async function resolveAiPlayerIdentity(accessToken) {
-  if (!SUPABASE_SERVICE_ROLE_KEY || !accessToken) return null;
-  const authUser = await supabaseServiceRequest('/auth/v1/user', {
-    authorization: `Bearer ${accessToken}`,
-  });
-  if (!authUser || !authUser.id) return null;
-  const rows = await supabaseServiceRequest(
-    `/rest/v1/profiles?id=eq.${encodeURIComponent(authUser.id)}&select=id,game_id,username,char&limit=1`
-  );
-  const profile = Array.isArray(rows) ? rows[0] : null;
-  if (!profile) return null;
-  return {
-    id: profile.id,
-    gameId: profile.game_id || '',
-    name: profile.username || profile.game_id || 'Player',
-    char: profile.char || '',
+async function resolvePlayerIdentity(accessToken) {
+  if (!accessToken) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
   };
+  try {
+    const authResponse = await fetch(SUPABASE_URL + '/auth/v1/user', { headers, signal: controller.signal });
+    if (!authResponse.ok) throw new Error(`Supabase auth ${authResponse.status}`);
+    const authUser = await authResponse.json();
+    if (!authUser || !authUser.id) return null;
+    const profileResponse = await fetch(
+      SUPABASE_URL + `/rest/v1/profiles?id=eq.${encodeURIComponent(authUser.id)}&select=id,game_id,username,char&limit=1`,
+      { headers, signal: controller.signal }
+    );
+    if (!profileResponse.ok) throw new Error(`Supabase profile ${profileResponse.status}`);
+    const rows = await profileResponse.json();
+    const profile = Array.isArray(rows) ? rows[0] : null;
+    if (!profile) return null;
+    return {
+      id: profile.id,
+      gameId: profile.game_id || '',
+      name: profile.username || profile.game_id || 'Player',
+      char: profile.char || '',
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function verifyParticipationIdentity(socket, accessToken) {
+  if (!accessToken) return { ok: true, identity: null };
+  try {
+    const identity = await resolvePlayerIdentity(accessToken);
+    if (!identity) throw new Error('Profile not found');
+    return { ok: true, identity };
+  } catch (err) {
+    console.warn('[account game lock] Player verification failed:', err.message);
+    socket.emit('err', '로그인 정보를 확인하지 못했습니다. 다시 로그인한 뒤 시도해주세요.');
+    return { ok: false, identity: null };
+  }
+}
+
+function findAccountSeat(accountId) {
+  if (!accountId) return null;
+  for (const room of rooms.values()) {
+    const idx = (room.accountIds || []).indexOf(accountId);
+    if (idx !== -1) return { room, idx };
+  }
+  return null;
+}
+
+function emitAccountGameConflict(socket, seat) {
+  const { room, idx } = seat;
+  socket.emit('account-game-conflict', {
+    code: room.code,
+    opponentName: room.names[1 - idx] || (room.vsAI ? 'AI' : '상대방 대기 중'),
+    inProgress: !!(room.game && !room.game.over),
+    canTakeOver: !room.game || !room.game.over,
+    vsAI: !!room.vsAI,
+  });
 }
 
 async function recordAiMatchToDb(room, winnerIdx) {
@@ -333,15 +381,20 @@ function joinAsSpectator(socket, room, payload = {}) {
 io.on('connection', socket => {
   console.log('connect', socket.id);
 
-  socket.on('create-room', ({ name, char, targetScore, turnTimeSecs, gameMode, handSize, isPublic, gameId, cardBorder, clientId }) => {
+  socket.on('create-room', async ({ name, char, targetScore, turnTimeSecs, gameMode, handSize, isPublic, gameId, cardBorder, clientId, authToken }) => {
+    const verified = await verifyParticipationIdentity(socket, authToken);
+    if (!verified.ok) return;
+    const activeSeat = findAccountSeat(verified.identity && verified.identity.id);
+    if (activeSeat) { emitAccountGameConflict(socket, activeSeat); return; }
     const code = makeCode();
     rooms.set(code, {
       code,
       players: [socket.id],
       clientIds: [clientId || null, null],
+      accountIds: [verified.identity ? verified.identity.id : null, null],
       names: [name || '플레이어1', ''],
       chars: [char || '🐱', ''],
-      gameIds: [gameId || '', ''],
+      gameIds: [(verified.identity && verified.identity.gameId) || gameId || '', ''],
       cardBorders: [cardBorder || 'green', 'green'],
       away: [false, false],
       aiControlled: [false, false],
@@ -360,18 +413,25 @@ io.on('connection', socket => {
     socket.data.room = code;
     socket.data.idx = 0;
     socket.data.clientId = clientId || null;
+    socket.data.accountId = verified.identity ? verified.identity.id : null;
     const r = rooms.get(code);
     socket.emit('room-created', { code, playerIndex: 0, targetScore: r.targetScore, isPublic: r.isPublic, turnTimeSecs: r.turnTimeSecs, gameMode: r.gameMode, handSize: r.handSize });
   });
 
-  socket.on('create-ai-room', ({ name, char, targetScore, turnTimeSecs, aiDifficulty, gameMode, handSize, cardBorder, clientId, authToken }) => {
+  socket.on('create-ai-room', async ({ name, char, targetScore, turnTimeSecs, aiDifficulty, gameMode, handSize, cardBorder, clientId, authToken }) => {
+    const verified = await verifyParticipationIdentity(socket, authToken);
+    if (!verified.ok) return;
+    const activeSeat = findAccountSeat(verified.identity && verified.identity.id);
+    if (activeSeat) { emitAccountGameConflict(socket, activeSeat); return; }
     const code = makeCode();
     const room = {
       code,
       players: [socket.id],
       clientIds: [clientId || null, null],
+      accountIds: [verified.identity ? verified.identity.id : null, null],
       names: [name || '플레이어1', 'AI'],
       chars: [char || '🐱', '🤖'],
+      gameIds: [(verified.identity && verified.identity.gameId) || '', 'AI'],
       cardBorders: [cardBorder || 'green', 'green'],
       away: [false, false],
       ready: [true, true],
@@ -388,20 +448,18 @@ io.on('connection', socket => {
       aiMatchId: randomUUID(),
       aiMatchRecordStarted: false,
       aiMatchRecorded: false,
-      aiPlayerIdentityPromise: resolveAiPlayerIdentity(authToken).catch(err => {
-        console.warn('[AI stats] Player verification failed:', err.message);
-        return null;
-      }),
+      aiPlayerIdentityPromise: Promise.resolve(verified.identity),
     };
     rooms.set(code, room);
     socket.join(code);
     socket.data.room = code;
     socket.data.idx = 0;
     socket.data.clientId = clientId || null;
+    socket.data.accountId = verified.identity ? verified.identity.id : null;
     startGame(room);
   });
 
-  socket.on('join-room', ({ code, name, char, gameId, cardBorder, clientId }) => {
+  socket.on('join-room', async ({ code, name, char, gameId, cardBorder, clientId, authToken }) => {
     const room = rooms.get(code.toUpperCase().trim());
     if (!room) { socket.emit('err', '방을 찾을 수 없습니다.'); return; }
 
@@ -442,6 +500,11 @@ io.on('connection', socket => {
       return;
     }
 
+    const verified = await verifyParticipationIdentity(socket, authToken);
+    if (!verified.ok) return;
+    const activeSeat = findAccountSeat(verified.identity && verified.identity.id);
+    if (activeSeat) { emitAccountGameConflict(socket, activeSeat); return; }
+
     // Find an empty (null = disconnected) slot
     let slotIdx = -1;
     if (!room.players[0]) slotIdx = 0;
@@ -456,16 +519,19 @@ io.on('connection', socket => {
     if (!room.gameIds) room.gameIds = ['', ''];
     if (!room.cardBorders) room.cardBorders = ['green', 'green'];
     if (!room.clientIds) room.clientIds = [null, null];
+    if (!room.accountIds) room.accountIds = [null, null];
     room.players[slotIdx] = socket.id;
     room.names[slotIdx] = name || (slotIdx === 0 ? '플레이어1' : '플레이어2');
     room.chars[slotIdx] = char || (slotIdx === 0 ? '🐱' : '🐶');
-    room.gameIds[slotIdx] = gameId || '';
+    room.gameIds[slotIdx] = (verified.identity && verified.identity.gameId) || gameId || '';
     room.cardBorders[slotIdx] = cardBorder || 'green';
     room.clientIds[slotIdx] = clientId || null;
+    room.accountIds[slotIdx] = verified.identity ? verified.identity.id : null;
     socket.join(code);
     socket.data.room = code;
     socket.data.idx = slotIdx;
     socket.data.clientId = clientId || null;
+    socket.data.accountId = verified.identity ? verified.identity.id : null;
 
     socket.emit('room-joined', {
       code, playerIndex: slotIdx,
@@ -491,6 +557,87 @@ io.on('connection', socket => {
         scores: room.scores,
         gameMode: g.gameMode, oklahomaCap: g.oklahomaCap, handSize: g.handSize,
       });
+    }
+  });
+
+  socket.on('take-over-account-game', async ({ code, clientId, authToken, name, char, gameId, cardBorder }) => {
+    const verified = await verifyParticipationIdentity(socket, authToken);
+    if (!verified.ok || !verified.identity) return;
+    const seat = findAccountSeat(verified.identity.id);
+    if (!seat || seat.room.code !== String(code || '').toUpperCase()) {
+      socket.emit('account-game-takeover-failed');
+      return;
+    }
+
+    const { room, idx } = seat;
+    if (room.game && room.game.over) {
+      socket.emit('account-game-takeover-failed');
+      return;
+    }
+    const oppIdx = 1 - idx;
+    const oldSocketId = room.players[idx];
+    if (!room.clientIds) room.clientIds = [null, null];
+    if (!room.accountIds) room.accountIds = [null, null];
+    if (!room.gameIds) room.gameIds = ['', ''];
+    if (!room.cardBorders) room.cardBorders = ['green', 'green'];
+
+    room.players[idx] = socket.id;
+    room.clientIds[idx] = clientId || null;
+    room.accountIds[idx] = verified.identity.id;
+    room.names[idx] = name || verified.identity.name || room.names[idx];
+    room.chars[idx] = char || verified.identity.char || room.chars[idx];
+    room.gameIds[idx] = verified.identity.gameId || gameId || room.gameIds[idx];
+    room.cardBorders[idx] = cardBorder || room.cardBorders[idx] || 'green';
+    socket.join(room.code);
+    socket.data.room = room.code;
+    socket.data.idx = idx;
+    socket.data.clientId = clientId || null;
+    socket.data.accountId = verified.identity.id;
+    socket.data.spectator = false;
+
+    for (const [oldClientId, reg] of disconnectRegistry.entries()) {
+      if (reg.code === room.code && reg.idx === idx) disconnectRegistry.delete(oldClientId);
+    }
+
+    if (oldSocketId && oldSocketId !== socket.id) {
+      const oldSocket = io.sockets.sockets.get(oldSocketId);
+      if (oldSocket) {
+        oldSocket.emit('account-game-transferred', { code: room.code });
+        joinAsSpectator(oldSocket, room, {
+          name: room.names[idx], char: room.chars[idx], gameId: room.gameIds[idx], cardBorder: room.cardBorders[idx],
+        });
+      }
+    }
+
+    if (room.game) {
+      const g = room.game;
+      reclaimControlIfNeeded(room, idx);
+      socket.emit('resume-success', {
+        code: room.code, playerIndex: idx,
+        opponentName: room.names[oppIdx] || '', opponentChar: room.chars[oppIdx] || '',
+        opponentGameId: room.gameIds[oppIdx] || '', opponentCardBorder: room.cardBorders[oppIdx] || 'green',
+        hand: g.hands[idx], discardTop: g.discardPile[g.discardPile.length - 1] || null,
+        deckCount: g.deck.length, turn: g.turn, phase: g.phase,
+        oppCardCount: g.hands[oppIdx].length, scores: room.scores, names: room.names, chars: room.chars,
+        targetScore: room.targetScore, gameMode: g.gameMode, oklahomaCap: g.oklahomaCap, handSize: g.handSize,
+        vsAI: !!room.vsAI,
+      });
+      emitToPlayer(room, oppIdx, 'opponent-resumed', { name: room.names[idx] });
+      if (!g.over && g.turn === idx) startTurnTimer(room);
+    } else if (idx === 0 && !room.players[1]) {
+      socket.emit('room-created', {
+        code: room.code, playerIndex: 0, targetScore: room.targetScore, isPublic: room.isPublic,
+        turnTimeSecs: room.turnTimeSecs, gameMode: room.gameMode, handSize: room.handSize,
+      });
+    } else {
+      socket.emit('room-joined', {
+        code: room.code, playerIndex: idx,
+        opponentName: room.names[oppIdx] || '', opponentChar: room.chars[oppIdx] || '',
+        opponentGameId: room.gameIds[oppIdx] || '', opponentCardBorder: room.cardBorders[oppIdx] || 'green',
+        targetScore: room.targetScore, turnTimeSecs: room.turnTimeSecs,
+        gameMode: room.gameMode, handSize: room.handSize, isPublic: room.isPublic,
+      });
+      io.to(room.code).emit('ready-update', { ready: room.ready || [false, false], names: room.names });
     }
   });
 
@@ -527,7 +674,6 @@ io.on('connection', socket => {
   socket.on('spectate-room', ({ code, name, char, gameId, cardBorder }) => {
     const room = rooms.get(String(code || '').toUpperCase().trim());
     if (!room) { socket.emit('err', '방을 찾을 수 없습니다.'); return; }
-    if (!room.game) { socket.emit('err', '아직 게임이 시작되지 않은 방입니다.'); return; }
     joinAsSpectator(socket, room, { name, char, gameId, cardBorder });
   });
 
@@ -969,12 +1115,20 @@ io.on('connection', socket => {
       // Waiting room (before game starts): notify and transfer host if needed
       if (room.ready) room.ready = [false, false];
       emitToPlayer(room, 1 - idx, 'opponent-disconnected-info', { name: room.names[idx] });
+      if (room.accountIds) room.accountIds[idx] = null;
+      if (room.clientIds) room.clientIds[idx] = null;
+      if (room.gameIds) room.gameIds[idx] = '';
+      if (room.cardBorders) room.cardBorders[idx] = 'green';
       // If host (idx 0) left, promote remaining player to host
       if (idx === 0 && room.players[1]) {
         room.players[0] = room.players[1];
         room.players[1] = null;
         room.names[0] = room.names[1];
         room.chars[0] = room.chars[1];
+        if (room.accountIds) { room.accountIds[0] = room.accountIds[1]; room.accountIds[1] = null; }
+        if (room.clientIds) { room.clientIds[0] = room.clientIds[1]; room.clientIds[1] = null; }
+        if (room.gameIds) { room.gameIds[0] = room.gameIds[1]; room.gameIds[1] = ''; }
+        if (room.cardBorders) { room.cardBorders[0] = room.cardBorders[1]; room.cardBorders[1] = 'green'; }
         room.names[1] = '';
         room.chars[1] = '';
         const newHostSocket = io.sockets.sockets.get(room.players[0]);
@@ -982,6 +1136,8 @@ io.on('connection', socket => {
           newHostSocket.data.idx = 0;
           emitToPlayer(room, 0, 'host-transferred', {});
         }
+      } else if (!room.players[0] && !room.players[1]) {
+        rooms.delete(room.code);
       }
     }
   });
