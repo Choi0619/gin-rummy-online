@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gin Rummy Profile Border Gallery</title>
   <link rel="stylesheet" href="/theme-angel.css">
+  <link rel="stylesheet" href="/character-art.css">
   <link rel="stylesheet" href="/profile-borders.css">
   <style id="galleryStyles">
     :root { color-scheme: dark; }
@@ -58,6 +59,8 @@
     .context-item { min-width: 0; padding: 14px; border-radius: 8px; background: rgba(13,18,40,.72); }
     .context-label { display: block; margin-bottom: 12px; color: rgba(255,224,154,.72); font-size: 10px; font-weight: 800; }
     .context-item .auth-user-badge { width: 100%; margin: 0; }
+    .context-item .badge-copy { display:flex; flex:1; min-width:0; flex-direction:column; gap:2px; }
+    .context-item .badge-meta { display:flex; align-items:center; gap:6px; white-space:nowrap; }
     .context-item .friend-row { width: 100%; margin: 0; }
     .context-item .player-slot { width: 100%; min-height: 76px; }
     .context-item .slot-icon { flex: 0 0 auto; }
@@ -84,7 +87,7 @@
       <div class="context-grid">
         <article class="context-item">
           <span class="context-label">로비 프로필</span>
-          <div class="auth-user-badge cb-w100"><span class="badge-char cb-w100">🐢</span><span><strong>수박복</strong><small>gyupaca · 257 RP</small></span></div>
+          <div class="auth-user-badge cb-w100"><span class="badge-char cb-w100"><img class="char-art-img" src="/turtle.png" alt="거북이"></span><span class="badge-copy"><span class="badge-name">수박복</span><span class="badge-meta"><span class="badge-id">gyupaca</span><span class="badge-rp">267 RP</span></span></span><span class="badge-logout">로그아웃</span></div>
         </article>
         <article class="context-item">
           <span class="context-label">친구 목록</span>
