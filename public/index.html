@@ -3015,6 +3015,8 @@ body.theme-aurora .card.just-drawn {
   .result-pts { font-size: 11px; margin-bottom: 5px; }
 }
 </style>
+<link rel="preload" href="/assets/characters/animal-atlas-v1.webp" as="image" type="image/webp">
+<link rel="stylesheet" href="/character-art.css">
 <link rel="stylesheet" href="/profile-borders.css">
 </head>
 <body>
@@ -6391,7 +6393,7 @@ function switchHistoryTab(tab) {
 function renderRankingTab() {
   const rp = supaProfile ? (supaProfile.rank_points || 0) : parseInt(localStorage.getItem(RANK_KEY) || '0');
   const myTier = getTierInfo(rp);
-  document.getElementById('myRankChar').textContent = supaProfile?.char || myChar || '🐱';
+  document.getElementById('myRankChar').innerHTML = charHTML(supaProfile?.char || myChar || '🐱');
   document.getElementById('myRankTierLabel').innerHTML = `<span style="color:${myTier.color}">${myTier.emoji} ${myTier.name}</span>`;
   document.getElementById('myRankRP').textContent = rp;
 
@@ -6658,9 +6660,18 @@ function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// Turtle uses a custom image instead of an emoji glyph; scales with surrounding font-size via 1em.
+const CHARACTER_ART = {
+  '🐱': ['cat', '고양이'], '🐶': ['dog', '강아지'], '🐰': ['rabbit', '토끼'],
+  '🦊': ['fox', '여우'], '🐻': ['bear', '곰'], '🐼': ['panda', '판다'],
+  '🐨': ['koala', '코알라'], '🐯': ['tiger', '호랑이'], '🦁': ['lion', '사자'],
+  '🐸': ['frog', '개구리'], '🦄': ['unicorn', '유니콘']
+};
+
+// Character identifiers stay as emoji in saved/server data; rendering uses the shared atlas.
 function charHTML(ch) {
-  if (ch === '🐢') return '<img src="/turtle.png" alt="turtle" style="height:1em;width:1em;vertical-align:-0.2em;object-fit:contain;display:inline-block">';
+  if (ch === '🐢') return '<img class="char-art-img" src="/turtle.png" alt="거북이">';
+  const art = CHARACTER_ART[ch];
+  if (art) return '<span class="char-art char-' + art[0] + '" role="img" aria-label="' + art[1] + '"></span>';
   return escapeHtml(ch);
 }
 

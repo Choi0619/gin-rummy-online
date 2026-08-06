@@ -1,0 +1,35 @@
+/* Shared mascot atlas. Character identity remains the original emoji string in data. */
+.char-art {
+  --char-x: 0%;
+  --char-y: 0%;
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+  vertical-align: -.18em;
+  background-image: url('/assets/characters/animal-atlas-v1.webp');
+  background-repeat: no-repeat;
+  background-size: 400% 300%;
+  background-position: var(--char-x) var(--char-y);
+  background-origin: border-box;
+  background-clip: border-box;
+  image-rendering: auto;
+}
+.char-cat { --char-x: 0%; --char-y: 0%; }
+.char-dog { --char-x: 33.333%; --char-y: 0%; }
+.char-rabbit { --char-x: 66.667%; --char-y: 0%; }
+.char-fox { --char-x: 100%; --char-y: 0%; }
+.char-bear { --char-x: 0%; --char-y: 50%; }
+.char-panda { --char-x: 33.333%; --char-y: 50%; }
+.char-koala { --char-x: 66.667%; --char-y: 50%; }
+.char-tiger { --char-x: 100%; --char-y: 50%; }
+.char-lion { --char-x: 0%; --char-y: 100%; }
+.char-frog { --char-x: 33.333%; --char-y: 100%; }
+.char-unicorn { --char-x: 66.667%; --char-y: 100%; }
+.char-art-img {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+  vertical-align: -.18em;
+}
