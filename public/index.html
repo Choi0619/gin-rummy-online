@@ -3015,6 +3015,7 @@ body.theme-aurora .card.just-drawn {
   .result-pts { font-size: 11px; margin-bottom: 5px; }
 }
 </style>
+<link rel="stylesheet" href="/profile-borders.css">
 </head>
 <body>
 
@@ -4873,11 +4874,25 @@ let myCardBorder = localStorage.getItem('grCardBorder') || 'green';
 function renderBorderGrid() {
   const grid = document.getElementById('borderGrid');
   if (!grid) return;
-  grid.innerHTML = CARD_BORDERS.map(function(b) {
-    const unlocked = b.unlock() || hasPromoBorders();
+  const orderedBorders = CARD_BORDERS
+    .map((border, originalIndex) => ({
+      border,
+      originalIndex,
+      unlocked: border.unlock() || hasPromoBorders()
+    }))
+    .sort((a, b) => Number(b.unlocked) - Number(a.unlocked) || a.originalIndex - b.originalIndex);
+
+  grid.innerHTML = orderedBorders.map(function(entry) {
+    const b = entry.border;
+    const unlocked = entry.unlocked;
     const selected = myCardBorder === b.id;
-    const cls = 'border-opt rarity-' + b.rarity + (selected ? ' selected' : '') + (unlocked ? '' : ' locked');
+    const cls = 'border-opt rarity-' + b.rarity + (selected ? ' selected' : '') + (unlocked ? ' unlocked-preview cb-' + b.id : ' locked');
     const clickHandler = unlocked ? 'selectCardBorder(\'' + b.id + '\')' : 'showLockedBorderMsg(\'' + b.id + '\')';
+    if (unlocked) {
+      const preview = '<span class="border-preview-medallion cb-' + b.id + '"><img src="/turtle.png" alt=""></span>' +
+        '<span class="border-opt-label">' + b.name + '</span>';
+      return '<div class="' + cls + '" onclick="' + clickHandler + '" title="' + b.name + '">' + preview + '</div>';
+    }
     let inner = '<div class="border-frame" style="border-color:' + b.border + ';border-width:' + (b.rarity >= 4 ? '3px' : b.rarity >= 3 ? '2.5px' : '2px') + '"></div>';
     if (b.rarity >= 2 && b.gem) inner += '<span class="border-gem">' + b.gem + '</span>';
     if (b.rarity === 3) {

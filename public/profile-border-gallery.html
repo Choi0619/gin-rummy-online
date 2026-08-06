@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gin Rummy Profile Border Gallery</title>
   <link rel="stylesheet" href="/theme-angel.css">
+  <link rel="stylesheet" href="/profile-borders.css">
   <style id="galleryStyles">
     :root { color-scheme: dark; }
     * { box-sizing: border-box; }
@@ -50,10 +51,21 @@
     .sample-profile .avatar-subline { display: flex; margin-top: 4px; color: rgba(228,233,255,.52); }
     .sample-unlock { margin-top: 12px; color: rgba(232,234,255,.52); font-size: 11px; line-height: 1.4; }
     .sample-id { color: rgba(255,224,154,.72); font-family: Consolas, monospace; font-size: 10px; }
+    .context-check { margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(220,225,255,.1); }
+    .context-check h2 { margin: 0 0 6px; font-size: 18px; }
+    .context-check > p { margin: 0 0 16px; color: rgba(232,234,255,.52); font-size: 12px; }
+    .context-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    .context-item { min-width: 0; padding: 14px; border-radius: 8px; background: rgba(13,18,40,.72); }
+    .context-label { display: block; margin-bottom: 12px; color: rgba(255,224,154,.72); font-size: 10px; font-weight: 800; }
+    .context-item .auth-user-badge { width: 100%; margin: 0; }
+    .context-item .friend-row { width: 100%; margin: 0; }
+    .context-item .player-slot { width: 100%; min-height: 76px; }
+    .context-item .slot-icon { flex: 0 0 auto; }
+    .context-item .border-preview-medallion { margin: 0 auto; }
     .fx-check { display: flex; gap: 8px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(220,225,255,.1); }
     .fx-check button { min-height: 38px; padding: 0 14px; border: 1px solid rgba(255,224,154,.35); border-radius: 6px; color: #fff8dd; background: rgba(255,224,154,.1); cursor: pointer; }
-    @media (max-width: 850px) { .border-gallery { grid-template-columns: repeat(2, minmax(0,1fr)); } }
-    @media (max-width: 540px) { body { padding: 24px 14px 40px; } .border-gallery { grid-template-columns: 1fr; } .gallery-head { align-items: start; flex-direction: column; } }
+    @media (max-width: 850px) { .border-gallery, .context-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    @media (max-width: 540px) { body { padding: 24px 14px 40px; } .border-gallery, .context-grid { grid-template-columns: 1fr; } .gallery-head { align-items: start; flex-direction: column; } }
   </style>
 </head>
 <body class="theme-angel">
@@ -66,6 +78,28 @@
       <div class="gallery-count">총 11종</div>
     </header>
     <section class="border-gallery" id="borderGallery"></section>
+    <section class="context-check">
+      <h2>실사용 크기 점검</h2>
+      <p>로비 배지, 친구 목록, 대기실 슬롯, 컬렉션 미리보기 크기에서 레전드 장식의 잘림과 겹침을 확인합니다.</p>
+      <div class="context-grid">
+        <article class="context-item">
+          <span class="context-label">로비 프로필</span>
+          <div class="auth-user-badge cb-w100"><span class="badge-char cb-w100">🐢</span><span><strong>수박복</strong><small>gyupaca · 257 RP</small></span></div>
+        </article>
+        <article class="context-item">
+          <span class="context-label">친구 목록</span>
+          <div class="friend-row cb-w100"><span class="f-char cb-w100">🐢</span><span><strong>수박복</strong><small>온라인 · 게임 중</small></span></div>
+        </article>
+        <article class="context-item">
+          <span class="context-label">대기실 슬롯</span>
+          <div class="player-slot cb-w100"><span class="slot-icon cb-w100">🐢</span><span><strong>수박복</strong><small>준비 완료</small></span></div>
+        </article>
+        <article class="context-item">
+          <span class="context-label">컬렉션 미리보기</span>
+          <span class="border-preview-medallion cb-w100"><img src="/turtle.png" alt="거북이 캐릭터"></span>
+        </article>
+      </div>
+    </section>
     <div class="fx-check" aria-label="축복 효과 가장자리 테스트">
       <button type="button" data-fx-x="24px">왼쪽 광휘 테스트</button>
       <button type="button" data-fx-x="50%">중앙 광휘 테스트</button>
@@ -92,7 +126,7 @@
       const parsed = new DOMParser().parseFromString(source, 'text/html');
       const gameStyles = document.createElement('style');
       gameStyles.textContent = Array.from(parsed.querySelectorAll('style'), style => style.textContent).join('\n');
-      document.head.insertBefore(gameStyles, document.getElementById('galleryStyles'));
+      document.head.insertBefore(gameStyles, document.querySelector('link[href="/profile-borders.css"]'));
     }
 
     function renderGallery() {
