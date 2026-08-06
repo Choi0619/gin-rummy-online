@@ -7,7 +7,7 @@
   height: 1em;
   flex: 0 0 auto;
   vertical-align: -.18em;
-  background-image: url('/assets/characters/animal-atlas-v1.webp');
+  background-image: url('/assets/characters/animal-atlas-v2.webp');
   background-repeat: no-repeat;
   background-size: 400% 300%;
   background-position: var(--char-x) var(--char-y);
@@ -25,11 +25,45 @@
 .char-tiger { --char-x: 100%; --char-y: 50%; }
 .char-lion { --char-x: 0%; --char-y: 100%; }
 .char-frog { --char-x: 33.333%; --char-y: 100%; }
-.char-unicorn { --char-x: 66.667%; --char-y: 100%; }
+.char-unicorn {
+  --char-x: 66.667%;
+  --char-y: 100%;
+  position: relative;
+  transform-origin: 50% 72%;
+  filter: drop-shadow(0 0 .11em rgba(255,240,170,.9)) drop-shadow(0 .06em .08em rgba(111,205,255,.5));
+  animation: unicornMajesticFloat 3.2s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.char-unicorn::after {
+  content: '';
+  position: absolute;
+  top: 8%;
+  right: 8%;
+  width: .1em;
+  height: .1em;
+  border-radius: 50%;
+  background: #fffbe7;
+  box-shadow: -.72em .18em 0 -.02em rgba(166,239,255,.92), -.18em .7em 0 -.025em rgba(255,196,241,.86);
+  pointer-events: none;
+  animation: unicornOpalSpark 2.4s ease-in-out infinite;
+}
+@keyframes unicornMajesticFloat {
+  0%,100% { transform: translate3d(0,0,0) scale(1); opacity: .97; }
+  50% { transform: translate3d(0,-.035em,0) scale(1.025); opacity: 1; }
+}
+@keyframes unicornOpalSpark {
+  0%,100% { transform: scale(.5) rotate(0deg); opacity: .25; }
+  45% { transform: scale(1.45) rotate(90deg); opacity: 1; }
+  70% { transform: scale(.8) rotate(155deg); opacity: .48; }
+}
 .char-art-img {
   display: inline-block;
   width: 1em;
   height: 1em;
   object-fit: contain;
   vertical-align: -.18em;
+}
+@media (prefers-reduced-motion: reduce) {
+  .char-unicorn,
+  .char-unicorn::after { animation: none !important; }
 }
