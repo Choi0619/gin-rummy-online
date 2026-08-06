@@ -3016,6 +3016,7 @@ body.theme-aurora .card.just-drawn {
 }
 </style>
 <link rel="preload" href="/assets/characters/animal-atlas-v2.webp" as="image" type="image/webp">
+<link rel="preload" href="/assets/profile-borders/rank-emblems-atlas-v1.webp" as="image" type="image/webp">
 <link rel="stylesheet" href="/character-art.css">
 <link rel="stylesheet" href="/profile-borders.css">
 </head>
@@ -4918,6 +4919,13 @@ function applyAvatarBorder(elId, borderId) {
   if (!el) return;
   el.className = el.className.replace(/\bcb-[a-z0-9]+\b/g, '').trim();
   if (borderId && borderId !== 'none') el.classList.add('cb-' + borderId);
+  if (el.classList.contains('slot-icon')) {
+    const slot = el.closest('.player-slot');
+    if (slot) {
+      slot.className = slot.className.replace(/\bcb-[a-z0-9]+\b/g, '').trim();
+      if (borderId && borderId !== 'none') slot.classList.add('cb-' + borderId);
+    }
+  }
 }
 
 function selectCardBorder(id) {

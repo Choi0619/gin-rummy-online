@@ -1,215 +1,124 @@
-/* Profile rank frames: one AI-authored atlas, scaled around every avatar size. */
+/* Rank borders: scalable rectangular frames with compact top emblems. */
 :is(.cb-green,.cb-bronze,.cb-silver,.cb-w5,.cb-gold,.cb-w20,.cb-platinum,.cb-diamond,.cb-w50,.cb-challenger,.cb-w100) {
-  --pb-x: 0%;
-  --pb-y: 0%;
-  --pb-edge-a: #42f08d;
-  --pb-edge-b: #087b43;
-  --pb-glow: rgba(38,224,118,.38);
-  --pb-panel-a: rgba(13,47,36,.96);
-  --pb-panel-b: rgba(5,22,23,.98);
-  --pb-frame-scale: 150%;
-  --pb-border-width: 2px;
-  --pb-corner-len: 16px;
-  --pb-ornament-opacity: .38;
+  --pb-x:0%; --pb-y:0%; --pb-edge-a:#42f08d; --pb-edge-b:#087b43;
+  --pb-glow:rgba(38,224,118,.34); --pb-panel-a:rgba(13,47,36,.96); --pb-panel-b:rgba(5,22,23,.98);
+  --pb-border-width:2px; --pb-corner-len:15px; --pb-ornament-opacity:.38; --pb-frame-inset:3px; --pb-emblem-size:26px;
 }
-.cb-green { --pb-x:0%; --pb-y:0%; }
-.cb-bronze { --pb-x:33.333%; --pb-y:0%; --pb-edge-a:#efb66e; --pb-edge-b:#70401e; --pb-glow:rgba(205,127,50,.34); --pb-panel-a:rgba(58,37,28,.96); --pb-panel-b:rgba(24,19,22,.98); }
-.cb-silver { --pb-x:66.667%; --pb-y:0%; --pb-edge-a:#f5f7fb; --pb-edge-b:#78808e; --pb-glow:rgba(218,226,238,.34); --pb-panel-a:rgba(45,51,65,.96); --pb-panel-b:rgba(18,23,35,.98); }
-.cb-w5 { --pb-x:100%; --pb-y:0%; --pb-edge-a:#c3d0d8; --pb-edge-b:#45525d; --pb-glow:rgba(126,149,164,.38); --pb-panel-a:rgba(35,44,50,.97); --pb-panel-b:rgba(13,19,25,.99); }
-.cb-gold { --pb-x:0%; --pb-y:50%; --pb-edge-a:#fff0a1; --pb-edge-b:#b67a00; --pb-glow:rgba(255,200,45,.46); --pb-panel-a:rgba(62,48,20,.96); --pb-panel-b:rgba(25,20,21,.98); --pb-border-width:2.5px; }
-.cb-w20 { --pb-x:33.333%; --pb-y:50%; --pb-edge-a:#9affc8; --pb-edge-b:#05894f; --pb-glow:rgba(36,231,135,.46); --pb-panel-a:rgba(20,58,46,.96); --pb-panel-b:rgba(7,25,27,.98); --pb-border-width:2.5px; }
-.cb-platinum { --pb-x:66.667%; --pb-y:50%; --pb-edge-a:#fff; --pb-edge-b:#9d86d8; --pb-glow:rgba(196,181,253,.5); --pb-panel-a:rgba(49,47,76,.96); --pb-panel-b:rgba(18,22,43,.98); --pb-border-width:2.5px; }
-.cb-diamond { --pb-x:100%; --pb-y:50%; --pb-edge-a:#e9fdff; --pb-edge-b:#39bde7; --pb-glow:rgba(87,214,255,.55); --pb-panel-a:rgba(25,54,77,.96); --pb-panel-b:rgba(8,24,43,.99); --pb-border-width:3px; --pb-frame-scale:164%; --pb-corner-len:24px; --pb-ornament-opacity:.68; }
-.cb-w50 { --pb-x:0%; --pb-y:100%; --pb-edge-a:#ff9aac; --pb-edge-b:#b4002d; --pb-glow:rgba(255,45,82,.52); --pb-panel-a:rgba(69,24,40,.96); --pb-panel-b:rgba(29,10,23,.99); --pb-border-width:3px; --pb-frame-scale:166%; --pb-corner-len:25px; --pb-ornament-opacity:.7; }
-.cb-challenger { --pb-x:33.333%; --pb-y:100%; --pb-edge-a:#ffe09a; --pb-edge-b:#d55b00; --pb-glow:rgba(255,137,24,.62); --pb-panel-a:rgba(70,39,17,.97); --pb-panel-b:rgba(29,15,18,.99); --pb-border-width:3px; --pb-frame-scale:172%; --pb-corner-len:29px; --pb-ornament-opacity:.8; }
-.cb-w100 { --pb-x:66.667%; --pb-y:100%; --pb-edge-a:#fff9d5; --pb-edge-b:#d7a614; --pb-glow:rgba(255,226,104,.68); --pb-panel-a:rgba(59,48,26,.97); --pb-panel-b:rgba(24,18,28,.99); --pb-border-width:3px; --pb-frame-scale:178%; --pb-corner-len:32px; --pb-ornament-opacity:.92; }
+.cb-green { --pb-x:0%;--pb-y:0%; }
+.cb-bronze { --pb-x:33.333%;--pb-y:0%;--pb-edge-a:#efb66e;--pb-edge-b:#70401e;--pb-glow:rgba(205,127,50,.34);--pb-panel-a:rgba(58,37,28,.96);--pb-panel-b:rgba(24,19,22,.98);--pb-emblem-size:28px; }
+.cb-silver { --pb-x:66.667%;--pb-y:0%;--pb-edge-a:#f5f7fb;--pb-edge-b:#78808e;--pb-glow:rgba(218,226,238,.34);--pb-panel-a:rgba(45,51,65,.96);--pb-panel-b:rgba(18,23,35,.98);--pb-emblem-size:28px; }
+.cb-w5 { --pb-x:100%;--pb-y:0%;--pb-edge-a:#c3d0d8;--pb-edge-b:#45525d;--pb-glow:rgba(126,149,164,.38);--pb-panel-a:rgba(35,44,50,.97);--pb-panel-b:rgba(13,19,25,.99);--pb-emblem-size:29px; }
+.cb-gold { --pb-x:0%;--pb-y:50%;--pb-edge-a:#fff0a1;--pb-edge-b:#b67a00;--pb-glow:rgba(255,200,45,.46);--pb-panel-a:rgba(62,48,20,.96);--pb-panel-b:rgba(25,20,21,.98);--pb-border-width:2.5px;--pb-corner-len:20px;--pb-ornament-opacity:.54;--pb-emblem-size:31px; }
+.cb-w20 { --pb-x:33.333%;--pb-y:50%;--pb-edge-a:#9affc8;--pb-edge-b:#05894f;--pb-glow:rgba(36,231,135,.46);--pb-panel-a:rgba(20,58,46,.96);--pb-panel-b:rgba(7,25,27,.98);--pb-border-width:2.5px;--pb-corner-len:21px;--pb-ornament-opacity:.56;--pb-emblem-size:32px; }
+.cb-platinum { --pb-x:66.667%;--pb-y:50%;--pb-edge-a:#fff;--pb-edge-b:#9d86d8;--pb-glow:rgba(196,181,253,.5);--pb-panel-a:rgba(49,47,76,.96);--pb-panel-b:rgba(18,22,43,.98);--pb-border-width:2.5px;--pb-corner-len:22px;--pb-ornament-opacity:.62;--pb-emblem-size:34px; }
+.cb-diamond { --pb-x:100%;--pb-y:50%;--pb-edge-a:#e9fdff;--pb-edge-b:#39bde7;--pb-glow:rgba(87,214,255,.55);--pb-panel-a:rgba(25,54,77,.96);--pb-panel-b:rgba(8,24,43,.99);--pb-border-width:3px;--pb-corner-len:25px;--pb-ornament-opacity:.7;--pb-frame-inset:1px;--pb-emblem-size:36px; }
+.cb-w50 { --pb-x:0%;--pb-y:100%;--pb-edge-a:#ff9aac;--pb-edge-b:#b4002d;--pb-glow:rgba(255,45,82,.52);--pb-panel-a:rgba(69,24,40,.96);--pb-panel-b:rgba(29,10,23,.99);--pb-border-width:3px;--pb-corner-len:26px;--pb-ornament-opacity:.72;--pb-frame-inset:0;--pb-emblem-size:38px; }
+.cb-challenger { --pb-x:33.333%;--pb-y:100%;--pb-edge-a:#ffe09a;--pb-edge-b:#d55b00;--pb-glow:rgba(255,137,24,.62);--pb-panel-a:rgba(70,39,17,.97);--pb-panel-b:rgba(29,15,18,.99);--pb-border-width:3px;--pb-corner-len:31px;--pb-ornament-opacity:.86;--pb-frame-inset:-4px;--pb-emblem-size:42px; }
+.cb-w100 { --pb-x:66.667%;--pb-y:100%;--pb-edge-a:#fff9d5;--pb-edge-b:#d7a614;--pb-glow:rgba(255,226,104,.68);--pb-panel-a:rgba(59,48,26,.97);--pb-panel-b:rgba(24,18,28,.99);--pb-border-width:3px;--pb-corner-len:35px;--pb-ornament-opacity:.96;--pb-frame-inset:-5px;--pb-emblem-size:46px; }
 
-/* The generated crest wraps the character, while the character remains readable. */
+/* Animal circles are safe zones: a thin ring only, never covering the animal. */
 :is(.avatar-frame,.badge-char,.slot-icon,.f-char,.avatar-emoji,.border-preview-medallion)[class*="cb-"] {
-  position: relative;
-  isolation: isolate;
-  overflow: visible;
-  border-color: transparent !important;
-  outline: 0 !important;
-  box-shadow: none !important;
-  z-index: 7;
+  position:relative;isolation:isolate;overflow:visible;box-sizing:border-box;
+  border:2px solid color-mix(in srgb,var(--pb-edge-a) 76%,var(--pb-edge-b)) !important;
+  outline:0 !important;box-shadow:0 0 0 2px color-mix(in srgb,var(--pb-edge-a) 13%,transparent),0 0 7px var(--pb-glow) !important;
+  animation:none !important;z-index:8;
 }
-:is(.avatar-frame,.badge-char,.slot-icon,.f-char,.avatar-emoji,.border-preview-medallion)[class*="cb-"]::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: var(--pb-frame-scale);
-  height: var(--pb-frame-scale);
-  transform: translate3d(-50%,-50%,0);
-  background-image: url('/assets/profile-borders/rank-crests-atlas-v1.webp');
-  background-repeat: no-repeat;
-  background-size: 400% 300%;
-  background-position: var(--pb-x) var(--pb-y);
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,.48)) drop-shadow(0 0 5px var(--pb-glow));
-  pointer-events: none;
-  z-index: 0;
-  will-change: transform, opacity;
-}
-.badge-char[class*="cb-"],
-.slot-icon[class*="cb-"],
-.f-char[class*="cb-"] { --pb-frame-scale:146%; }
-.avatar-frame[class*="cb-"] { --pb-frame-scale:154%; }
-.avatar-emoji[class*="cb-"] {
-  width: 1.18em;
-  height: 1.18em;
-  display: grid;
-  place-items: center;
-  --pb-frame-scale:158%;
-}
-.avatar-emoji.cb-diamond { --pb-frame-scale:164%; }
-.avatar-emoji.cb-w50 { --pb-frame-scale:166%; }
-.avatar-emoji.cb-challenger { --pb-frame-scale:172%; }
-.avatar-emoji.cb-w100 { --pb-frame-scale:178%; }
-.f-char[class*="cb-"] { --pb-frame-scale:140%; }
-.badge-char[class*="cb-"] > *,
-.slot-icon[class*="cb-"] > *,
-.f-char[class*="cb-"] > *,
-.avatar-frame[class*="cb-"] > *,
-.avatar-emoji[class*="cb-"] > * { position: relative; z-index: 3; }
-.lobby-status-dot,
-.f-char .f-dot { z-index: 12; }
+:is(.avatar-frame,.badge-char,.slot-icon,.f-char,.avatar-emoji)[class*="cb-"]::before { content:none !important; }
+.lobby-status-dot,.f-char .f-dot { z-index:12; }
 
-/* Rank material carries across rectangular lobby, game, friend and DM surfaces. */
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header)[class*="cb-"] {
-  position: relative;
-  overflow: visible;
-  isolation: isolate;
-  border: var(--pb-border-width) solid transparent !important;
+/* A standalone profile portrait receives only a small emblem above its circle. */
+.avatar-frame[class*="cb-"]::after {
+  content:'' !important;position:absolute;left:50%;top:0;width:var(--pb-emblem-size);height:var(--pb-emblem-size);
+  transform:translate3d(-50%,-88%,0);background:url('/assets/profile-borders/rank-emblems-atlas-v1.webp') no-repeat var(--pb-x) var(--pb-y) / 400% 300%;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.6)) drop-shadow(0 0 4px var(--pb-glow));pointer-events:none;z-index:10;
+}
+
+/* The actual rank design spans the whole rectangular profile surface. */
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot)[class*="cb-"] {
+  position:relative;overflow:visible !important;isolation:isolate;border:var(--pb-border-width) solid transparent !important;
   background:
-    radial-gradient(circle at 13% 35%, color-mix(in srgb, var(--pb-edge-a) 12%, transparent), transparent 31%) padding-box,
-    linear-gradient(142deg, var(--pb-panel-a), var(--pb-panel-b)) padding-box,
-    linear-gradient(118deg, var(--pb-edge-a), var(--pb-edge-b) 48%, var(--pb-edge-a)) border-box !important;
-  box-shadow:
-    0 8px 18px rgba(0,0,0,.34),
-    0 0 10px var(--pb-glow),
-    inset 0 1px 0 rgba(255,255,255,.12) !important;
+    linear-gradient(108deg,color-mix(in srgb,var(--pb-edge-a) 9%,transparent),transparent 28%,transparent 72%,color-mix(in srgb,var(--pb-edge-b) 9%,transparent)) padding-box,
+    radial-gradient(circle at 14% 50%,color-mix(in srgb,var(--pb-edge-a) 13%,transparent),transparent 30%) padding-box,
+    linear-gradient(142deg,var(--pb-panel-a),var(--pb-panel-b)) padding-box,
+    linear-gradient(118deg,var(--pb-edge-a),var(--pb-edge-b) 46%,var(--pb-edge-a)) border-box !important;
+  box-shadow:0 8px 18px rgba(0,0,0,.34),0 0 11px var(--pb-glow),inset 0 1px 0 rgba(255,255,255,.13) !important;
 }
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header)[class*="cb-"]::before {
-  content: '' !important;
-  position: absolute;
-  inset: 3px;
-  border-radius: inherit;
+
+/* Rails, corner gems and high-tier protrusions scale with any rectangle width. */
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot)[class*="cb-"]::before {
+  content:'' !important;position:absolute;inset:var(--pb-frame-inset);border-radius:inherit;
   background:
-    radial-gradient(circle at 7px 7px, var(--pb-edge-a) 0 1.5px, transparent 2.5px),
-    radial-gradient(circle at calc(100% - 7px) 7px, var(--pb-edge-a) 0 1.5px, transparent 2.5px),
-    radial-gradient(circle at 7px calc(100% - 7px), var(--pb-edge-a) 0 1.5px, transparent 2.5px),
-    radial-gradient(circle at calc(100% - 7px) calc(100% - 7px), var(--pb-edge-a) 0 1.5px, transparent 2.5px),
-    linear-gradient(90deg, transparent, var(--pb-edge-a), transparent) top center / 62% 1px no-repeat,
-    linear-gradient(90deg, transparent, var(--pb-edge-b), transparent) bottom center / 62% 1px no-repeat,
-    linear-gradient(90deg, var(--pb-edge-a), transparent) left top / var(--pb-corner-len) 1px no-repeat,
-    linear-gradient(180deg, var(--pb-edge-a), transparent) left top / 1px var(--pb-corner-len) no-repeat,
-    linear-gradient(-90deg, var(--pb-edge-a), transparent) right top / var(--pb-corner-len) 1px no-repeat,
-    linear-gradient(180deg, var(--pb-edge-a), transparent) right top / 1px var(--pb-corner-len) no-repeat,
-    linear-gradient(90deg, var(--pb-edge-a), transparent) left bottom / var(--pb-corner-len) 1px no-repeat,
-    linear-gradient(0deg, var(--pb-edge-a), transparent) left bottom / 1px var(--pb-corner-len) no-repeat,
-    linear-gradient(-90deg, var(--pb-edge-a), transparent) right bottom / var(--pb-corner-len) 1px no-repeat,
-    linear-gradient(0deg, var(--pb-edge-a), transparent) right bottom / 1px var(--pb-corner-len) no-repeat;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pb-edge-a) 16%, transparent);
-  opacity: var(--pb-ornament-opacity);
-  pointer-events: none;
-  z-index: 1;
-}
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-challenger::after,
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-w100::after,
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-diamond::after,
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-w50::after {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border: 1px solid var(--pb-edge-a);
-  border-radius: inherit;
-  opacity: .26;
-  pointer-events: none;
-  z-index: 1;
-  animation: pbOuterAura 2.8s ease-in-out infinite;
-}
-.avatar-card[class*="cb-"] { gap: 14px; }
-.auth-user-badge[class*="cb-"] { gap: 14px; }
-.friend-row[class*="cb-"] { gap: 12px; padding-left: 13px; }
-.avatar-info,
-.auth-user-badge > :not(.badge-char),
-.friend-row .f-info,
-.player-slot > :not(.slot-icon) {
-  position: relative;
-  z-index: 8;
+    radial-gradient(circle at 7px 7px,var(--pb-edge-a) 0 1.5px,transparent 2.5px),
+    radial-gradient(circle at calc(100% - 7px) 7px,var(--pb-edge-a) 0 1.5px,transparent 2.5px),
+    radial-gradient(circle at 7px calc(100% - 7px),var(--pb-edge-a) 0 1.5px,transparent 2.5px),
+    radial-gradient(circle at calc(100% - 7px) calc(100% - 7px),var(--pb-edge-a) 0 1.5px,transparent 2.5px),
+    linear-gradient(90deg,transparent,var(--pb-edge-a),transparent) top center / 64% 1px no-repeat,
+    linear-gradient(90deg,transparent,var(--pb-edge-b),transparent) bottom center / 64% 1px no-repeat,
+    linear-gradient(90deg,var(--pb-edge-a),transparent) left top / var(--pb-corner-len) 1px no-repeat,
+    linear-gradient(180deg,var(--pb-edge-a),transparent) left top / 1px var(--pb-corner-len) no-repeat,
+    linear-gradient(-90deg,var(--pb-edge-a),transparent) right top / var(--pb-corner-len) 1px no-repeat,
+    linear-gradient(180deg,var(--pb-edge-a),transparent) right top / 1px var(--pb-corner-len) no-repeat,
+    linear-gradient(90deg,var(--pb-edge-a),transparent) left bottom / var(--pb-corner-len) 1px no-repeat,
+    linear-gradient(0deg,var(--pb-edge-a),transparent) left bottom / 1px var(--pb-corner-len) no-repeat,
+    linear-gradient(-90deg,var(--pb-edge-a),transparent) right bottom / var(--pb-corner-len) 1px no-repeat,
+    linear-gradient(0deg,var(--pb-edge-a),transparent) right bottom / 1px var(--pb-corner-len) no-repeat;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pb-edge-a) 17%,transparent);
+  opacity:var(--pb-ornament-opacity);pointer-events:none;z-index:7;
 }
 
-/* Each tier has a different silhouette and surface language. */
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-green { border-radius: 14px 8px 14px 8px; }
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-bronze { border-radius: 5px 12px 5px 12px; }
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-silver { border-radius: 12px; }
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-w5 { border-radius: 5px; }
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-gold { border-radius: 15px 7px; }
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-w20 { border-radius: 7px 15px; }
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-platinum { border-radius: 16px 8px 16px 8px; }
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-diamond { border-radius: 8px 18px; }
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-w50 { border-radius: 18px 6px; }
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-challenger { border-radius: 5px 18px 5px 18px; }
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-w100 { border-radius: 20px 7px; }
+/* Compact AI-authored emblem hangs outside the top edge, above the avatar. */
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot)[class*="cb-"]::after {
+  content:'' !important;position:absolute;top:0;left:var(--pb-emblem-left,32px);width:var(--pb-emblem-size);height:var(--pb-emblem-size);
+  transform:translate3d(-50%,-70%,0);background:url('/assets/profile-borders/rank-emblems-atlas-v1.webp') no-repeat var(--pb-x) var(--pb-y) / 400% 300%;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.62)) drop-shadow(0 0 5px var(--pb-glow));pointer-events:none;z-index:10;
+}
+.avatar-card[class*="cb-"] { --pb-emblem-left:38px;gap:12px; }
+.auth-user-badge[class*="cb-"] { --pb-emblem-left:31px;gap:12px; }
+.friend-row[class*="cb-"] { --pb-emblem-left:34px;gap:10px;padding-left:12px; }
+.dm-header[class*="cb-"] { --pb-emblem-left:31px; }
+.player-slot[class*="cb-"] { --pb-emblem-left:34px; }
 
-/* Upper ranks breathe on the compositor; static lower tiers cost no idle frames. */
-:is(.avatar-frame,.badge-char,.slot-icon,.f-char,.avatar-emoji,.border-preview-medallion).cb-platinum::before,
-:is(.avatar-frame,.badge-char,.slot-icon,.f-char,.avatar-emoji,.border-preview-medallion).cb-diamond::before {
-  animation: pbCrystalBreathe 3.4s ease-in-out infinite;
-}
-:is(.avatar-frame,.badge-char,.slot-icon,.f-char,.avatar-emoji,.border-preview-medallion).cb-w50::before {
-  animation: pbRubyBreathe 2.7s ease-in-out infinite;
-}
-:is(.avatar-frame,.badge-char,.slot-icon,.f-char,.avatar-emoji,.border-preview-medallion).cb-challenger::before {
-  animation: pbChallengerRise 2.5s ease-in-out infinite;
-}
-:is(.avatar-frame,.badge-char,.slot-icon,.f-char,.avatar-emoji,.border-preview-medallion).cb-w100::before {
-  animation: pbLegendAscend 3s ease-in-out infinite;
-}
-@keyframes pbOuterAura { 0%,100% { transform: scale(.99); opacity:.18; } 50% { transform: scale(1.025); opacity:.58; } }
-@keyframes pbCrystalBreathe { 0%,100% { transform:translate3d(-50%,-50%,0) scale(.985); opacity:.9; } 50% { transform:translate3d(-50%,-50%,0) scale(1.035); opacity:1; } }
-@keyframes pbRubyBreathe { 0%,100% { transform:translate3d(-50%,-50%,0) scale(.98); opacity:.92; } 50% { transform:translate3d(-50%,-51%,0) scale(1.045); opacity:1; } }
-@keyframes pbChallengerRise { 0%,100% { transform:translate3d(-50%,-50%,0) scale(.985); opacity:.92; } 50% { transform:translate3d(-50%,-52%,0) scale(1.055); opacity:1; } }
-@keyframes pbLegendAscend { 0%,100% { transform:translate3d(-50%,-50%,0) scale(.98); opacity:.9; } 50% { transform:translate3d(-50%,-52.5%,0) scale(1.065); opacity:1; } }
+.avatar-info,.auth-user-badge>:not(.badge-char),.friend-row .f-info,.player-slot>:not(.slot-icon),.dm-header>:not(.avatar-frame) { position:relative;z-index:8; }
 
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-challenger::before,
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header).cb-w100::before {
-  animation: pbFrameGlint 2.8s ease-in-out infinite;
-}
-@keyframes pbFrameGlint { 0%,100% { opacity:.55; } 50% { opacity:.95; } }
+/* Every tier gets a different outer silhouette. */
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-green { border-radius:14px 8px 14px 8px; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-bronze { border-radius:5px 12px 5px 12px; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-silver { border-radius:12px; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w5 { border-radius:4px; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-gold { border-radius:15px 7px; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w20 { border-radius:7px 15px; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-platinum { border-radius:16px 8px 16px 8px; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-diamond { border-radius:8px 18px; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w50 { border-radius:18px 6px; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-challenger { border-radius:5px 18px 5px 18px; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w100 { border-radius:20px 7px; }
 
-/* Collection: unlocked frames use their real crest; locked frames retain legacy previews. */
-.border-opt.unlocked-preview {
-  width: 66px;
-  height: 78px;
-  border: 1px solid color-mix(in srgb, var(--pb-edge-a) 42%, transparent);
-  background: linear-gradient(155deg, var(--pb-panel-a), var(--pb-panel-b)) !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,.28), 0 0 8px var(--pb-glow);
-}
-.border-opt.unlocked-preview.selected {
-  box-shadow: inset 0 0 0 2px #fff, 0 0 14px var(--pb-glow) !important;
-}
-.border-preview-medallion {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 28%, rgba(255,255,255,.16), rgba(3,8,18,.76));
-  --pb-frame-scale:205%;
-}
-.border-preview-medallion img { width: 72%; height: 72%; object-fit: contain; }
-.border-opt.unlocked-preview .border-opt-label { color: rgba(255,255,255,.72); font-weight: 700; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-challenger::before,
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w100::before { animation:pbFrameGlint 2.8s ease-in-out infinite; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-platinum::after,
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-diamond::after { animation:pbEmblemBreathe 3.4s ease-in-out infinite; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w50::after,
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-challenger::after,
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w100::after { animation:pbEmblemAscend 3s ease-in-out infinite; }
+@keyframes pbFrameGlint { 0%,100%{opacity:.54}50%{opacity:1} }
+@keyframes pbEmblemBreathe { 0%,100%{transform:translate3d(-50%,-70%,0) scale(.96);opacity:.88}50%{transform:translate3d(-50%,-73%,0) scale(1.05);opacity:1} }
+@keyframes pbEmblemAscend { 0%,100%{transform:translate3d(-50%,-70%,0) scale(.96);opacity:.9}50%{transform:translate3d(-50%,-76%,0) scale(1.08);opacity:1} }
 
-@media (max-width: 720px) {
-  .avatar-card[class*="cb-"] { gap: 13px; }
-  .avatar-emoji[class*="cb-"] { --pb-frame-scale:148%; }
-  .avatar-emoji.cb-challenger { --pb-frame-scale:160%; }
-  .avatar-emoji.cb-w100 { --pb-frame-scale:166%; }
-  .friend-row[class*="cb-"] { gap: 12px; }
+/* Unlocked collection entries preview the new emblem without hiding the pet. */
+.border-opt.unlocked-preview { width:66px;height:78px;border:1px solid color-mix(in srgb,var(--pb-edge-a) 46%,transparent);background:linear-gradient(155deg,var(--pb-panel-a),var(--pb-panel-b)) !important;box-shadow:0 4px 12px rgba(0,0,0,.28),0 0 8px var(--pb-glow); }
+.border-opt.unlocked-preview.selected { box-shadow:inset 0 0 0 2px #fff,0 0 14px var(--pb-glow) !important; }
+.border-preview-medallion { width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.16),rgba(3,8,18,.76)); }
+.border-preview-medallion::after { content:'';position:absolute;left:50%;top:0;width:16px;height:16px;transform:translate3d(-50%,-72%,0);background:url('/assets/profile-borders/rank-emblems-atlas-v1.webp') no-repeat var(--pb-x) var(--pb-y) / 400% 300%;filter:drop-shadow(0 0 3px var(--pb-glow));z-index:4; }
+.border-preview-medallion img { width:72%;height:72%;object-fit:contain; }
+.border-opt.unlocked-preview .border-opt-label { color:rgba(255,255,255,.72);font-weight:700; }
+
+@media(max-width:720px) {
+  :is(.cb-green,.cb-bronze,.cb-silver,.cb-w5) { --pb-emblem-size:23px; }
+  .cb-challenger { --pb-emblem-size:36px; }.cb-w100 { --pb-emblem-size:39px; }
+  .avatar-card[class*="cb-"] { --pb-emblem-left:34px;gap:10px; }.friend-row[class*="cb-"] { --pb-emblem-left:31px; }
 }
-@media (prefers-reduced-motion: reduce) {
-  :is(.avatar-frame,.badge-char,.slot-icon,.f-char,.avatar-emoji,.border-preview-medallion)[class*="cb-"]::before,
-  :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header)[class*="cb-"]::after { animation: none !important; }
+@media(prefers-reduced-motion:reduce) {
+  :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot)[class*="cb-"]::before,
+  :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot)[class*="cb-"]::after,
+  .avatar-frame[class*="cb-"]::after { animation:none !important; }
 }

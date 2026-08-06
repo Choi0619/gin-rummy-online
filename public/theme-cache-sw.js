@@ -1,4 +1,4 @@
-const THEME_CACHE_VERSION = 'gin-rummy-theme-assets-v4';
+const THEME_CACHE_VERSION = 'gin-rummy-theme-assets-v5';
 const THEME_ASSET_PATH = /^\/assets\/(?:abyss|angel|profile-borders|characters)\//;
 
 self.addEventListener('install', () => self.skipWaiting());
