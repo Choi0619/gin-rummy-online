@@ -8579,9 +8579,10 @@ let _fullAutoTimer = null;
 
 function toggleSecretMode() {
   if (!document.getElementById('gameScreen').classList.contains('active')) return;
-  if (vsAI) return;
   secretMode[myIdx] = !secretMode[myIdx];
-  socket.emit('set-secret-mode', { active: secretMode[myIdx] });
+  // vsAI rooms have no opponent to notify, so there's nothing to sync server-side —
+  // just flip the local disguise state.
+  if (!vsAI) socket.emit('set-secret-mode', { active: secretMode[myIdx] });
   const overlay = document.getElementById('autopilotOverlay');
   if (secretMode[myIdx]) {
     overlay.classList.add('show');
@@ -8590,6 +8591,10 @@ function toggleSecretMode() {
     // Leaving secret mode always stops autopilot too — no separate click needed.
     if (fullAutoMode) toggleFullAuto();
   }
+  // "AI 대신 플레이" only makes sense against a human opponent you're waiting
+  // on — against the AI there's no one to keep waiting for, so hide it.
+  const luckyBtn = document.getElementById('disguiseLuckyBtn');
+  if (luckyBtn) luckyBtn.style.display = vsAI ? 'none' : '';
   renderGame();
 }
 
