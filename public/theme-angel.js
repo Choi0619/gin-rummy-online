@@ -263,6 +263,10 @@ function angelMotionProfile() {
   };
 }
 
+function angelThemeCanSpawn() {
+  return !document.hidden && document.body.classList.contains('theme-angel');
+}
+
 function angelMake(tag, className, parent) {
   const el = document.createElement(tag);
   el.className = className;
@@ -406,7 +410,7 @@ function angelScheduleMiniAngel(delay = angelRandom(24000, 48000)) {
   clearTimeout(_angelMiniTimer);
   _angelMiniTimer = setTimeout(() => {
     _angelMiniTimer = null;
-    if (!document.body.classList.contains('theme-angel') || _angelMiniAngel) {
+    if (!angelThemeCanSpawn() || _angelMiniAngel) {
       angelScheduleMiniAngel();
       return;
     }
@@ -416,7 +420,7 @@ function angelScheduleMiniAngel(delay = angelRandom(24000, 48000)) {
 
 function angelSpawnMiniAngel() {
   const motion = angelMotionProfile();
-  if (motion.reduced || _angelMiniAngel || !document.body.classList.contains('theme-angel')) return;
+  if (motion.reduced || _angelMiniAngel || !angelThemeCanSpawn()) return;
 
   const angel = document.createElement('button');
   angel.type = 'button';
@@ -472,7 +476,7 @@ function angelScheduleGoldenFeather(delay = angelRandom(36000, 72000)) {
   clearTimeout(_angelFeatherTimer);
   _angelFeatherTimer = setTimeout(() => {
     _angelFeatherTimer = null;
-    if (!document.body.classList.contains('theme-angel') || _angelGoldenFeather) {
+    if (!angelThemeCanSpawn() || _angelGoldenFeather) {
       angelScheduleGoldenFeather();
       return;
     }
@@ -497,7 +501,7 @@ function angelActivateBlessing(x, y) {
 
 function angelSpawnGoldenFeather(originX, originY, fromAngel = false) {
   const motion = angelMotionProfile();
-  if (motion.reduced || _angelGoldenFeather || !document.body.classList.contains('theme-angel')) return;
+  if (motion.reduced || _angelGoldenFeather || !angelThemeCanSpawn()) return;
 
   const feather = document.createElement('button');
   feather.type = 'button';
@@ -555,7 +559,7 @@ function angelScheduleButterfly(delay = angelRandom(22000, 44000)) {
   clearTimeout(_angelButterflyTimer);
   _angelButterflyTimer = setTimeout(() => {
     _angelButterflyTimer = null;
-    if (!document.body.classList.contains('theme-angel') || _angelButterfly) {
+    if (!angelThemeCanSpawn() || _angelButterfly) {
       angelScheduleButterfly();
       return;
     }
@@ -565,7 +569,7 @@ function angelScheduleButterfly(delay = angelRandom(22000, 44000)) {
 
 function angelSpawnRadiantButterfly() {
   const motion = angelMotionProfile();
-  if (motion.reduced || _angelButterfly || !document.body.classList.contains('theme-angel')) return;
+  if (motion.reduced || _angelButterfly || !angelThemeCanSpawn()) return;
   const butterfly = document.createElement('button');
   butterfly.type = 'button';
   butterfly.className = 'angel-radiant-butterfly';
@@ -619,7 +623,7 @@ function angelScheduleCrystal(delay = angelRandom(58000, 105000)) {
   clearTimeout(_angelCrystalTimer);
   _angelCrystalTimer = setTimeout(() => {
     _angelCrystalTimer = null;
-    if (!document.body.classList.contains('theme-angel') || _angelCrystal) {
+    if (!angelThemeCanSpawn() || _angelCrystal) {
       angelScheduleCrystal();
       return;
     }
@@ -644,7 +648,7 @@ function angelCrystalShatter(x, y) {
 
 function angelSpawnStarlightCrystal() {
   const motion = angelMotionProfile();
-  if (motion.reduced || _angelCrystal || !document.body.classList.contains('theme-angel')) return;
+  if (motion.reduced || _angelCrystal || !angelThemeCanSpawn()) return;
   const crystal = document.createElement('button');
   crystal.type = 'button';
   crystal.className = 'angel-starlight-crystal';
@@ -690,7 +694,7 @@ function angelScheduleCelestialKey(delay = angelRandom(115000, 195000)) {
   clearTimeout(_angelKeyTimer);
   _angelKeyTimer = setTimeout(() => {
     _angelKeyTimer = null;
-    if (!document.body.classList.contains('theme-angel') || _angelCelestialKey) {
+    if (!angelThemeCanSpawn() || _angelCelestialKey) {
       angelScheduleCelestialKey();
       return;
     }
@@ -725,7 +729,7 @@ function angelOpenCelestialGate(x, y) {
 
 function angelSpawnCelestialKey() {
   const motion = angelMotionProfile();
-  if (motion.reduced || _angelCelestialKey || !document.body.classList.contains('theme-angel')) return;
+  if (motion.reduced || _angelCelestialKey || !angelThemeCanSpawn()) return;
   const position = angelKeyPosition();
   if (!position) {
     angelScheduleCelestialKey(angelRandom(18000, 32000));

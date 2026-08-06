@@ -271,6 +271,10 @@ function abyssMotionProfile() {
   };
 }
 
+function abyssThemeCanSpawn() {
+  return !document.hidden && document.body.classList.contains('theme-abyss');
+}
+
 let _abyssJellyEls = [];
 let _abyssJellyTimer = null;
 let _abyssBubbleTimer = null;
@@ -442,6 +446,7 @@ function startAbyssTheme() {
   // travel path. Restricting the live count is important because each jelly
   // is visually large even though it is just one DOM node and one image.
   const spawnJelly = () => {
+    if (!abyssThemeCanSpawn()) return;
     if (_abyssJellyEls.length >= motion.jellyLimit) return;
     const el = document.createElement('div');
     const far = Math.random() < 0.58;
@@ -485,12 +490,12 @@ function startAbyssTheme() {
   };
   for (let i = 0; i < motion.jellyLimit; i++) {
     _abyssSeedTimers.push(setTimeout(() => {
-      if (document.body.classList.contains('theme-abyss')) spawnJelly();
+      if (abyssThemeCanSpawn()) spawnJelly();
     }, i * 650));
   }
   const scheduleJelly = () => {
     _abyssJellyTimer = setTimeout(() => {
-      if (document.body.classList.contains('theme-abyss')) spawnJelly();
+      if (abyssThemeCanSpawn()) spawnJelly();
       scheduleJelly();
     }, 9000 + Math.random() * 9000);
   };
@@ -499,6 +504,7 @@ function startAbyssTheme() {
   // Rising bubbles, one-shot elements that self-remove after their CSS
   // animation finishes.
   const spawnBubble = (fromLeft) => {
+    if (!abyssThemeCanSpawn()) return;
     const el = document.createElement('div');
     const size = 4 + Math.random() * 9;
     el.className = 'abyss-bubble';
@@ -512,7 +518,7 @@ function startAbyssTheme() {
   };
   const scheduleBubble = () => {
     _abyssBubbleTimer = setTimeout(() => {
-      if (document.body.classList.contains('theme-abyss')) spawnBubble();
+      if (abyssThemeCanSpawn()) spawnBubble();
       scheduleBubble();
     }, 900 + Math.random() * 1400);
   };
@@ -524,6 +530,7 @@ function startAbyssTheme() {
   // above. Same spawnBubble() one-shot elements, just several fired in a
   // tight burst from a shared origin with slight spread.
   const spawnBubbleCluster = () => {
+    if (!abyssThemeCanSpawn()) return;
     const originVw = 8 + Math.random() * 84;
     const count = 5 + Math.floor(Math.random() * 4);
     for (let i = 0; i < count; i++) {
@@ -532,7 +539,7 @@ function startAbyssTheme() {
   };
   const scheduleBubbleCluster = () => {
     _abyssClusterTimer = setTimeout(() => {
-      if (document.body.classList.contains('theme-abyss')) spawnBubbleCluster();
+      if (abyssThemeCanSpawn()) spawnBubbleCluster();
       scheduleBubbleCluster();
     }, 7000 + Math.random() * 8000);
   };
@@ -540,6 +547,7 @@ function startAbyssTheme() {
 
   // Rare anglerfish crossing — the deep-sea "wow" moment. Self-removes.
   const spawnAngler = () => {
+    if (!abyssThemeCanSpawn()) return;
     const el = document.createElement('div');
     el.className = 'abyss-anglerfish';
     el.style.setProperty('--y', (15 + Math.random() * 55) + '%');
@@ -558,7 +566,7 @@ function startAbyssTheme() {
   };
   const scheduleAngler = () => {
     _abyssAnglerTimer = setTimeout(() => {
-      if (document.body.classList.contains('theme-abyss') && !motion.reduced) spawnAngler();
+      if (abyssThemeCanSpawn() && !motion.reduced) spawnAngler();
       scheduleAngler();
     }, 16000 + Math.random() * 14000);
   };
@@ -566,13 +574,14 @@ function startAbyssTheme() {
   // Also fire one shortly after the theme is switched on, instead of making
   // the first sighting wait a full 16-30s.
   _abyssSeedTimers.push(setTimeout(() => {
-    if (document.body.classList.contains('theme-abyss') && !motion.reduced) spawnAngler();
+    if (abyssThemeCanSpawn() && !motion.reduced) spawnAngler();
   }, 4200));
 
   // Each swimmer is a single image with a species-specific pixel range.
   // Direction lives on a wrapper, body bob lives on the image, and travel
   // lives on the outer node so their transforms never overwrite one another.
   const spawnFish = () => {
+    if (!abyssThemeCanSpawn()) return;
     if (_abyssFishEls.length >= motion.fishLimit) return;
     const el = document.createElement('div');
     const species = ABYSS_FISH_SPECIES[Math.floor(Math.random() * ABYSS_FISH_SPECIES.length)];
@@ -608,7 +617,7 @@ function startAbyssTheme() {
   };
   const scheduleFish = () => {
     _abyssFishTimer = setTimeout(() => {
-      if (document.body.classList.contains('theme-abyss')) spawnFish();
+      if (abyssThemeCanSpawn()) spawnFish();
       scheduleFish();
     }, 4200 + Math.random() * 7200);
   };
@@ -616,7 +625,7 @@ function startAbyssTheme() {
 
   for (let i = 0; i < motion.fishLimit; i++) {
     _abyssSeedTimers.push(setTimeout(() => {
-      if (document.body.classList.contains('theme-abyss')) spawnFish();
+      if (abyssThemeCanSpawn()) spawnFish();
     }, 900 + i * 1050));
   }
 

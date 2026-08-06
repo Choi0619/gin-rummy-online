@@ -42,8 +42,14 @@ body.theme-abyss #lobbyScreen.active::before { opacity: 0.34; }
   display: none;
   position: fixed; inset: 0; pointer-events: none; z-index: 0;
   overflow: hidden;
+  contain: strict;
 }
 body.theme-abyss .abyss-layer { display: block; }
+
+html.theme-effects-paused body.theme-abyss :is(.abyss-layer, .abyss-cursor-fx-layer) *,
+html.theme-effects-paused body.theme-abyss :is(.abyss-layer, .abyss-cursor-fx-layer) {
+  animation-play-state: paused !important;
+}
 
 /* ---------- Lobby-only sanctuary and schooling fish ---------- */
 .abyss-lobby-sanctuary,

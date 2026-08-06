@@ -9,6 +9,7 @@
 <title>진 러미 온라인</title>
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/theme-performance.js"></script>
 <!-- Abyss theme lives in its own files (not inlined below) so its artwork can
      be as detailed as it needs without bloating this file further. -->
 <link rel="stylesheet" href="/theme-abyss.css">
@@ -892,6 +893,9 @@ body.theme-aurora .logo-title { animation: auroraText 6s linear infinite; }
   background: linear-gradient(to bottom, rgba(0,255,200,0.9), transparent);
   border-radius: 2px;
   animation: meteorFall linear forwards;
+}
+html.theme-effects-paused body.theme-aurora * {
+  animation-play-state: paused !important;
 }
 @keyframes meteorFall {
   0%   { opacity: 0; transform: translateY(-100px) rotate(35deg); }
@@ -4491,6 +4495,7 @@ function setTheme(theme, options = {}) {
     showConfirmModal({ emoji:'✦', title:'천상 테마 잠금', sub:'PVP 100승 달성 시 해금됩니다.\n현재 총 승리: ' + wins + '승', acceptLabel:'확인', onAccept:()=>{} });
     return;
   }
+  if (window.ThemePerformance) void window.ThemePerformance.prepare(theme);
   document.body.className = document.body.className.replace(/theme-\S+/g, '').trim();
   if (theme !== 'green') document.body.classList.add('theme-' + theme);
   localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -4535,11 +4540,14 @@ function stopAuroraStars() {
 // Occasional bright sparkle bursts drifting across the screen, independent of
 // the win-celebration meteor shower — just ambient flair while playing.
 let _auroraSparkleTimer = null;
+function auroraThemeCanSpawn() {
+  return !document.hidden && document.body.classList.contains('theme-aurora');
+}
 function startAuroraSparkleLoop() {
   stopAuroraSparkleLoop();
   const schedule = () => {
     _auroraSparkleTimer = setTimeout(() => {
-      if (document.body.classList.contains('theme-aurora')) spawnAuroraSparkle();
+      if (auroraThemeCanSpawn()) spawnAuroraSparkle();
       schedule();
     }, 4000 + Math.random() * 5000);
   };
@@ -4556,7 +4564,7 @@ function startAuroraShootingStarLoop() {
   stopAuroraShootingStarLoop();
   const schedule = () => {
     _auroraShootingStarTimer = setTimeout(() => {
-      if (document.body.classList.contains('theme-aurora')) spawnAuroraShootingStar();
+      if (auroraThemeCanSpawn()) spawnAuroraShootingStar();
       schedule();
     }, 15000 + Math.random() * 15000);
   };
@@ -4567,6 +4575,7 @@ function stopAuroraShootingStarLoop() {
   _auroraShootingStarTimer = null;
 }
 function spawnAuroraShootingStar() {
+  if (!auroraThemeCanSpawn()) return;
   const m = document.createElement('div');
   m.className = 'aurora-meteor';
   const startX = Math.random() * 110 - 10;
@@ -4586,6 +4595,7 @@ function auroraStarSvg(size, c1, c2, id) {
   '</svg>';
 }
 function spawnAuroraSparkle() {
+  if (!auroraThemeCanSpawn()) return;
   const el = document.createElement('div');
   el.className = 'aurora-sparkle';
   const size = 12 + Math.random() * 14;
