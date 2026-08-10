@@ -38,16 +38,16 @@
 
 /* The generated atlas cells have deliberately different silhouettes. Keep
    every mascot centered inside circular avatars without clipping tails/ears. */
-.char-cat { transform: translate3d(-3%, 1%, 0) scale(.86); }
-.char-dog { transform: translate3d(-3%, 1%, 0) scale(.85); }
-.char-rabbit { transform: translate3d(3%, 3%, 0) scale(.86); }
-.char-fox { transform: translate3d(10%, 1%, 0) scale(.78); }
-.char-bear { transform: translate3d(-3%, 3%, 0) scale(.86); }
-.char-panda { transform: translate3d(-3%, 3%, 0) scale(.87); }
-.char-koala { transform: translate3d(12%, 3%, 0) scale(.82); }
-.char-tiger { transform: translate3d(9%, 2%, 0) scale(.78); }
-.char-lion { transform: translate3d(-3%, 11%, 0) scale(.82); }
-.char-frog { transform: translate3d(-1%, 7%, 0) scale(.9); }
+.char-cat { transform: translate3d(-5%, -9.5%, 0) scale(.86); }
+.char-dog { transform: translate3d(-4.1%, -10%, 0) scale(.85); }
+.char-rabbit { transform: translate3d(2.5%, -4.4%, 0) scale(.86); }
+.char-fox { transform: translate3d(4.1%, -8.5%, 0) scale(.78); }
+.char-bear { transform: translate3d(-4.8%, -5.9%, 0) scale(.86); }
+.char-panda { transform: translate3d(-4.7%, -5.6%, 0) scale(.87); }
+.char-koala { transform: translate3d(7.9%, -6%, 0) scale(.82); }
+.char-tiger { transform: translate3d(3.4%, -6.7%, 0) scale(.78); }
+.char-lion { transform: translate3d(-5.2%, 4.8%, 0) scale(.82); }
+.char-frog { transform: translate3d(-1.2%, -0.9%, 0) scale(.9); }
 .char-unicorn::after {
   content: '';
   position: absolute;
