@@ -1904,6 +1904,15 @@ body.theme-angel #revengeBtn {
 body.theme-angel .rematch-banner,
 body.theme-angel #revengeStatus:not(:empty) {
   min-height: 38px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
   color: #fff4d5 !important;
   background: linear-gradient(145deg, rgba(93,85,128,.62), rgba(28,32,70,.72));
   border: 1px solid rgba(255,229,168,.35);

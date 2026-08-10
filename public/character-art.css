@@ -14,6 +14,7 @@
   background-origin: border-box;
   background-clip: border-box;
   image-rendering: auto;
+  transform-origin: 50% 50%;
 }
 .char-cat { --char-x: 0%; --char-y: 0%; }
 .char-dog { --char-x: 33.333%; --char-y: 0%; }
@@ -34,6 +35,19 @@
   animation: unicornMajesticFloat 3.2s ease-in-out infinite;
   will-change: transform, opacity;
 }
+
+/* The generated atlas cells have deliberately different silhouettes. Keep
+   every mascot centered inside circular avatars without clipping tails/ears. */
+.char-cat { transform: translate3d(-3%, 1%, 0) scale(.86); }
+.char-dog { transform: translate3d(-3%, 1%, 0) scale(.85); }
+.char-rabbit { transform: translate3d(3%, 3%, 0) scale(.86); }
+.char-fox { transform: translate3d(10%, 1%, 0) scale(.78); }
+.char-bear { transform: translate3d(-3%, 3%, 0) scale(.86); }
+.char-panda { transform: translate3d(-3%, 3%, 0) scale(.87); }
+.char-koala { transform: translate3d(12%, 3%, 0) scale(.82); }
+.char-tiger { transform: translate3d(9%, 2%, 0) scale(.78); }
+.char-lion { transform: translate3d(-3%, 11%, 0) scale(.82); }
+.char-frog { transform: translate3d(-1%, 7%, 0) scale(.9); }
 .char-unicorn::after {
   content: '';
   position: absolute;
