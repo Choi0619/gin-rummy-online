@@ -7913,6 +7913,7 @@ function initSocket() {
       if (overlay) overlay.classList.remove('show');
     }
     myIdx = data.playerIndex;
+    roomCode = data.code || roomCode;
     vsAI = !!data.vsAI;
     myHand = data.hand;
     discardTop = data.discardTop;

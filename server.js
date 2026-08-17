@@ -1175,6 +1175,7 @@ function startGame(room) {
   room.aiControlled = [false, false];
   room.players.forEach((sid, i) => {
     io.to(sid).emit('game-started', {
+      code: room.code,
       hand: room.game.hands[i],
       discardTop: upcard,
       deckCount: room.game.deck.length,
