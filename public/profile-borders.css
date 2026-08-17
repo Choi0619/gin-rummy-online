@@ -112,13 +112,46 @@
 .border-preview-medallion img { width:72%;height:72%;object-fit:contain; }
 .border-opt.unlocked-preview .border-opt-label { color:rgba(255,255,255,.72);font-weight:700; }
 
+/* Game profiles keep one stable footprint in every theme. Content such as RP,
+   tier and status can differ without making either player's card jump in size. */
+:is(#gameScreen,#spectateScreen) .player-bar {
+  box-sizing:border-box;
+  width:min(620px,calc(100vw - 24px)) !important;
+  max-width:620px !important;
+  margin-inline:auto;
+  padding-inline:0 !important;
+  gap:18px !important;
+}
+:is(#gameScreen,#spectateScreen) .avatar-card {
+  box-sizing:border-box;
+  flex:0 0 260px !important;
+  width:260px !important;
+  min-width:260px !important;
+  max-width:260px !important;
+  height:68px !important;
+  min-height:68px !important;
+  padding:9px 12px;
+  gap:9px;
+}
+
 @media(max-width:720px) {
   :is(.cb-green,.cb-bronze,.cb-silver,.cb-w5) { --pb-emblem-size:23px; }
   .cb-challenger { --pb-emblem-size:36px; }.cb-w100 { --pb-emblem-size:39px; }
   .avatar-card[class*="cb-"] { --pb-emblem-left:34px;gap:10px; }.friend-row[class*="cb-"] { --pb-emblem-left:31px; }
+  :is(#gameScreen,#spectateScreen) .player-bar {
+    width:min(360px,calc(100vw - 20px)) !important;max-width:360px !important;gap:8px !important;padding-inline:0 !important;
+  }
+  :is(#gameScreen,#spectateScreen) .avatar-card {
+    flex:1 1 0 !important;width:auto !important;min-width:0 !important;max-width:none !important;
+    height:58px !important;min-height:58px !important;padding:7px 9px;gap:7px;
+  }
+  .revenge-flame-layer { inset:-36px -11px -8px; }
 }
 @media(prefers-reduced-motion:reduce) {
   :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot)[class*="cb-"]::before,
   :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot)[class*="cb-"]::after,
   .avatar-frame[class*="cb-"]::after { animation:none !important; }
+  .rf-frame,.rf-spark { animation:none !important; }
+  .rf-frame-a { opacity:.34; }
+  .rf-frame-b,.rf-frame-c,.rf-spark { display:none; }
 }
