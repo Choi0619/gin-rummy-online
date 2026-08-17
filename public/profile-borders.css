@@ -98,7 +98,6 @@
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w50::before,
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-challenger::before,
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w100::before {
-  inset:-4px -6px;
   border-radius:inherit;
   background-position:center !important;
   background-repeat:no-repeat !important;
@@ -110,18 +109,29 @@
   will-change:opacity,transform;
 }
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w50::before {
+  inset:-10.3% -2.7%;
   background-image:url('/assets/profile-borders/high-tier-frame-ruby-v1.webp') !important;
   animation:pbRubyFrame 4.6s ease-in-out infinite;
 }
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-challenger::before {
+  inset:-23.9% -2.9% -27.9%;
   background-image:url('/assets/profile-borders/high-tier-frame-challenger-v1.webp') !important;
   animation:pbChallengerFrame 3.2s ease-in-out infinite;
 }
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w100::before {
-  inset:-6px -8px;
+  inset:-26.6% -4.25% -23.1%;
   background-image:url('/assets/profile-borders/high-tier-frame-legend-v1.webp') !important;
   filter:drop-shadow(0 0 5px rgba(255,226,104,.64)) drop-shadow(0 0 3px rgba(174,226,255,.5));
   animation:pbLegendFrame 2.45s ease-in-out infinite;
+}
+
+/* The authored rails are the visible border for these tiers. Keeping the
+   generic gradient border underneath creates a second, misaligned outline. */
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot):is(.cb-w50,.cb-challenger,.cb-w100) {
+  background:
+    linear-gradient(108deg,color-mix(in srgb,var(--pb-edge-a) 9%,transparent),transparent 28%,transparent 72%,color-mix(in srgb,var(--pb-edge-b) 9%,transparent)) padding-box,
+    radial-gradient(circle at 14% 50%,color-mix(in srgb,var(--pb-edge-a) 13%,transparent),transparent 30%) padding-box,
+    linear-gradient(142deg,var(--pb-panel-a),var(--pb-panel-b)) padding-box !important;
 }
 
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-platinum::after,
