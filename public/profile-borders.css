@@ -12,9 +12,9 @@
 .cb-w20 { --pb-x:33.333%;--pb-y:50%;--pb-edge-a:#9affc8;--pb-edge-b:#05894f;--pb-glow:rgba(36,231,135,.46);--pb-panel-a:rgba(20,58,46,.96);--pb-panel-b:rgba(7,25,27,.98);--pb-border-width:2.5px;--pb-corner-len:21px;--pb-ornament-opacity:.56;--pb-emblem-size:32px; }
 .cb-platinum { --pb-x:66.667%;--pb-y:50%;--pb-edge-a:#fff;--pb-edge-b:#9d86d8;--pb-glow:rgba(196,181,253,.5);--pb-panel-a:rgba(49,47,76,.96);--pb-panel-b:rgba(18,22,43,.98);--pb-border-width:2.5px;--pb-corner-len:22px;--pb-ornament-opacity:.62;--pb-emblem-size:34px; }
 .cb-diamond { --pb-x:100%;--pb-y:50%;--pb-edge-a:#e9fdff;--pb-edge-b:#39bde7;--pb-glow:rgba(87,214,255,.55);--pb-panel-a:rgba(25,54,77,.96);--pb-panel-b:rgba(8,24,43,.99);--pb-border-width:3px;--pb-corner-len:25px;--pb-ornament-opacity:.7;--pb-frame-inset:1px;--pb-emblem-size:36px; }
-.cb-w50 { --pb-x:0%;--pb-y:100%;--pb-edge-a:#ff9aac;--pb-edge-b:#b4002d;--pb-glow:rgba(255,45,82,.52);--pb-panel-a:rgba(69,24,40,.96);--pb-panel-b:rgba(29,10,23,.99);--pb-border-width:3px;--pb-corner-len:26px;--pb-ornament-opacity:.72;--pb-frame-inset:0;--pb-emblem-size:38px; }
-.cb-challenger { --pb-x:33.333%;--pb-y:100%;--pb-edge-a:#ffe09a;--pb-edge-b:#d55b00;--pb-glow:rgba(255,137,24,.62);--pb-panel-a:rgba(70,39,17,.97);--pb-panel-b:rgba(29,15,18,.99);--pb-border-width:3px;--pb-corner-len:31px;--pb-ornament-opacity:.86;--pb-frame-inset:-4px;--pb-emblem-size:42px; }
-.cb-w100 { --pb-x:66.667%;--pb-y:100%;--pb-edge-a:#fff9d5;--pb-edge-b:#d7a614;--pb-glow:rgba(255,226,104,.68);--pb-panel-a:rgba(59,48,26,.97);--pb-panel-b:rgba(24,18,28,.99);--pb-border-width:3px;--pb-corner-len:35px;--pb-ornament-opacity:.96;--pb-frame-inset:-5px;--pb-emblem-size:46px; }
+.cb-w50 { --pb-x:0%;--pb-y:100%;--pb-edge-a:#ff9aac;--pb-edge-b:#b4002d;--pb-glow:rgba(255,45,82,.52);--pb-panel-a:rgba(69,24,40,.96);--pb-panel-b:rgba(29,10,23,.99);--pb-border-width:3px;--pb-corner-len:26px;--pb-ornament-opacity:.72;--pb-frame-inset:0;--pb-emblem-size:38px;--pb-emblem-y-rest:-58%;--pb-emblem-y-peak:-62%; }
+.cb-challenger { --pb-x:33.333%;--pb-y:100%;--pb-edge-a:#ffe09a;--pb-edge-b:#d55b00;--pb-glow:rgba(255,137,24,.62);--pb-panel-a:rgba(70,39,17,.97);--pb-panel-b:rgba(29,15,18,.99);--pb-border-width:3px;--pb-corner-len:31px;--pb-ornament-opacity:.86;--pb-frame-inset:-4px;--pb-emblem-size:42px;--pb-emblem-y-rest:-56%;--pb-emblem-y-peak:-61%; }
+.cb-w100 { --pb-x:66.667%;--pb-y:100%;--pb-edge-a:#fff9d5;--pb-edge-b:#d7a614;--pb-glow:rgba(255,226,104,.68);--pb-panel-a:rgba(59,48,26,.97);--pb-panel-b:rgba(24,18,28,.99);--pb-border-width:3px;--pb-corner-len:35px;--pb-ornament-opacity:.96;--pb-frame-inset:-5px;--pb-emblem-size:46px;--pb-emblem-y-rest:-54%;--pb-emblem-y-peak:-60%; }
 
 /* Animal circles are safe zones: a thin ring only, never covering the animal. */
 :is(.avatar-frame,.badge-char,.slot-icon,.f-char,.avatar-emoji,.border-preview-medallion)[class*="cb-"] {
@@ -69,7 +69,7 @@
 /* Compact AI-authored emblem hangs outside the top edge, above the avatar. */
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot)[class*="cb-"]::after {
   content:'' !important;position:absolute;top:0;left:var(--pb-emblem-left,32px);width:var(--pb-emblem-size);height:var(--pb-emblem-size);
-  transform:translate3d(-50%,-70%,0);background:url('/assets/profile-borders/rank-emblems-atlas-v1.webp') no-repeat var(--pb-x) var(--pb-y) / 400% 300%;
+  transform:translate3d(-50%,var(--pb-emblem-y-rest,-70%),0);background:url('/assets/profile-borders/rank-emblems-atlas-v1.webp') no-repeat var(--pb-x) var(--pb-y) / 400% 300%;
   filter:drop-shadow(0 2px 2px rgba(0,0,0,.62)) drop-shadow(0 0 5px var(--pb-glow));pointer-events:none;z-index:10;
 }
 .avatar-card[class*="cb-"] { --pb-emblem-left:38px;gap:12px; }
@@ -93,16 +93,48 @@
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-challenger { border-radius:5px 18px 5px 18px; }
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w100 { border-radius:20px 7px; }
 
+/* AI-authored high-tier rails sit above the scalable base panel. Their center
+   is transparent, so avatars and profile text retain the existing safe zones. */
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w50::before,
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-challenger::before,
-:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w100::before { animation:pbFrameGlint 2.8s ease-in-out infinite; }
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w100::before {
+  inset:-4px -6px;
+  border-radius:inherit;
+  background-position:center !important;
+  background-repeat:no-repeat !important;
+  background-size:100% 100% !important;
+  box-shadow:none;
+  opacity:.94;
+  filter:drop-shadow(0 0 4px var(--pb-glow));
+  transform-origin:50% 50%;
+  will-change:opacity,transform;
+}
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w50::before {
+  background-image:url('/assets/profile-borders/high-tier-frame-ruby-v1.webp') !important;
+  animation:pbRubyFrame 4.6s ease-in-out infinite;
+}
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-challenger::before {
+  background-image:url('/assets/profile-borders/high-tier-frame-challenger-v1.webp') !important;
+  animation:pbChallengerFrame 3.2s ease-in-out infinite;
+}
+:is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w100::before {
+  inset:-6px -8px;
+  background-image:url('/assets/profile-borders/high-tier-frame-legend-v1.webp') !important;
+  filter:drop-shadow(0 0 5px rgba(255,226,104,.64)) drop-shadow(0 0 3px rgba(174,226,255,.5));
+  animation:pbLegendFrame 2.45s ease-in-out infinite;
+}
+
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-platinum::after,
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-diamond::after { animation:pbEmblemBreathe 3.4s ease-in-out infinite; }
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w50::after,
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-challenger::after,
 :is(.avatar-card,.auth-user-badge,.friend-row,.dm-header,.player-slot).cb-w100::after { animation:pbEmblemAscend 3s ease-in-out infinite; }
 @keyframes pbFrameGlint { 0%,100%{opacity:.54}50%{opacity:1} }
-@keyframes pbEmblemBreathe { 0%,100%{transform:translate3d(-50%,-70%,0) scale(.96);opacity:.88}50%{transform:translate3d(-50%,-73%,0) scale(1.05);opacity:1} }
-@keyframes pbEmblemAscend { 0%,100%{transform:translate3d(-50%,-70%,0) scale(.96);opacity:.9}50%{transform:translate3d(-50%,-76%,0) scale(1.08);opacity:1} }
+@keyframes pbEmblemBreathe { 0%,100%{transform:translate3d(-50%,var(--pb-emblem-y-rest,-70%),0) scale(.96);opacity:.88}50%{transform:translate3d(-50%,var(--pb-emblem-y-peak,-73%),0) scale(1.05);opacity:1} }
+@keyframes pbEmblemAscend { 0%,100%{transform:translate3d(-50%,var(--pb-emblem-y-rest,-70%),0) scale(.96);opacity:.9}50%{transform:translate3d(-50%,var(--pb-emblem-y-peak,-76%),0) scale(1.08);opacity:1} }
+@keyframes pbRubyFrame { 0%,100%{opacity:.82}48%{opacity:1} }
+@keyframes pbChallengerFrame { 0%,100%{opacity:.86;transform:scale(1)}52%{opacity:1;transform:scale(1.006)} }
+@keyframes pbLegendFrame { 0%,100%{opacity:.86;transform:scale(1)}46%{opacity:1;transform:scale(1.009)}72%{opacity:.93;transform:scale(1.003)} }
 
 /* Unlocked collection entries preview the new emblem without hiding the pet. */
 .border-opt.unlocked-preview { width:66px;height:78px;border:1px solid color-mix(in srgb,var(--pb-edge-a) 46%,transparent);background:linear-gradient(155deg,var(--pb-panel-a),var(--pb-panel-b)) !important;box-shadow:0 4px 12px rgba(0,0,0,.28),0 0 8px var(--pb-glow); }

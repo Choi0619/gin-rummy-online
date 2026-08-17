@@ -5385,6 +5385,12 @@ async function persistCharacterChoice(ch, showFeedback = false) {
   if (profileAvatar) profileAvatar.innerHTML = charHTML(ch);
   const lobbyAvatar = document.getElementById('lobbyUserChar');
   if (lobbyAvatar) lobbyAvatar.innerHTML = charHTML(ch);
+  if (Number.isInteger(myIdx) && myIdx >= 0) {
+    chars[myIdx] = ch;
+    const slotIcon = document.getElementById('slotIcon' + myIdx);
+    if (slotIcon) slotIcon.innerHTML = charHTML(ch);
+    setAvatarEmojiChar('myAvatarEmoji', ch);
+  }
   renderCharGrid();
   if (document.getElementById('profileCharGrid')) renderProfileCharGrid();
   if (socket && roomCode) socket.emit('set-character', { char: ch });
@@ -7346,6 +7352,11 @@ function initSocket() {
 
   socket.on('card-border-update', ({ idx, border }) => {
     cardBorders[idx] = border || 'green';
+    applyAvatarBorder('slotIcon' + idx, cardBorders[idx]);
+    if (document.getElementById('spectateScreen').classList.contains('active')) {
+      specState.cardBorders[idx] = cardBorders[idx];
+      renderSpectateView();
+    }
     renderGame();
   });
 
@@ -7354,6 +7365,10 @@ function initSocket() {
     const slotIdx = idx;
     const iconEl = document.getElementById('slotIcon' + slotIdx);
     if (iconEl) iconEl.innerHTML = charHTML(char);
+    if (document.getElementById('spectateScreen').classList.contains('active')) {
+      specState.chars[idx] = char;
+      renderSpectateView();
+    }
     renderGame();
   });
 
