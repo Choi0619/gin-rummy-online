@@ -2084,6 +2084,10 @@ body.theme-aurora .avatar-card.my-turn > .turn-halo-layer {
   font-size: 40px; line-height: 1; position: relative; flex-shrink: 0;
 }
 .avatar-emoji > :is(.char-art,.char-art-img) { display: block; margin: auto; }
+.avatar-emoji.is-ai-avatar .char-fallback {
+  font-size: .78em;
+  transform: translate3d(0,1px,0);
+}
 .avatar-emoji .face-overlay { position: absolute; bottom: -4px; right: -10px; font-size: 17px; }
 .avatar-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .avatar-name { font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -6684,7 +6688,7 @@ function charHTML(ch) {
   if (ch === '🐢') return '<img class="char-art-img" src="/turtle.png" alt="거북이">';
   const art = CHARACTER_ART[ch];
   if (art) return '<span class="char-art char-' + art[0] + '" role="img" aria-label="' + art[1] + '"></span>';
-  return escapeHtml(ch);
+  return '<span class="char-fallback">' + escapeHtml(ch) + '</span>';
 }
 
 // .avatar-emoji keeps a face-overlay span as its 2nd child; swap only the char node.
@@ -6692,6 +6696,7 @@ function setAvatarEmojiChar(elId, ch) {
   const el = document.getElementById(elId);
   if (!el) return;
   const overlay = el.querySelector('.face-overlay');
+  el.classList.toggle('is-ai-avatar', ch === '🤖');
   el.innerHTML = charHTML(ch);
   if (overlay) el.appendChild(overlay);
 }
