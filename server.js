@@ -123,6 +123,24 @@ function emitAccountGameConflict(socket, seat) {
   });
 }
 
+// A previous match under this same live socket (e.g. an AI match that
+// finished — round/match end always leaves room.game.over === true, whether
+// or not the whole match is actually over — and the room otherwise sits
+// around until an explicit leave) is not a real "playing on another device"
+// conflict; it's this same tab starting another game. Clear it out exactly
+// like an explicit leave would, instead of surfacing a resume/spectate
+// prompt (or, if the old game had already truly ended, a same-account
+// takeover that's flatly rejected because room.game.over is true) for a
+// session the player never actually left.
+function autoLeaveStaleAccountSeat(seat) {
+  const { room, idx } = seat;
+  room.leaving = true;
+  clearTurnTimers(room);
+  if (room.aiMoveTimer) { clearTimeout(room.aiMoveTimer); room.aiMoveTimer = null; }
+  emitToPlayer(room, 1 - idx, 'player-left', { name: room.names[idx] });
+  rooms.delete(room.code);
+}
+
 async function recordAiMatchToDb(room, winnerIdx) {
   if (!room.vsAI || room.aiMatchRecordStarted) return;
   room.aiMatchRecordStarted = true;
@@ -385,7 +403,14 @@ io.on('connection', socket => {
     const verified = await verifyParticipationIdentity(socket, authToken);
     if (!verified.ok) return;
     const activeSeat = findAccountSeat(verified.identity && verified.identity.id);
-    if (activeSeat) { emitAccountGameConflict(socket, activeSeat); return; }
+    if (activeSeat) {
+      if (activeSeat.room.players[activeSeat.idx] === socket.id) {
+        autoLeaveStaleAccountSeat(activeSeat);
+      } else {
+        emitAccountGameConflict(socket, activeSeat);
+        return;
+      }
+    }
     const code = makeCode();
     rooms.set(code, {
       code,
@@ -422,7 +447,14 @@ io.on('connection', socket => {
     const verified = await verifyParticipationIdentity(socket, authToken);
     if (!verified.ok) return;
     const activeSeat = findAccountSeat(verified.identity && verified.identity.id);
-    if (activeSeat) { emitAccountGameConflict(socket, activeSeat); return; }
+    if (activeSeat) {
+      if (activeSeat.room.players[activeSeat.idx] === socket.id) {
+        autoLeaveStaleAccountSeat(activeSeat);
+      } else {
+        emitAccountGameConflict(socket, activeSeat);
+        return;
+      }
+    }
     const code = makeCode();
     const room = {
       code,
@@ -503,7 +535,14 @@ io.on('connection', socket => {
     const verified = await verifyParticipationIdentity(socket, authToken);
     if (!verified.ok) return;
     const activeSeat = findAccountSeat(verified.identity && verified.identity.id);
-    if (activeSeat) { emitAccountGameConflict(socket, activeSeat); return; }
+    if (activeSeat) {
+      if (activeSeat.room.players[activeSeat.idx] === socket.id) {
+        autoLeaveStaleAccountSeat(activeSeat);
+      } else {
+        emitAccountGameConflict(socket, activeSeat);
+        return;
+      }
+    }
 
     // Find an empty (null = disconnected) slot
     let slotIdx = -1;
