@@ -119,9 +119,15 @@ async function verifyParticipationIdentity(socket, accessToken) {
   }
 }
 
+// A room whose match has genuinely concluded (target score reached — see
+// checkMatchEnd) is never a real "active game" for account-lock purposes,
+// even though it may still be sitting around for PVP revenge/rematch. Skip
+// it here so a finished match can never itself be the reason a new game
+// gets blocked as a cross-device conflict.
 function findAccountSeat(accountId) {
   if (!accountId) return null;
   for (const room of rooms.values()) {
+    if (room.matchEnded) continue;
     const idx = (room.accountIds || []).indexOf(accountId);
     if (idx !== -1) return { room, idx };
   }
@@ -139,15 +145,21 @@ function emitAccountGameConflict(socket, seat) {
   });
 }
 
-// A previous match under this same live socket (e.g. an AI match that
-// finished — round/match end always leaves room.game.over === true, whether
-// or not the whole match is actually over — and the room otherwise sits
-// around until an explicit leave) is not a real "playing on another device"
-// conflict; it's this same tab starting another game. Clear it out exactly
-// like an explicit leave would, instead of surfacing a resume/spectate
-// prompt (or, if the old game had already truly ended, a same-account
-// takeover that's flatly rejected because room.game.over is true) for a
-// session the player never actually left.
+// A previous seat under this same player (same live socket, OR the same
+// persistent browser clientId reconnected under a fresh socket.id — a
+// socket.io reconnect after a network blip/backgrounded tab issues a brand
+// new socket.id, so socket.id alone misses this case) is not a real
+// "playing on another device" conflict; it's this same session starting
+// another game. Clear it out exactly like an explicit leave would, instead
+// of surfacing a resume/spectate prompt for a session the player never
+// actually left.
+function isSameAccountSession(seat, socket, clientId) {
+  const { room, idx } = seat;
+  if (room.players[idx] === socket.id) return true;
+  if (clientId && room.clientIds && room.clientIds[idx] === clientId) return true;
+  return false;
+}
+
 function autoLeaveStaleAccountSeat(seat) {
   const { room, idx } = seat;
   room.leaving = true;
@@ -420,7 +432,7 @@ io.on('connection', socket => {
     if (!verified.ok) return;
     const activeSeat = findAccountSeat(verified.identity && verified.identity.id);
     if (activeSeat) {
-      if (activeSeat.room.players[activeSeat.idx] === socket.id) {
+      if (isSameAccountSession(activeSeat, socket, clientId)) {
         autoLeaveStaleAccountSeat(activeSeat);
       } else {
         emitAccountGameConflict(socket, activeSeat);
@@ -464,7 +476,7 @@ io.on('connection', socket => {
     if (!verified.ok) return;
     const activeSeat = findAccountSeat(verified.identity && verified.identity.id);
     if (activeSeat) {
-      if (activeSeat.room.players[activeSeat.idx] === socket.id) {
+      if (isSameAccountSession(activeSeat, socket, clientId)) {
         autoLeaveStaleAccountSeat(activeSeat);
       } else {
         emitAccountGameConflict(socket, activeSeat);
@@ -552,7 +564,7 @@ io.on('connection', socket => {
     if (!verified.ok) return;
     const activeSeat = findAccountSeat(verified.identity && verified.identity.id);
     if (activeSeat) {
-      if (activeSeat.room.players[activeSeat.idx] === socket.id) {
+      if (isSameAccountSession(activeSeat, socket, clientId)) {
         autoLeaveStaleAccountSeat(activeSeat);
       } else {
         emitAccountGameConflict(socket, activeSeat);
@@ -1200,6 +1212,7 @@ io.on('connection', socket => {
 
 // ===== Game =====
 function startGame(room) {
+  room.matchEnded = false;
   const deck = createDeck();
   const handSize = room.handSize || 10;
 
@@ -1263,6 +1276,13 @@ function checkMatchEnd(room) {
   const winnerIdx = room.scores[0] === room.scores[1] ? -1 : (room.scores[0] > room.scores[1] ? 0 : 1);
   const revengeSuccess = !!room.isRevenge && winnerIdx === room.revengerIdx;
   const wasRevenge = !!room.isRevenge;
+  // Distinct from `game.over`, which also flips true after every single
+  // round — this marks the whole MATCH as concluded (target score reached),
+  // so findAccountSeat() stops treating this room as anyone's active game.
+  // A same-room rematch/next-round via startGame() clears it again; PVP
+  // revenge/rematch can still find and reuse this room in the meantime, it
+  // just won't count as an active-game conflict while sitting here.
+  room.matchEnded = true;
   // Reset revenge state before emitting so next match can start fresh
   room.isRevenge = false;
   room.revengerIdx = null;
