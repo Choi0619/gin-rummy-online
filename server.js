@@ -67,18 +67,34 @@ async function resolvePlayerIdentity(accessToken) {
     'Content-Type': 'application/json',
   };
   try {
-    const authResponse = await fetch(SUPABASE_URL + '/auth/v1/user', { headers, signal: controller.signal });
-    if (!authResponse.ok) throw new Error(`Supabase auth ${authResponse.status}`);
+    let authResponse;
+    try {
+      authResponse = await fetch(SUPABASE_URL + '/auth/v1/user', { headers, signal: controller.signal });
+    } catch (e) {
+      throw new Error(e.name === 'AbortError' ? 'auth request timed out (8s)' : `auth request failed: ${e.message}`);
+    }
+    if (!authResponse.ok) {
+      const body = await authResponse.text().catch(() => '');
+      throw new Error(`auth ${authResponse.status}${body ? ' — ' + body.slice(0, 200) : ''}`);
+    }
     const authUser = await authResponse.json();
     if (!authUser || !authUser.id) return null;
-    const profileResponse = await fetch(
-      SUPABASE_URL + `/rest/v1/profiles?id=eq.${encodeURIComponent(authUser.id)}&select=id,game_id,username,char&limit=1`,
-      { headers, signal: controller.signal }
-    );
-    if (!profileResponse.ok) throw new Error(`Supabase profile ${profileResponse.status}`);
+    let profileResponse;
+    try {
+      profileResponse = await fetch(
+        SUPABASE_URL + `/rest/v1/profiles?id=eq.${encodeURIComponent(authUser.id)}&select=id,game_id,username,char&limit=1`,
+        { headers, signal: controller.signal }
+      );
+    } catch (e) {
+      throw new Error(e.name === 'AbortError' ? 'profile request timed out (8s)' : `profile request failed: ${e.message}`);
+    }
+    if (!profileResponse.ok) {
+      const body = await profileResponse.text().catch(() => '');
+      throw new Error(`profile ${profileResponse.status}${body ? ' — ' + body.slice(0, 200) : ''}`);
+    }
     const rows = await profileResponse.json();
     const profile = Array.isArray(rows) ? rows[0] : null;
-    if (!profile) return null;
+    if (!profile) throw new Error('profile row not found for authenticated user');
     return {
       id: profile.id,
       gameId: profile.game_id || '',
@@ -94,10 +110,10 @@ async function verifyParticipationIdentity(socket, accessToken) {
   if (!accessToken) return { ok: true, identity: null };
   try {
     const identity = await resolvePlayerIdentity(accessToken);
-    if (!identity) throw new Error('Profile not found');
+    if (!identity) throw new Error('no identity resolved (unexpected — should have thrown already)');
     return { ok: true, identity };
   } catch (err) {
-    console.warn('[account game lock] Player verification failed:', err.message);
+    console.warn(`[account game lock] Player verification failed for socket ${socket.id}:`, err.message);
     socket.emit('err', '로그인 정보를 확인하지 못했습니다. 다시 로그인한 뒤 시도해주세요.');
     return { ok: false, identity: null };
   }

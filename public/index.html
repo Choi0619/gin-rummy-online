@@ -4787,7 +4787,7 @@ function _renderRoomVisibility() {
     : '비공개방은 코드를 아는 사람만 참가할 수 있습니다';
 }
 
-function confirmRoomSettings() {
+async function confirmRoomSettings() {
   closeRoomSettings();
   if (_roomEditMode) {
     socket.emit('update-room-settings', { targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic });
@@ -4797,12 +4797,13 @@ function confirmRoomSettings() {
   myName = document.getElementById('myName').value.trim() || t('defaultPlayer1');
   if (!socket) initSocket();
   document.getElementById('lobbyError').textContent = '';
+  const freshToken = await getFreshAuthToken();
   if (_roomMode === 'ai') {
     myIdx = 0;
     myAiDifficulty = _roomDiff;
-    socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff, gameMode: _gameMode, handSize: _handSize, cardBorder: myCardBorder, clientId: CLIENT_ID, authToken: myAccessToken });
+    socket.emit('create-ai-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, aiDifficulty: _roomDiff, gameMode: _gameMode, handSize: _handSize, cardBorder: myCardBorder, clientId: CLIENT_ID, authToken: freshToken });
   } else {
-    socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder, clientId: CLIENT_ID, authToken: myAccessToken });
+    socket.emit('create-room', { name: myName, char: myChar, targetScore: _roomScore, turnTimeSecs: _roomTimer, gameMode: _gameMode, handSize: _handSize, isPublic: _roomPublic, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder, clientId: CLIENT_ID, authToken: freshToken });
   }
 }
 
@@ -5001,6 +5002,32 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 let supaUser = null;   // current auth user
 let supaProfile = null; // current profile row
 let myAccessToken = null; // cached JWT for keepalive-fetch calls that must survive page unload
+
+// `myAccessToken` is normally kept in sync by supa.auth.onAuthStateChange, but
+// that's passive — if a tab sits backgrounded long enough for the browser to
+// throttle timers, the SDK's own auto-refresh can miss its window and this
+// cached value goes stale while looking perfectly logged-in. Anything that's
+// about to ask the game server to verify identity (create/join/take-over a
+// room) should call this first instead of reading myAccessToken directly, so
+// it actively confirms (and refreshes if needed) rather than trusting a
+// possibly-stale cache. Guests (no supaUser) never touch Supabase here and
+// just get null straight back, same as before — this only changes behavior
+// for accounts that were actually logged in.
+async function getFreshAuthToken() {
+  if (!supaUser) return null;
+  try {
+    const { data, error } = await supa.auth.getSession();
+    if (error || !data || !data.session) {
+      console.warn('[auth] Could not confirm a live session before this request; proceeding without one.', error && error.message);
+      return null;
+    }
+    myAccessToken = data.session.access_token;
+    return myAccessToken;
+  } catch (e) {
+    console.warn('[auth] getSession() threw while refreshing before a request; proceeding without a token.', e && e.message);
+    return null;
+  }
+}
 
 async function initAuth() {
   // Check if this is a password reset redirect (URL has access_token + type=recovery)
@@ -7323,13 +7350,15 @@ function initSocket() {
       acceptLabel: takeover ? '이 기기에서 이어하기' : '관전하기',
       declineLabel: takeover ? '관전하기' : '닫기',
       kind: 'resume',
-      onAccept: () => takeover
-        ? socket.emit('take-over-account-game', {
-            code, clientId: CLIENT_ID, authToken: myAccessToken,
-            name: myName || (supaProfile && supaProfile.username) || '',
-            char: myChar, gameId: (supaProfile && supaProfile.game_id) || '', cardBorder: myCardBorder,
-          })
-        : spectateRoomByCode(code),
+      onAccept: async () => {
+        if (!takeover) { spectateRoomByCode(code); return; }
+        const freshToken = await getFreshAuthToken();
+        socket.emit('take-over-account-game', {
+          code, clientId: CLIENT_ID, authToken: freshToken,
+          name: myName || (supaProfile && supaProfile.username) || '',
+          char: myChar, gameId: (supaProfile && supaProfile.game_id) || '', cardBorder: myCardBorder,
+        });
+      },
       onDecline: () => { if (takeover) spectateRoomByCode(code); },
     });
   });
@@ -8100,13 +8129,14 @@ function getSelectedTargetScore() {
 function createRoom() { openRoomSettings('pvp'); }
 function startAIGame() { openRoomSettings('ai'); }
 
-function joinRoom() {
+async function joinRoom() {
   const code = document.getElementById('joinCode').value.trim().toUpperCase();
   if (!code) { document.getElementById('lobbyError').textContent = t('enterRoomCode'); return; }
   myName = document.getElementById('myName').value.trim() || t('defaultPlayer2');
   if (!socket) initSocket();
   document.getElementById('lobbyError').textContent = '';
-  socket.emit('join-room', { code, name: myName, char: myChar, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder, clientId: CLIENT_ID, authToken: myAccessToken });
+  const freshToken = await getFreshAuthToken();
+  socket.emit('join-room', { code, name: myName, char: myChar, gameId: (supaProfile && supaProfile.game_id) || null, cardBorder: myCardBorder, clientId: CLIENT_ID, authToken: freshToken });
 }
 
 document.getElementById('joinCode').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
