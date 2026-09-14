@@ -1081,6 +1081,22 @@ io.on('connection', socket => {
   socket.on('action', ({ type, cardId }) => {
     const room = rooms.get(socket.data.room);
     if (!room || !room.game || room.game.over || socket.data.spectator) return;
+    const g = room.game;
+    const discardTop = g.discardPile[g.discardPile.length - 1] || null;
+    console.log('[game-action]', {
+      code: room.code,
+      playerIdx: socket.data.idx,
+      type,
+      cardId: cardId ?? null,
+      phase: g.phase,
+      turn: g.turn,
+      discardTop: discardTop ? `${discardTop.rank}${discardTop.suit}` : null,
+      deckCount: g.deck.length,
+      aiControlled: room.aiControlled || null,
+      away: room.away || null,
+      vsAI: !!room.vsAI,
+      ts: new Date().toISOString(),
+    });
     if (type === 'take-upcard' || type === 'pass-upcard') {
       handleUpcardDecision(room, socket.data.idx, type, socket);
     } else {
